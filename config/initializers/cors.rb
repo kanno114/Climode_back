@@ -2,7 +2,7 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
     origins [
       'http://front:3000',
-      'https://next-poc-front.vercel.app'
+      'https://climode-front.vercel.app'
     ]
     resource "*",
       headers: :any,
