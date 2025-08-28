@@ -88,6 +88,10 @@ GEM
     debug (1.11.0)
       irb (~> 1.10)
       reline (>= 0.3.8)
+    dotenv (3.1.8)
+    dotenv-rails (3.1.8)
+      dotenv (= 3.1.8)
+      railties (>= 6.1)
     drb (2.2.3)
     erb (5.0.2)
     erubi (1.13.1)
@@ -268,6 +272,7 @@ DEPENDENCIES
   bootsnap
   brakeman
   debug
+  dotenv-rails
   pg (~> 1.1)
   puma (>= 5.0)
   rails (~> 7.2.0)
