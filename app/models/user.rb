@@ -9,7 +9,7 @@ class User < ApplicationRecord
   validates :name, presence: true, unless: :oauth_provider?
 
   def oauth_provider?
-    provider.present?
+    user_identities.exists?
   end
 end
 
