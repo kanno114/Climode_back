@@ -35,12 +35,35 @@ class Api::V1::DailyLogsController < ApplicationController
 
   # POST /api/v1/daily_logs
   def create
-    @daily_log = current_user.daily_logs.build(daily_log_params)
+    # フロントエンドからのデータを処理
+    daily_log_data = params[:daily_log]
+    
+    # 都道府県を取得
+    prefecture = Prefecture.find(daily_log_data[:prefecture_id])
+    
+    @daily_log = current_user.daily_logs.build(
+      date: daily_log_data[:date],
+      prefecture: prefecture,
+      sleep_hours: daily_log_data[:sleep_hours],
+      mood: daily_log_data[:mood_score].to_i, # そのまま使用
+      memo: daily_log_data[:notes] || ""
+    )
     
     # 体調スコアを計算
     @daily_log.score = HealthScoreCalculator.new(@daily_log).calculate
 
     if @daily_log.save
+      # 症状を関連付け
+      if daily_log_data[:symptoms].present?
+        symptoms = JSON.parse(daily_log_data[:symptoms])
+        symptoms.each do |symptom_code|
+          symptom = Symptom.find_by(code: symptom_code)
+          if symptom
+            @daily_log.daily_log_symptoms.create!(symptom: symptom)
+          end
+        end
+      end
+      
       # 天気データを作成（ダミーデータ）
       create_weather_observation
       
@@ -54,9 +77,37 @@ class Api::V1::DailyLogsController < ApplicationController
 
   # PUT /api/v1/daily_logs/:id
   def update
-    if @daily_log.update(daily_log_params)
-      # 体調スコアを再計算
-      @daily_log.update(score: HealthScoreCalculator.new(@daily_log).calculate)
+    # フロントエンドからのデータを処理
+    daily_log_data = params[:daily_log]
+    
+    # 都道府県を取得
+    prefecture = Prefecture.find(daily_log_data[:prefecture_id])
+    
+    # 既存の記録を更新
+    @daily_log.assign_attributes(
+      prefecture: prefecture,
+      sleep_hours: daily_log_data[:sleep_hours],
+      mood: daily_log_data[:mood_score].to_i, # そのまま使用
+      memo: daily_log_data[:notes] || ""
+    )
+    
+    # 体調スコアを再計算
+    @daily_log.score = HealthScoreCalculator.new(@daily_log).calculate
+
+    if @daily_log.save
+      # 既存の症状を削除
+      @daily_log.daily_log_symptoms.destroy_all
+      
+      # 症状を関連付け
+      if daily_log_data[:symptoms].present?
+        symptoms = JSON.parse(daily_log_data[:symptoms])
+        symptoms.each do |symptom_code|
+          symptom = Symptom.find_by(code: symptom_code)
+          if symptom
+            @daily_log.daily_log_symptoms.create!(symptom: symptom)
+          end
+        end
+      end
       
       render json: @daily_log.as_json(include: [:prefecture, :weather_observation, :symptoms])
     else
@@ -97,7 +148,6 @@ class Api::V1::DailyLogsController < ApplicationController
       :prefecture_id, 
       :sleep_hours, 
       :mood, 
-      :fatigue, 
       :self_score, 
       :memo,
       symptom_ids: []
