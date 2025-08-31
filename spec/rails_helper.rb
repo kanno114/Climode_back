@@ -75,6 +75,14 @@ RSpec.configure do |config|
   # arbitrary gems may also be filtered via:
   # config.filter_gems_from_backtrace("gem name")
 
+  # Request spec用のホスト設定
+  config.before(:each, type: :request) do
+    host! 'localhost'
+    # Railsのホスト設定も更新
+    Rails.application.config.hosts << "localhost" unless Rails.application.config.hosts.include?("localhost")
+    Rails.application.config.hosts << "www.example.com" unless Rails.application.config.hosts.include?("www.example.com")
+  end
+
   # Database Cleanerの設定（必要に応じて後で追加）
   # config.before(:suite) do
   #   DatabaseCleaner.clean_with(:truncation)
