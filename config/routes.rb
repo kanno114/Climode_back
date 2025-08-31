@@ -17,9 +17,19 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
-      post :signup, to: "auth#signup"
-      post :signin, to: "auth#signin"
-      post :oauth_register, to: "auth#oauth_register"
+      # Authentication routes
+      post :signin, to: 'sessions#create'
+      post :signup, to: 'registrations#create'
+      post :oauth_register, to: 'registrations#oauth_register'
+
+      resources :daily_logs do
+        collection do
+          get 'date/:date', to: 'daily_logs#show_by_date'
+        end
+      end
+
+      resources :symptoms, only: [:index, :show]
+      resources :prefectures, only: [:index, :show]
     end
   end
 end
