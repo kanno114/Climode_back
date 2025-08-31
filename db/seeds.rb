@@ -1,3 +1,13 @@
+puts "Resetting database..."
+# 既存のデータを削除（外部キー制約を考慮して順序を調整）
+DailyLogSymptom.delete_all
+WeatherObservation.delete_all
+DailyLog.delete_all
+UserIdentity.delete_all
+User.delete_all
+Symptom.delete_all
+Prefecture.delete_all
+
 puts "Seeding users..."
 
 users = [
@@ -85,37 +95,190 @@ prefectures_data.each do |prefecture_data|
   end
 end
 
-# 症状マスタデータ
+# 症状マスタデータ（フロントエンドのフォームと一致）
 symptoms_data = [
   { code: 'headache', name: '頭痛' },
-  { code: 'fatigue', name: '疲労感' },
   { code: 'dizziness', name: 'めまい' },
   { code: 'nausea', name: '吐き気' },
-  { code: 'joint_pain', name: '関節痛' },
-  { code: 'muscle_pain', name: '筋肉痛' },
-  { code: 'back_pain', name: '腰痛' },
+  { code: 'fatigue', name: '倦怠感' },
   { code: 'shoulder_pain', name: '肩こり' },
+  { code: 'back_pain', name: '腰痛' },
+  { code: 'stomach_ache', name: '腹痛' },
+  { code: 'fever', name: '発熱' },
+  { code: 'cough', name: '咳' },
+  { code: 'runny_nose', name: '鼻水' },
   { code: 'eye_strain', name: '目の疲れ' },
   { code: 'insomnia', name: '不眠' },
-  { code: 'oversleeping', name: '過眠' },
-  { code: 'irritability', name: 'イライラ' },
-  { code: 'anxiety', name: '不安感' },
-  { code: 'depression', name: '憂鬱感' },
   { code: 'loss_of_appetite', name: '食欲不振' },
-  { code: 'overeating', name: '過食' },
-  { code: 'stomach_ache', name: '腹痛' },
-  { code: 'diarrhea', name: '下痢' },
-  { code: 'constipation', name: '便秘' },
-  { code: 'runny_nose', name: '鼻水' },
-  { code: 'sneezing', name: 'くしゃみ' },
-  { code: 'itchy_eyes', name: '目のかゆみ' },
-  { code: 'skin_rash', name: '発疹' },
-  { code: 'swelling', name: 'むくみ' }
+  { code: 'other', name: 'その他' }
 ]
 
 symptoms_data.each do |symptom_data|
   Symptom.find_or_create_by!(code: symptom_data[:code]) do |symptom|
     symptom.name = symptom_data[:name]
+  end
+end
+
+# サンプルの日次記録データ
+puts "Creating sample daily logs..."
+
+# Aliceのサンプル記録
+alice = User.find_by(email: 'alice@example.com')
+if alice
+  # 過去7日分のサンプルデータ（今日は除く）
+  (1..7).each do |days_ago|
+    date = Date.current - days_ago.days
+    
+    # 既存の記録があるかチェック
+    existing_log = DailyLog.find_by(user: alice, date: date)
+    next if existing_log
+    
+    # ランダムな体調データを生成
+    sleep_hours = rand(5.0..9.0).round(1)
+    mood_score = rand(3..9)
+    fatigue_score = rand(2..8) # 疲労感スコア（1-10の範囲）
+    
+    # ランダムな症状を選択（0-3個）
+    symptom_count = rand(0..3)
+    selected_symptoms = symptoms_data.sample(symptom_count).map { |s| s[:code] }
+    
+    # 天候データ
+    weather_conditions = ['晴れ', '曇り', '雨', '雪', '霧', '雷']
+    weather_condition = weather_conditions.sample
+    temperature = rand(10.0..30.0).round(1)
+    humidity = rand(30..80)
+    pressure = rand(1000.0..1020.0).round(1)
+    
+    # メモ（気分と疲労感を考慮）
+    notes = case [mood_score, fatigue_score]
+    in [8..9, 1..3]
+      "体調が良く、充実した一日でした。疲れも少なく快調です。"
+    in [6..7, 1..4]
+      "普通の一日でした。特に問題なし。"
+    in [4..5, 5..7]
+      "少し疲れを感じました。"
+    in [1..3, 8..10]
+      "体調が優れませんでした。疲労感が強いです。"
+    else
+      "普通の一日でした。"
+    end
+    
+    # デフォルトの都道府県（東京都）を取得
+    default_prefecture = Prefecture.find_by(code: '13')
+    
+    daily_log = DailyLog.create!(
+      user: alice,
+      prefecture: default_prefecture,
+      date: date,
+      sleep_hours: sleep_hours,
+      mood: mood_score - 5, # moodは-5から5の範囲なので変換
+      fatigue: fatigue_score - 5, # fatigueは-5から5の範囲なので変換
+      memo: notes
+    )
+    
+    # 天候データを別テーブルに保存
+    WeatherObservation.create!(
+      daily_log: daily_log,
+      temperature_c: temperature,
+      humidity_pct: humidity,
+      pressure_hpa: pressure,
+      observed_at: date.to_datetime,
+      snapshot: {
+        weather_condition: weather_condition
+      }
+    )
+    
+    # 症状を関連付け
+    selected_symptoms.each do |symptom_code|
+      symptom = Symptom.find_by(code: symptom_code)
+      if symptom
+        DailyLogSymptom.create!(
+          daily_log: daily_log,
+          symptom: symptom
+        )
+      end
+    end
+    
+    puts "  Created daily log for Alice on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}, symptoms=#{selected_symptoms.join(', ')}"
+  end
+end
+
+# Bobのサンプル記録
+bob = User.find_by(email: 'bob@example.com')
+if bob
+  # 過去3日分のサンプルデータ（今日は除く）
+  (1..3).each do |days_ago|
+    date = Date.current - days_ago.days
+    
+    # 既存の記録があるかチェック
+    existing_log = DailyLog.find_by(user: bob, date: date)
+    next if existing_log
+    
+    # ランダムな体調データを生成
+    sleep_hours = rand(6.0..8.5).round(1)
+    mood_score = rand(4..8)
+    fatigue_score = rand(3..7) # 疲労感スコア（1-10の範囲）
+    
+    # ランダムな症状を選択（0-2個）
+    symptom_count = rand(0..2)
+    selected_symptoms = symptoms_data.sample(symptom_count).map { |s| s[:code] }
+    
+    # 天候データ
+    weather_conditions = ['晴れ', '曇り', '雨']
+    weather_condition = weather_conditions.sample
+    temperature = rand(15.0..25.0).round(1)
+    humidity = rand(40..70)
+    pressure = rand(1005.0..1015.0).round(1)
+    
+    # メモ（気分と疲労感を考慮）
+    notes = case [mood_score, fatigue_score]
+    in [7..8, 1..4]
+      "仕事が順調に進みました。疲れも少なく快調です。"
+    in [5..6, 3..6]
+      "普通の一日でした。"
+    in [4..5, 6..8]
+      "少し疲れました。"
+    else
+      "普通の一日でした。"
+    end
+    
+    # デフォルトの都道府県（東京都）を取得
+    default_prefecture = Prefecture.find_by(code: '13')
+    
+    daily_log = DailyLog.create!(
+      user: bob,
+      prefecture: default_prefecture,
+      date: date,
+      sleep_hours: sleep_hours,
+      mood: mood_score - 5, # moodは-5から5の範囲なので変換
+      fatigue: fatigue_score - 5, # fatigueは-5から5の範囲なので変換
+      memo: notes
+    )
+    
+    # 天候データを別テーブルに保存
+    WeatherObservation.create!(
+      daily_log: daily_log,
+      temperature_c: temperature,
+      humidity_pct: humidity,
+      pressure_hpa: pressure,
+      observed_at: date.to_datetime,
+      snapshot: {
+        weather_condition: weather_condition
+      }
+    )
+    
+    # 症状を関連付け
+    selected_symptoms.each do |symptom_code|
+      symptom = Symptom.find_by(code: symptom_code)
+      if symptom
+        DailyLogSymptom.create!(
+          daily_log: daily_log,
+          symptom: symptom
+        )
+      end
+    end
+    
+    puts "  Created daily log for Bob on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}, symptoms=#{selected_symptoms.join(', ')}"
   end
 end
 
