@@ -59,11 +59,15 @@ class WeatherDataService
     time_index ||= hourly_data['time'].index { |time| time.include?('T08:00') }
     time_index ||= 0 # 9時のデータがない場合は最初のデータを使用
     
+    # 実際の時刻を取得
+    actual_time = hourly_data['time'][time_index]
+    observed_datetime = actual_time ? DateTime.parse(actual_time) : @date.to_datetime.change(hour: 9, minute: 0, second: 0)
+    
     {
       temperature_c: hourly_data['temperature_2m'][time_index],
       humidity_pct: hourly_data['relative_humidity_2m'][time_index],
       pressure_hpa: hourly_data['pressure_msl'][time_index],
-      observed_at: @date.to_datetime.change(hour: 9, minute: 0, second: 0),
+      observed_at: observed_datetime,
       snapshot: {
         source: 'open_meteo_api',
         prefecture_code: @prefecture.code,

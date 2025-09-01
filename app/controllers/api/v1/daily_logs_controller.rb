@@ -51,7 +51,8 @@ class Api::V1::DailyLogsController < ApplicationController
     )
     
     # 体調スコアを計算
-    @daily_log.score = HealthScoreCalculator.new(@daily_log).calculate
+    score_result = ::Score::ScoreCalculatorV1.new(@daily_log).call(persist: false)
+    @daily_log.score = score_result[:score]
 
     if @daily_log.save
       # 症状を関連付け
@@ -93,7 +94,8 @@ class Api::V1::DailyLogsController < ApplicationController
     )
     
     # 体調スコアを再計算
-    @daily_log.score = HealthScoreCalculator.new(@daily_log).calculate
+    score_result = ::Score::ScoreCalculatorV1.new(@daily_log).call(persist: false)
+    @daily_log.score = score_result[:score]
 
     if @daily_log.save
       # 既存の症状を削除

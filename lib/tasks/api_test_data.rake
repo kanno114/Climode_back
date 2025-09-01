@@ -2,6 +2,7 @@ namespace :api do
   namespace :test_data do
     desc "Create test daily logs for API testing"
     task create_daily_logs: :environment do
+      require_relative '../../app/services/score_calculator_v1'
       puts "Creating test daily logs..."
       
       user = User.first
@@ -40,7 +41,8 @@ namespace :api do
         daily_log.symptoms = symptoms
         
         # 体調スコアを計算して更新
-        daily_log.update(score: HealthScoreCalculator.new(daily_log).calculate)
+        score_result = Score::ScoreCalculatorV1.new(daily_log).call(persist: false)
+        daily_log.update(score: score_result[:score])
         
         # 天気データを作成
         weather_data = WeatherDataService.new(prefecture, date).fetch_weather_data
