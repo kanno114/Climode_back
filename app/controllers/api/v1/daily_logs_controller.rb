@@ -45,8 +45,9 @@ class Api::V1::DailyLogsController < ApplicationController
       date: daily_log_data[:date],
       prefecture: prefecture,
       sleep_hours: daily_log_data[:sleep_hours],
-      mood: daily_log_data[:mood_score].to_i, # そのまま使用
-      memo: daily_log_data[:notes] || ""
+      mood: daily_log_data[:mood] || daily_log_data[:mood_score]&.to_i,
+      fatigue: daily_log_data[:fatigue],
+      memo: daily_log_data[:memo] || daily_log_data[:notes] || ""
     )
     
     # 体調スコアを計算
@@ -64,8 +65,7 @@ class Api::V1::DailyLogsController < ApplicationController
         end
       end
       
-      # 天気データを作成（ダミーデータ）
-      create_weather_observation
+      # 天気データはモデルのコールバックで自動取得される
       
       render json: @daily_log.as_json(include: [:prefecture, :weather_observation, :symptoms]), 
              status: :created
@@ -87,8 +87,9 @@ class Api::V1::DailyLogsController < ApplicationController
     @daily_log.assign_attributes(
       prefecture: prefecture,
       sleep_hours: daily_log_data[:sleep_hours],
-      mood: daily_log_data[:mood_score].to_i, # そのまま使用
-      memo: daily_log_data[:notes] || ""
+      mood: daily_log_data[:mood] || daily_log_data[:mood_score]&.to_i,
+      fatigue: daily_log_data[:fatigue],
+      memo: daily_log_data[:memo] || daily_log_data[:notes] || ""
     )
     
     # 体調スコアを再計算
@@ -154,18 +155,7 @@ class Api::V1::DailyLogsController < ApplicationController
     )
   end
 
-  def create_weather_observation
-    prefecture = @daily_log.prefecture
-    weather_data = WeatherDataService.new(prefecture, @daily_log.date).fetch_weather_data
-    
-    @daily_log.create_weather_observation!(
-      temperature_c: weather_data[:temperature_c],
-      humidity_pct: weather_data[:humidity_pct],
-      pressure_hpa: weather_data[:pressure_hpa],
-      observed_at: weather_data[:observed_at],
-      snapshot: weather_data[:snapshot]
-    )
-  end
+  # 天気データ作成メソッドは削除（モデルのコールバックに移行）
 
   def authenticate_user!
     # 認証ロジックは既存の実装に依存
