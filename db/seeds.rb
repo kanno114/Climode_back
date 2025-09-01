@@ -125,8 +125,8 @@ puts "Creating sample daily logs..."
 # Aliceのサンプル記録
 alice = User.find_by(email: 'alice@example.com')
 if alice
-  # 過去7日分のサンプルデータ（今日は除く）
-  (1..7).each do |days_ago|
+  # 過去30日分のサンプルデータ（今日は除く）
+  (1..30).each do |days_ago|
     date = Date.current - days_ago.days
     
     # 既存の記録があるかチェック
@@ -148,6 +148,34 @@ if alice
     temperature = rand(10.0..30.0).round(1)
     humidity = rand(30..80)
     pressure = rand(1000.0..1020.0).round(1)
+    
+    # スコア計算（睡眠、気分、疲労感、症状数を考慮）
+    base_score = 50 # ベーススコア
+    
+    # 睡眠スコア（7-8時間が最適）
+    sleep_score = case sleep_hours
+    when 7.0..8.0
+      20
+    when 6.0..6.9, 8.1..9.0
+      15
+    when 5.0..5.9, 9.1..10.0
+      10
+    else
+      5
+    end
+    
+    # 気分スコア
+    mood_bonus = (mood_score - 5) * 2 # -5から5の範囲を-10から10に変換
+    
+    # 疲労感スコア（疲労感が少ないほど高スコア）
+    fatigue_bonus = (10 - fatigue_score) * 1.5
+    
+    # 症状数による減点
+    symptom_penalty = symptom_count * 5
+    
+    # 総合スコア計算
+    total_score = [base_score + sleep_score + mood_bonus + fatigue_bonus - symptom_penalty, 100].min
+    total_score = [total_score, 0].max
     
     # メモ（気分と疲労感を考慮）
     notes = case [mood_score, fatigue_score]
@@ -173,7 +201,8 @@ if alice
       sleep_hours: sleep_hours,
       mood: mood_score - 5, # moodは-5から5の範囲なので変換
       fatigue: fatigue_score - 5, # fatigueは-5から5の範囲なので変換
-      memo: notes
+      memo: notes,
+      score: total_score
     )
     
     # 天候データを別テーブルに保存
@@ -199,15 +228,15 @@ if alice
       end
     end
     
-    puts "  Created daily log for Alice on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}, symptoms=#{selected_symptoms.join(', ')}"
+    puts "  Created daily log for Alice on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}, score=#{total_score}, symptoms=#{selected_symptoms.join(', ')}"
   end
 end
 
 # Bobのサンプル記録
 bob = User.find_by(email: 'bob@example.com')
 if bob
-  # 過去3日分のサンプルデータ（今日は除く）
-  (1..3).each do |days_ago|
+  # 過去30日分のサンプルデータ（今日は除く）
+  (1..30).each do |days_ago|
     date = Date.current - days_ago.days
     
     # 既存の記録があるかチェック
@@ -229,6 +258,34 @@ if bob
     temperature = rand(15.0..25.0).round(1)
     humidity = rand(40..70)
     pressure = rand(1005.0..1015.0).round(1)
+    
+    # スコア計算（睡眠、気分、疲労感、症状数を考慮）
+    base_score = 50 # ベーススコア
+    
+    # 睡眠スコア（7-8時間が最適）
+    sleep_score = case sleep_hours
+    when 7.0..8.0
+      20
+    when 6.0..6.9, 8.1..9.0
+      15
+    when 5.0..5.9, 9.1..10.0
+      10
+    else
+      5
+    end
+    
+    # 気分スコア
+    mood_bonus = (mood_score - 5) * 2 # -5から5の範囲を-10から10に変換
+    
+    # 疲労感スコア（疲労感が少ないほど高スコア）
+    fatigue_bonus = (10 - fatigue_score) * 1.5
+    
+    # 症状数による減点
+    symptom_penalty = symptom_count * 5
+    
+    # 総合スコア計算
+    total_score = [base_score + sleep_score + mood_bonus + fatigue_bonus - symptom_penalty, 100].min
+    total_score = [total_score, 0].max
     
     # メモ（気分と疲労感を考慮）
     notes = case [mood_score, fatigue_score]
@@ -252,7 +309,8 @@ if bob
       sleep_hours: sleep_hours,
       mood: mood_score - 5, # moodは-5から5の範囲なので変換
       fatigue: fatigue_score - 5, # fatigueは-5から5の範囲なので変換
-      memo: notes
+      memo: notes,
+      score: total_score
     )
     
     # 天候データを別テーブルに保存
@@ -278,7 +336,7 @@ if bob
       end
     end
     
-    puts "  Created daily log for Bob on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}, symptoms=#{selected_symptoms.join(', ')}"
+    puts "  Created daily log for Bob on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}, score=#{total_score}, symptoms=#{selected_symptoms.join(', ')}"
   end
 end
 
