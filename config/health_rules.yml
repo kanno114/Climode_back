@@ -1,0 +1,210 @@
+rules:
+  # 既存のルール
+  - key: sleep_short
+    condition: "sleep_hours < 6.0"
+    title: "睡眠不足。昼に小休止を"
+    message: "今日は睡眠が短め（%{sleep_hours}h）。15–20分の仮眠とカフェイン控えめを。"
+    tags: ["sleep"]
+    severity: "80"
+
+  - key: sleep_long
+    condition: "sleep_hours > 9.0"
+    title: "睡眠過多。活動的な一日を"
+    message: "今日は睡眠が長め（%{sleep_hours}h）。適度な運動で体を目覚めさせましょう。"
+    tags: ["sleep"]
+    severity: "60"
+
+  - key: sleep_optimal
+    condition: "sleep_hours >= 7.0 AND sleep_hours <= 8.0"
+    title: "理想的な睡眠時間"
+    message: "今日は理想的な睡眠時間（%{sleep_hours}h）です。この調子を維持しましょう！"
+    tags: ["sleep", "positive"]
+    severity: "40"
+
+  # 気温関連（既存 + 新規）
+  - key: hot_weather
+    title: "猛暑日。水分補給と日差しの遮蔽を。"
+    condition: "temperature_c > 30"
+    message: "今日は猛暑です（%{temperature_c}℃）。水分補給と日差しの遮蔽を。"
+    tags: ["temperature"]
+    severity: "80"
+
+  - key: very_hot_weather
+    title: "酷暑日。外出を控えめに"
+    condition: "temperature_c > 35"
+    message: "今日は酷暑です（%{temperature_c}℃）。外出を控えめにし、エアコンを適切に使用してください。"
+    tags: ["temperature", "caution"]
+    severity: "90"
+
+  - key: cold_weather
+    title: "寒い日。暖房の使用を検討してください。"
+    condition: "temperature_c < 10"
+    message: "今日は寒いです（%{temperature_c}℃）。暖房の使用を検討してください。"
+    tags: ["temperature"]
+    severity: "80"
+
+  - key: very_cold_weather
+    title: "極寒日。防寒対策を万全に"
+    condition: "temperature_c < 0"
+    message: "今日は極寒です（%{temperature_c}℃）。防寒対策を万全にし、外出時は十分注意してください。"
+    tags: ["temperature", "caution"]
+    severity: "90"
+
+  - key: comfortable_temperature
+    title: "快適な気温"
+    condition: "temperature_c >= 18 AND temperature_c <= 25"
+    message: "今日は快適な気温（%{temperature_c}℃）です。屋外活動に最適です。"
+    tags: ["temperature", "positive"]
+    severity: "30"
+
+  # 湿度関連（既存 + 新規）
+  - key: high_humidity
+    title: "湿気が高い日。除湿剤の使用を検討してください。"
+    condition: "humidity_pct > 80"
+    message: "今日は高湿度です（%{humidity_pct}%%）。除湿剤の使用を検討してください。"
+    tags: ["humidity"]
+    severity: "80"
+
+  - key: very_high_humidity
+    title: "非常に湿気が高い日"
+    condition: "humidity_pct > 90"
+    message: "今日は非常に湿気が高いです（%{humidity_pct}%%）。カビ対策も忘れずに。"
+    tags: ["humidity", "caution"]
+    severity: "85"
+
+  - key: low_humidity
+    title: "乾燥日。乾燥に注意してください。"
+    condition: "humidity_pct < 30"
+    message: "今日は低湿度です（%{humidity_pct}%%）。加湿器の使用を検討してください。"
+    tags: ["humidity"]
+    severity: "80"
+
+  - key: very_low_humidity
+    title: "非常に乾燥した日"
+    condition: "humidity_pct < 20"
+    message: "今日は非常に乾燥しています（%{humidity_pct}%%）。肌の保湿も忘れずに。"
+    tags: ["humidity", "caution"]
+    severity: "85"
+
+  - key: comfortable_humidity
+    title: "快適な湿度"
+    condition: "humidity_pct >= 40 AND humidity_pct <= 70"
+    message: "今日は快適な湿度（%{humidity_pct}%%）です。過ごしやすい一日です。"
+    tags: ["humidity", "positive"]
+    severity: "30"
+
+  # 気圧関連（既存 + 新規）
+  - key: high_pressure
+    title: "高気圧日。気圧の急降下を防ぐために。"
+    condition: "pressure_hpa > 1020"
+    message: "今日は高気圧です（%{pressure_hpa}hPa）。気圧の急降下を防ぐために。"
+    tags: ["pressure"]
+    severity: "80"
+
+  - key: very_high_pressure
+    title: "非常に高気圧な日"
+    condition: "pressure_hpa > 1030"
+    message: "今日は非常に高気圧です（%{pressure_hpa}hPa）。頭痛やめまいに注意してください。"
+    tags: ["pressure", "caution"]
+    severity: "85"
+
+  - key: low_pressure
+    title: "低気圧日。気圧の急上昇を防ぐために。"
+    condition: "pressure_hpa < 980"
+    message: "今日は低気圧です（%{pressure_hpa}hPa）。気圧の急上昇を防ぐために。"
+    tags: ["pressure"]
+    severity: "80"
+
+  - key: very_low_pressure
+    title: "非常に低気圧な日"
+    condition: "pressure_hpa < 970"
+    message: "今日は非常に低気圧です（%{pressure_hpa}hPa）。関節痛や古傷の痛みに注意。"
+    tags: ["pressure", "caution"]
+    severity: "85"
+
+  - key: stable_pressure
+    title: "安定した気圧"
+    condition: "pressure_hpa >= 1000 AND pressure_hpa <= 1020"
+    message: "今日は安定した気圧（%{pressure_hpa}hPa）です。体調が安定しやすい一日です。"
+    tags: ["pressure", "positive"]
+    severity: "30"
+
+  # 気分・体調スコア関連（新規）
+  - key: low_mood
+    title: "気分が低め。リフレッシュを"
+    condition: "mood < 3"
+    message: "今日の気分スコアは%{mood}点と低めです。軽い散歩や趣味の時間を作りましょう。"
+    tags: ["mood", "mental_health"]
+    severity: "75"
+
+  - key: high_mood
+    title: "気分が良好。この調子を維持"
+    condition: "mood >= 7"
+    message: "今日の気分スコアは%{mood}点と良好です。この調子を維持しましょう！"
+    tags: ["mood", "positive"]
+    severity: "40"
+
+  - key: low_score
+    title: "体調スコアが低め。休息を"
+    condition: "score < 50"
+    message: "今日の体調スコアは%{score}点と低めです。無理をせず、十分な休息を取りましょう。"
+    tags: ["health_score", "rest"]
+    severity: "85"
+
+  - key: high_score
+    title: "体調スコアが良好"
+    condition: "score >= 80"
+    message: "今日の体調スコアは%{score}点と良好です。健康的な生活を継続しましょう！"
+    tags: ["health_score", "positive"]
+    severity: "35"
+
+  # 複合条件のルール（新規）
+  - key: hot_and_humid
+    title: "高温多湿。熱中症に注意"
+    condition: "temperature_c > 28 AND humidity_pct > 70"
+    message: "高温多湿の一日です（%{temperature_c}℃、%{humidity_pct}%%）。熱中症予防を徹底してください。"
+    tags: ["temperature", "humidity", "caution"]
+    severity: "90"
+
+  - key: cold_and_dry
+    title: "低温乾燥。風邪予防を"
+    condition: "temperature_c < 15 AND humidity_pct < 40"
+    message: "低温乾燥の一日です（%{temperature_c}℃、%{humidity_pct}%%）。風邪予防と保湿を心がけてください。"
+    tags: ["temperature", "humidity", "health"]
+    severity: "80"
+
+  - key: weather_change_alert
+    title: "気圧変動が大きい日"
+    condition: "pressure_hpa < 990 OR pressure_hpa > 1030"
+    message: "気圧変動が大きい一日です（%{pressure_hpa}hPa）。体調の変化に注意してください。"
+    tags: ["pressure", "caution"]
+    severity: "85"
+
+  # 季節性のルール（新規）
+  - key: spring_allergy
+    title: "花粉症シーズン。対策を"
+    condition: "temperature_c >= 15 AND temperature_c <= 25 AND humidity_pct < 60"
+    message: "花粉症が発生しやすい条件です。マスクやメガネの着用を検討してください。"
+    tags: ["seasonal", "allergy"]
+    severity: "70"
+
+  - key: summer_heat
+    title: "夏の暑さ対策"
+    condition: "temperature_c > 25 AND humidity_pct > 60"
+    message: "夏らしい暑さです。水分補給と適切な冷房使用で熱中症を防ぎましょう。"
+    tags: ["seasonal", "summer"]
+    severity: "75"
+
+  - key: autumn_comfort
+    title: "秋の過ごしやすい一日"
+    condition: "temperature_c >= 15 AND temperature_c <= 22 AND humidity_pct >= 50 AND humidity_pct <= 70"
+    message: "秋らしく過ごしやすい一日です。散歩や屋外活動に最適です。"
+    tags: ["seasonal", "autumn", "positive"]
+    severity: "30"
+
+  - key: winter_cold
+    title: "冬の寒さ対策"
+    condition: "temperature_c < 10 AND humidity_pct < 50"
+    message: "冬らしい寒さと乾燥です。暖房と加湿器で快適な室内環境を作りましょう。"
+    tags: ["seasonal", "winter"]
+    severity: "80"
