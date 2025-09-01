@@ -12,4 +12,28 @@ class DailyLog < ApplicationRecord
   validates :fatigue, numericality: { greater_than_or_equal_to: -5, less_than_or_equal_to: 5 }, allow_nil: true
   validates :score, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 100 }, allow_nil: true
   validates :self_score, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 100 }, allow_nil: true
+
+  # 天気データ自動取得のコールバック
+  after_create :fetch_weather_data
+  after_update :fetch_weather_data, if: :prefecture_id_changed?
+
+  private
+
+  def fetch_weather_data
+    return unless prefecture&.centroid_lat && prefecture&.centroid_lon
+
+    begin
+      weather_service = WeatherDataService.new(prefecture, date)
+      weather_data = weather_service.fetch_weather_data
+      
+      # 既存の天気データがあれば更新、なければ作成
+      if weather_observation
+        weather_observation.update!(weather_data)
+      else
+        create_weather_observation!(weather_data)
+      end
+    rescue => e
+      Rails.logger.error "Failed to fetch weather data for DailyLog #{id}: #{e.message}"
+    end
+  end
 end
