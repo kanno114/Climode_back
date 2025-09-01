@@ -23,7 +23,7 @@ class DailyLog < ApplicationRecord
     return unless prefecture&.centroid_lat && prefecture&.centroid_lon
 
     begin
-      weather_service = WeatherDataService.new(prefecture, date)
+      weather_service = ::Weather::WeatherDataService.new(prefecture, date)
       weather_data = weather_service.fetch_weather_data
       
       # 既存の天気データがあれば更新、なければ作成

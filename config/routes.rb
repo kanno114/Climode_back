@@ -30,6 +30,7 @@ Rails.application.routes.draw do
 
       resources :symptoms, only: [:index, :show]
       resources :prefectures, only: [:index, :show]
+      resources :suggestions, only: [:index]
     end
   end
 end
