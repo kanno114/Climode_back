@@ -27,6 +27,9 @@ Rails.application.routes.draw do
           get 'date/:date', to: 'daily_logs#show_by_date'
           get 'date_range_30days', to: 'daily_logs#by_date_range_30days'
         end
+        member do
+          patch 'self_score', to: 'daily_logs#update_self_score'
+        end
       end
 
       resources :symptoms, only: [:index, :show]
