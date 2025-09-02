@@ -25,6 +25,7 @@ Rails.application.routes.draw do
       resources :daily_logs do
         collection do
           get 'date/:date', to: 'daily_logs#show_by_date'
+          get 'date_range_30days', to: 'daily_logs#by_date_range_30days'
         end
       end
 

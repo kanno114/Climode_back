@@ -33,6 +33,34 @@ class Api::V1::DailyLogsController < ApplicationController
     render json: @daily_log.as_json(include: [:prefecture, :weather_observation, :symptoms])
   end
 
+  # GET /api/v1/daily_logs/date/:date
+  def show_by_date
+    @daily_log = current_user.daily_logs
+                             .includes(:prefecture, :weather_observation, :symptoms)
+                             .find_by(date: params[:date])
+
+    if @daily_log
+      render json: @daily_log.as_json(include: [:prefecture, :weather_observation, :symptoms])
+    else
+      render json: { error: "Daily log not found for date: #{params[:date]}" }, 
+             status: :not_found
+    end
+  end
+
+  # GET /api/v1/daily_logs/date_range_30days
+  def by_date_range_30days
+    # 過去1ヶ月のデータを取得（今日から30日前まで）
+    end_date = Date.current
+    start_date = end_date - 30.days
+
+    @daily_logs = current_user.daily_logs
+                              .includes(:prefecture, :weather_observation, :symptoms)
+                              .where(date: start_date..end_date)
+                              .order(date: :desc)
+
+    render json: @daily_logs.as_json(include: [:prefecture, :weather_observation, :symptoms])
+  end
+
   # POST /api/v1/daily_logs
   def create
     # フロントエンドからのデータを処理
@@ -123,20 +151,6 @@ class Api::V1::DailyLogsController < ApplicationController
   def destroy
     @daily_log.destroy
     head :no_content
-  end
-
-  # GET /api/v1/daily_logs/date/:date
-  def show_by_date
-    @daily_log = current_user.daily_logs
-                             .includes(:prefecture, :weather_observation, :symptoms)
-                             .find_by(date: params[:date])
-    
-    if @daily_log
-      render json: @daily_log.as_json(include: [:prefecture, :weather_observation, :symptoms])
-    else
-      render json: { error: "Daily log not found for date: #{params[:date]}" }, 
-             status: :not_found
-    end
   end
 
   private
