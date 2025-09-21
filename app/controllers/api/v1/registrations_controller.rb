@@ -4,7 +4,20 @@ class Api::V1::RegistrationsController < ApplicationController
     user = User.new(signup_params)
 
     if user.save
-      render json: { id: user.id, email: user.email, name: user.name, image: user.image }, status: :created
+      access_token = Auth::JwtService.generate_access_token(user)
+      refresh_token = Auth::JwtService.generate_refresh_token(user)
+      
+      render json: {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image || nil
+        },
+        access_token: access_token,
+        refresh_token: refresh_token,
+        expires_in: Auth::JwtService::ACCESS_TOKEN_EXPIRY
+      }, status: :created
     else
       render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
     end
@@ -29,7 +42,20 @@ class Api::V1::RegistrationsController < ApplicationController
         )
 
         if user_identity.save
-          render json: { status: "ok", id: user.id }
+          access_token = Auth::JwtService.generate_access_token(user)
+          refresh_token = Auth::JwtService.generate_refresh_token(user)
+          
+          render json: {
+            user: {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              image: user.image || nil
+            },
+            access_token: access_token,
+            refresh_token: refresh_token,
+            expires_in: Auth::JwtService::ACCESS_TOKEN_EXPIRY
+          }, status: :created
         else
           raise ActiveRecord::Rollback
           render json: { errors: user_identity.errors.full_messages }, status: :unprocessable_entity
