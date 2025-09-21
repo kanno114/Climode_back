@@ -30,42 +30,41 @@ class Api::V1::RegistrationsController < ApplicationController
     user.password ||= SecureRandom.urlsafe_base64(16)
     user.image = params[:user][:image]
 
-    # トランザクション内でユーザーとuser_identityを作成
     ActiveRecord::Base.transaction do
-      if user.save
-        # user_identityを作成
-        user_identity = user.user_identities.build(
+      user.save!
+
+      # 既存のアイデンティティがあれば再作成しない
+      user_identity = user.user_identities.find_by(
+        provider: params[:user][:provider] || "oauth",
+        uid: params[:user][:uid]
+      )
+
+      unless user_identity
+        user_identity = user.user_identities.create!(
           provider: params[:user][:provider] || "oauth",
           uid: params[:user][:uid] || SecureRandom.uuid,
           email: params[:user][:email],
-          display_name: params[:user][:name],
+          display_name: params[:user][:name]
         )
-
-        if user_identity.save
-          access_token = Auth::JwtService.generate_access_token(user)
-          refresh_token = Auth::JwtService.generate_refresh_token(user)
-          
-          render json: {
-            user: {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              image: user.image || nil
-            },
-            access_token: access_token,
-            refresh_token: refresh_token,
-            expires_in: Auth::JwtService::ACCESS_TOKEN_EXPIRY
-          }, status: :created
-        else
-          raise ActiveRecord::Rollback
-          render json: { errors: user_identity.errors.full_messages }, status: :unprocessable_entity
-        end
-      else
-        render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
       end
+
+      access_token = Auth::JwtService.generate_access_token(user)
+      refresh_token = Auth::JwtService.generate_refresh_token(user)
+
+      render json: {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image || nil
+        },
+        access_token: access_token,
+        refresh_token: refresh_token,
+        expires_in: Auth::JwtService::ACCESS_TOKEN_EXPIRY
+      }, status: :created
     end
-  rescue ActiveRecord::Rollback
-    render json: { errors: ["Failed to create user identity"] }, status: :unprocessable_entity
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { errors: [e.record.errors.full_messages.presence || e.message].flatten }, status: :unprocessable_entity
   end
 
   private

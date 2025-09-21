@@ -46,7 +46,7 @@ class Auth::JwtService
       nil
     rescue JWT::ExpiredSignature => e
       Rails.logger.error "JWT expired: #{e.message}"
-      # 期限切れの場合もペイロードを返す（検証用）
+      # 注意：期限切れの場合もペイロードを返す（検証用）
       begin
         JWT.decode(token, JWT_SECRET, false, { algorithm: ALGORITHM })
       rescue
@@ -54,7 +54,7 @@ class Auth::JwtService
       end
     end
 
-    # トークンの形式をチェック（期限切れでもOK）
+    # 署名検証はしない（false）、期限チェックもしないで中身だけ見る関数。検証用。
     def decode_token_ignore_expiry(token)
       JWT.decode(token, JWT_SECRET, false, { algorithm: ALGORITHM })
     rescue JWT::DecodeError => e

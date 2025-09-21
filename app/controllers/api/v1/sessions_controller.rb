@@ -18,7 +18,7 @@ class Api::V1::SessionsController < ApplicationController
       return
     end
 
-    # まずトークンの形式をチェック（期限切れでもOK）
+    # 中身が有効かどうかチェック
     payload = Auth::JwtService.decode_token_ignore_expiry(refresh_token)
     if payload.nil?
       render json: {
@@ -64,18 +64,6 @@ class Api::V1::SessionsController < ApplicationController
     render json: {
       error: 'トークンリフレッシュ中にエラーが発生しました'
     }, status: :internal_server_error
-  end
-
-  def destroy
-    # リフレッシュトークンを受け取る（将来のブラックリスト管理用）
-    refresh_token = params[:refresh_token]
-    
-    # 現在はステートレスなので、特にサーバー側での処理は不要
-    # 将来的にRedis等でブラックリスト管理を実装する際はここで処理
-    
-    render json: {
-      message: 'ログアウトしました'
-    }, status: :ok
   end
 
   private

@@ -1,9 +1,9 @@
 class Api::V1::SuggestionsController < ApplicationController
-  before_action :authenticate_user!
+  include Authenticatable
 
   def index
     begin
-      suggestions = Suggestion::SuggestionEngine.call(user: @current_user)
+      suggestions = Suggestion::SuggestionEngine.call(user: current_user)
       render json: suggestions.map { |s| serialize(s) }
     rescue ActiveRecord::RecordNotFound => e
       # DailyLogが見つからない場合
@@ -16,15 +16,6 @@ class Api::V1::SuggestionsController < ApplicationController
 
   private
 
-  def authenticate_user!
-    # 認証ロジックは既存の実装に依存
-    # 現在は仮実装
-    @current_user = User.find_by(id: request.headers['User-Id'])
-    
-    unless @current_user
-      render json: { error: 'Unauthorized' }, status: :unauthorized
-    end
-  end
 
   def serialize(s)
     {
