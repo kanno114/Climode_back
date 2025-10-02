@@ -1,5 +1,5 @@
 class Api::V1::DailyLogsController < ApplicationController
-  before_action :authenticate_user!
+  include Authenticatable
   before_action :set_daily_log, only: [:show, :update, :destroy, :update_self_score]
 
   # GET /api/v1/daily_logs
@@ -181,17 +181,4 @@ class Api::V1::DailyLogsController < ApplicationController
     )
   end
 
-  def authenticate_user!
-    # 認証ロジックは既存の実装に依存
-    # 現在は仮実装
-    @current_user = User.find_by(id: request.headers['User-Id'])
-
-    unless @current_user
-      render json: { error: 'Unauthorized' }, status: :unauthorized
-    end
-  end
-
-  def current_user
-    @current_user
-  end
 end

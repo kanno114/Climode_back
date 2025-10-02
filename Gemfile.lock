@@ -129,6 +129,8 @@ GEM
     json_spec (1.1.5)
       multi_json (~> 1.0)
       rspec (>= 2.0, < 4.0)
+    jwt (3.1.2)
+      base64
     kaminari (1.2.2)
       activesupport (>= 4.1.0)
       kaminari-actionview (= 1.2.2)
@@ -345,6 +347,7 @@ DEPENDENCIES
   faker
   httparty
   json_spec
+  jwt
   kaminari
   pg (~> 1.1)
   puma (>= 5.0)
