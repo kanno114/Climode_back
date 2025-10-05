@@ -33,6 +33,7 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :users, only: [:show, :update]
       resources :symptoms, only: [:index, :show]
       resources :prefectures, only: [:index, :show]
       resources :suggestions, only: [:index]
