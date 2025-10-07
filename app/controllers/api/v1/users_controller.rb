@@ -40,6 +40,12 @@ class Api::V1::UsersController < ApplicationController
     }, status: :internal_server_error
   end
 
+  def default_prefecture
+    render json: {
+      prefecture: current_user.prefecture
+    }, status: :ok
+  end
+
   private
 
   def user_params
