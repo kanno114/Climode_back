@@ -33,6 +33,11 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :users, only: [:show, :update] do
+        collection do
+          get :default_prefecture
+        end
+      end
       resources :symptoms, only: [:index, :show]
       resources :prefectures, only: [:index, :show]
       resources :suggestions, only: [:index]
