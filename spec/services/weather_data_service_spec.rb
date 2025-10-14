@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe WeatherDataService do
+RSpec.describe Weather::WeatherDataService do
   let(:prefecture) { create(:prefecture, :tokyo) }
   let(:date) { Date.current }
   let(:service) { described_class.new(prefecture, date) }

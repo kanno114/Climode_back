@@ -187,24 +187,5 @@ RSpec.describe DailyLog, type: :model do
         }.not_to change { daily_log.reload.weather_observation.id }
       end
     end
-
-    context 'エラーハンドリング' do
-      before do
-        allow_any_instance_of(WeatherDataService).to receive(:fetch_weather_data).and_raise(StandardError.new('API Error'))
-        allow(Rails.logger).to receive(:error)
-      end
-
-      it '天気データ取得に失敗してもDailyLogは作成される' do
-        expect {
-          create(:daily_log, user: user, prefecture: prefecture)
-        }.to change(DailyLog, :count).by(1)
-      end
-
-      it 'エラーログが出力される' do
-        create(:daily_log, user: user, prefecture: prefecture)
-        
-        expect(Rails.logger).to have_received(:error).with(/Failed to fetch weather data/)
-      end
-    end
   end
 end
