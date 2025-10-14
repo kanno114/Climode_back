@@ -1,5 +1,4 @@
 class Api::V1::SessionsController < ApplicationController
-
   def create
     if params[:user][:provider] && params[:user][:uid]
       authenticate_oauth_user
@@ -10,10 +9,10 @@ class Api::V1::SessionsController < ApplicationController
 
   def refresh
     refresh_token = params[:refresh_token]
-    
+
     if refresh_token.blank?
       render json: {
-        error: 'リフレッシュトークンが提供されていません'
+        error: "リフレッシュトークンが提供されていません"
       }, status: :bad_request
       return
     end
@@ -22,7 +21,7 @@ class Api::V1::SessionsController < ApplicationController
     payload = Auth::JwtService.decode_token_ignore_expiry(refresh_token)
     if payload.nil?
       render json: {
-        error: '無効なリフレッシュトークンです'
+        error: "無効なリフレッシュトークンです"
       }, status: :unauthorized
       return
     end
@@ -30,7 +29,7 @@ class Api::V1::SessionsController < ApplicationController
     # 期限切れチェック
     unless Auth::JwtService.token_valid?(refresh_token)
       render json: {
-        error: 'リフレッシュトークンの有効期限が切れています'
+        error: "リフレッシュトークンの有効期限が切れています"
       }, status: :unauthorized
       return
     end
@@ -38,23 +37,23 @@ class Api::V1::SessionsController < ApplicationController
     # リフレッシュトークンかどうかチェック
     unless Auth::JwtService.refresh_token?(refresh_token)
       render json: {
-        error: '無効なリフレッシュトークンです'
+        error: "無効なリフレッシュトークンです"
       }, status: :unauthorized
       return
     end
 
     user = Auth::JwtService.user_from_token(refresh_token)
-    
+
     if user.nil?
       render json: {
-        error: 'ユーザーが見つかりません'
+        error: "ユーザーが見つかりません"
       }, status: :unauthorized
       return
     end
 
     # 新しいアクセストークンを生成
     new_access_token = Auth::JwtService.generate_access_token(user)
-    
+
     render json: {
       access_token: new_access_token,
       expires_in: Auth::JwtService::ACCESS_TOKEN_EXPIRY
@@ -62,7 +61,7 @@ class Api::V1::SessionsController < ApplicationController
   rescue => e
     Rails.logger.error "Token refresh error: #{e.message}"
     render json: {
-      error: 'トークンリフレッシュ中にエラーが発生しました'
+      error: "トークンリフレッシュ中にエラーが発生しました"
     }, status: :internal_server_error
   end
 
@@ -78,7 +77,7 @@ class Api::V1::SessionsController < ApplicationController
       user = user_identity.user
       access_token = Auth::JwtService.generate_access_token(user)
       refresh_token = Auth::JwtService.generate_refresh_token(user)
-      
+
       render json: {
         user: {
           id: user.id,
@@ -117,7 +116,7 @@ class Api::V1::SessionsController < ApplicationController
     if user&.authenticate(params[:user][:password])
       access_token = Auth::JwtService.generate_access_token(user)
       refresh_token = Auth::JwtService.generate_refresh_token(user)
-      
+
       render json: {
         user: {
           id: user.id,

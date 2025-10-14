@@ -1,6 +1,6 @@
 class Api::V1::DailyLogsController < ApplicationController
   include Authenticatable
-  before_action :set_daily_log, only: [:show, :update, :destroy, :update_self_score]
+  before_action :set_daily_log, only: [ :show, :update, :destroy, :update_self_score ]
 
   # GET /api/v1/daily_logs
   def index
@@ -18,7 +18,7 @@ class Api::V1::DailyLogsController < ApplicationController
     total_pages = (total_count.to_f / per_page).ceil
 
     render json: {
-      daily_logs: @daily_logs.as_json(include: [:prefecture, :weather_observation, :symptoms]),
+      daily_logs: @daily_logs.as_json(include: [ :prefecture, :weather_observation, :symptoms ]),
       pagination: {
         current_page: page,
         total_pages: total_pages,
@@ -30,7 +30,7 @@ class Api::V1::DailyLogsController < ApplicationController
 
   # GET /api/v1/daily_logs/:id
   def show
-    render json: @daily_log.as_json(include: [:prefecture, :weather_observation, :symptoms])
+    render json: @daily_log.as_json(include: [ :prefecture, :weather_observation, :symptoms ])
   end
 
   # GET /api/v1/daily_logs/date/:date
@@ -40,7 +40,7 @@ class Api::V1::DailyLogsController < ApplicationController
                              .find_by(date: params[:date])
 
     if @daily_log
-      render json: @daily_log.as_json(include: [:prefecture, :weather_observation, :symptoms])
+      render json: @daily_log.as_json(include: [ :prefecture, :weather_observation, :symptoms ])
     else
       render json: { error: "Daily log not found for date: #{params[:date]}" },
              status: :not_found
@@ -58,7 +58,7 @@ class Api::V1::DailyLogsController < ApplicationController
                               .where(date: start_date..end_date)
                               .order(date: :desc)
 
-    render json: @daily_logs.as_json(include: [:prefecture, :weather_observation, :symptoms])
+    render json: @daily_logs.as_json(include: [ :prefecture, :weather_observation, :symptoms ])
   end
 
   # POST /api/v1/daily_logs
@@ -96,7 +96,7 @@ class Api::V1::DailyLogsController < ApplicationController
 
       # 天気データはモデルのコールバックで自動取得される
 
-      render json: @daily_log.as_json(include: [:prefecture, :weather_observation, :symptoms]),
+      render json: @daily_log.as_json(include: [ :prefecture, :weather_observation, :symptoms ]),
              status: :created
     else
       render json: { errors: @daily_log.errors.full_messages },
@@ -140,7 +140,7 @@ class Api::V1::DailyLogsController < ApplicationController
         end
       end
 
-      render json: @daily_log.as_json(include: [:prefecture, :weather_observation, :symptoms])
+      render json: @daily_log.as_json(include: [ :prefecture, :weather_observation, :symptoms ])
     else
       render json: { errors: @daily_log.errors.full_messages },
              status: :unprocessable_entity
@@ -150,7 +150,7 @@ class Api::V1::DailyLogsController < ApplicationController
   # PATCH /api/v1/daily_logs/:id/self_score
   def update_self_score
     if @daily_log.update(self_score: params[:self_score])
-      render json: @daily_log.as_json(include: [:prefecture, :weather_observation, :symptoms])
+      render json: @daily_log.as_json(include: [ :prefecture, :weather_observation, :symptoms ])
     else
       render json: { errors: @daily_log.errors.full_messages },
              status: :unprocessable_entity
@@ -180,5 +180,4 @@ class Api::V1::DailyLogsController < ApplicationController
       symptom_ids: []
     )
   end
-
 end

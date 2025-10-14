@@ -1,15 +1,15 @@
 class Auth::JwtService
   # JWT秘密鍵（環境変数から取得、デフォルトは開発用）
-  JWT_SECRET = ENV['JWT_SECRET'] || 'development_secret_key_change_in_production'
-  
+  JWT_SECRET = ENV["JWT_SECRET"] || "development_secret_key_change_in_production"
+
   # アクセストークンの有効期限（15分）
   ACCESS_TOKEN_EXPIRY = 15.minutes
-  
+
   # リフレッシュトークンの有効期限（7日）
   REFRESH_TOKEN_EXPIRY = 7.days
-  
+
   # アルゴリズム
-  ALGORITHM = 'HS256'
+  ALGORITHM = "HS256"
 
   class << self
     # アクセストークンを生成
@@ -19,9 +19,9 @@ class Auth::JwtService
         email: user.email,
         exp: (Time.current + ACCESS_TOKEN_EXPIRY).to_i,
         iat: Time.current.to_i,
-        type: 'access'
+        type: "access"
       }
-      
+
       JWT.encode(payload, JWT_SECRET, ALGORITHM)
     end
 
@@ -32,9 +32,9 @@ class Auth::JwtService
         email: user.email,
         exp: (Time.current + REFRESH_TOKEN_EXPIRY).to_i,
         iat: Time.current.to_i,
-        type: 'refresh'
+        type: "refresh"
       }
-      
+
       JWT.encode(payload, JWT_SECRET, ALGORITHM)
     end
 
@@ -66,42 +66,42 @@ class Auth::JwtService
     def user_from_token(token)
       payload = decode_token(token)
       return nil unless payload
-      
+
       payload_data = payload.first
-      User.find_by(id: payload_data['user_id'])
+      User.find_by(id: payload_data["user_id"])
     end
 
     # アクセストークンかどうかを確認
     def access_token?(token)
       payload = decode_token(token)
       return false unless payload
-      
-      payload.first['type'] == 'access'
+
+      payload.first["type"] == "access"
     end
 
     # リフレッシュトークンかどうかを確認
     def refresh_token?(token)
       payload = decode_token(token)
       return false unless payload
-      
-      payload.first['type'] == 'refresh'
+
+      payload.first["type"] == "refresh"
     end
 
     # トークンの有効期限を取得
     def token_expiry(token)
       payload = decode_token(token)
       return nil unless payload
-      
-      Time.at(payload.first['exp'])
+
+      Time.at(payload.first["exp"])
     end
 
     # トークンが有効期限内かどうかを確認
     def token_valid?(token)
       payload = decode_token(token)
       return false unless payload
-      
+
       # 期限切れの場合はfalse
-      Time.current.to_i < payload.first['exp']
+      Time.current.to_i < payload.first["exp"]
     rescue => e
       Rails.logger.error "Token validation error: #{e.message}"
       false

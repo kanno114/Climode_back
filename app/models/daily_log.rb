@@ -25,7 +25,7 @@ class DailyLog < ApplicationRecord
     begin
       weather_service = ::Weather::WeatherDataService.new(prefecture, date)
       weather_data = weather_service.fetch_weather_data
-      
+
       # 既存の天気データがあれば更新、なければ作成
       if weather_observation
         weather_observation.update!(weather_data)

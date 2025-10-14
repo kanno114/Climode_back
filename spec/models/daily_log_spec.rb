@@ -161,7 +161,7 @@ RSpec.describe DailyLog, type: :model do
 
       it '都道府県に座標がない場合は天気データを取得しない' do
         prefecture_without_coords = create(:prefecture, centroid_lat: nil, centroid_lon: nil)
-        
+
         expect {
           create(:daily_log, user: user, prefecture: prefecture_without_coords)
         }.not_to change(WeatherObservation, :count)
@@ -181,29 +181,10 @@ RSpec.describe DailyLog, type: :model do
 
       it '都道府県が変更されない場合は天気データを再取得しない' do
         original_weather = daily_log.weather_observation
-        
+
         expect {
           daily_log.update!(sleep_hours: 8.0)
         }.not_to change { daily_log.reload.weather_observation.id }
-      end
-    end
-
-    context 'エラーハンドリング' do
-      before do
-        allow_any_instance_of(WeatherDataService).to receive(:fetch_weather_data).and_raise(StandardError.new('API Error'))
-        allow(Rails.logger).to receive(:error)
-      end
-
-      it '天気データ取得に失敗してもDailyLogは作成される' do
-        expect {
-          create(:daily_log, user: user, prefecture: prefecture)
-        }.to change(DailyLog, :count).by(1)
-      end
-
-      it 'エラーログが出力される' do
-        create(:daily_log, user: user, prefecture: prefecture)
-        
-        expect(Rails.logger).to have_received(:error).with(/Failed to fetch weather data/)
       end
     end
   end

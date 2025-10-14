@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe WeatherDataService do
+RSpec.describe Weather::WeatherDataService do
   let(:prefecture) { create(:prefecture, :tokyo) }
   let(:date) { Date.current }
   let(:service) { described_class.new(prefecture, date) }
@@ -38,10 +38,10 @@ RSpec.describe WeatherDataService do
             success?: true,
             body: {
               hourly: {
-                time: ['2024-01-01T09:00', '2024-01-01T10:00'],
-                temperature_2m: [20.5, 22.0],
-                relative_humidity_2m: [65.0, 60.0],
-                pressure_msl: [1013.2, 1012.8]
+                time: [ '2024-01-01T09:00', '2024-01-01T10:00' ],
+                temperature_2m: [ 20.5, 22.0 ],
+                relative_humidity_2m: [ 65.0, 60.0 ],
+                pressure_msl: [ 1013.2, 1012.8 ]
               }
             }.to_json
           )

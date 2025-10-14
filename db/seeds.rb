@@ -13,7 +13,7 @@ puts "Seeding users..."
 users = [
   { name: "Alice", email: "alice@example.com", password: "password123", password_confirmation: "password123" },
   { name: "Bob", email: "bob@example.com", password: "password123", password_confirmation: "password123" },
-  { name: "Carol", email: "carol@example.com", password: "password123", password_confirmation: "password123" },
+  { name: "Carol", email: "carol@example.com", password: "password123", password_confirmation: "password123" }
 ]
 
 users.each do |attrs|
@@ -128,30 +128,30 @@ if alice
   # 過去30日分のサンプルデータ（今日は除く）
   (1..30).each do |days_ago|
     date = Date.current - days_ago.days
-    
+
     # 既存の記録があるかチェック
     existing_log = DailyLog.find_by(user: alice, date: date)
     next if existing_log
-    
+
     # ランダムな体調データを生成
     sleep_hours = rand(5.0..9.0).round(1)
     mood_score = rand(3..9)
     fatigue_score = rand(2..8) # 疲労感スコア（1-10の範囲）
-    
+
     # ランダムな症状を選択（0-3個）
     symptom_count = rand(0..3)
     selected_symptoms = symptoms_data.sample(symptom_count).map { |s| s[:code] }
-    
+
     # 天候データ
-    weather_conditions = ['晴れ', '曇り', '雨', '雪', '霧', '雷']
+    weather_conditions = [ '晴れ', '曇り', '雨', '雪', '霧', '雷' ]
     weather_condition = weather_conditions.sample
     temperature = rand(10.0..30.0).round(1)
     humidity = rand(30..80)
     pressure = rand(1000.0..1020.0).round(1)
-    
+
     # スコア計算（睡眠、気分、疲労感、症状数を考慮）
     base_score = 50 # ベーススコア
-    
+
     # 睡眠スコア（7-8時間が最適）
     sleep_score = case sleep_hours
     when 7.0..8.0
@@ -163,37 +163,37 @@ if alice
     else
       5
     end
-    
+
     # 気分スコア
     mood_bonus = (mood_score - 5) * 2 # -5から5の範囲を-10から10に変換
-    
+
     # 疲労感スコア（疲労感が少ないほど高スコア）
     fatigue_bonus = (10 - fatigue_score) * 1.5
-    
+
     # 症状数による減点
     symptom_penalty = symptom_count * 5
-    
+
     # 総合スコア計算
-    total_score = [base_score + sleep_score + mood_bonus + fatigue_bonus - symptom_penalty, 100].min
-    total_score = [total_score, 0].max
-    
+    total_score = [ base_score + sleep_score + mood_bonus + fatigue_bonus - symptom_penalty, 100 ].min
+    total_score = [ total_score, 0 ].max
+
     # メモ（気分と疲労感を考慮）
-    notes = case [mood_score, fatigue_score]
-    in [8..9, 1..3]
+    notes = case [ mood_score, fatigue_score ]
+    in [ 8..9, 1..3 ]
       "体調が良く、充実した一日でした。疲れも少なく快調です。"
-    in [6..7, 1..4]
+    in [ 6..7, 1..4 ]
       "普通の一日でした。特に問題なし。"
-    in [4..5, 5..7]
+    in [ 4..5, 5..7 ]
       "少し疲れを感じました。"
-    in [1..3, 8..10]
+    in [ 1..3, 8..10 ]
       "体調が優れませんでした。疲労感が強いです。"
     else
       "普通の一日でした。"
     end
-    
+
     # デフォルトの都道府県（東京都）を取得
     default_prefecture = Prefecture.find_by(code: '13')
-    
+
     daily_log = DailyLog.create!(
       user: alice,
       prefecture: default_prefecture,
@@ -204,7 +204,7 @@ if alice
       memo: notes,
       score: total_score
     )
-    
+
     # 天候データを別テーブルに保存
     WeatherObservation.create!(
       daily_log: daily_log,
@@ -216,7 +216,7 @@ if alice
         weather_condition: weather_condition
       }
     )
-    
+
     # 症状を関連付け
     selected_symptoms.each do |symptom_code|
       symptom = Symptom.find_by(code: symptom_code)
@@ -227,7 +227,7 @@ if alice
         )
       end
     end
-    
+
     puts "  Created daily log for Alice on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}, score=#{total_score}, symptoms=#{selected_symptoms.join(', ')}"
   end
 end
@@ -238,30 +238,30 @@ if bob
   # 過去30日分のサンプルデータ（今日は除く）
   (1..30).each do |days_ago|
     date = Date.current - days_ago.days
-    
+
     # 既存の記録があるかチェック
     existing_log = DailyLog.find_by(user: bob, date: date)
     next if existing_log
-    
+
     # ランダムな体調データを生成
     sleep_hours = rand(6.0..8.5).round(1)
     mood_score = rand(4..8)
     fatigue_score = rand(3..7) # 疲労感スコア（1-10の範囲）
-    
+
     # ランダムな症状を選択（0-2個）
     symptom_count = rand(0..2)
     selected_symptoms = symptoms_data.sample(symptom_count).map { |s| s[:code] }
-    
+
     # 天候データ
-    weather_conditions = ['晴れ', '曇り', '雨']
+    weather_conditions = [ '晴れ', '曇り', '雨' ]
     weather_condition = weather_conditions.sample
     temperature = rand(15.0..25.0).round(1)
     humidity = rand(40..70)
     pressure = rand(1005.0..1015.0).round(1)
-    
+
     # スコア計算（睡眠、気分、疲労感、症状数を考慮）
     base_score = 50 # ベーススコア
-    
+
     # 睡眠スコア（7-8時間が最適）
     sleep_score = case sleep_hours
     when 7.0..8.0
@@ -273,35 +273,35 @@ if bob
     else
       5
     end
-    
+
     # 気分スコア
     mood_bonus = (mood_score - 5) * 2 # -5から5の範囲を-10から10に変換
-    
+
     # 疲労感スコア（疲労感が少ないほど高スコア）
     fatigue_bonus = (10 - fatigue_score) * 1.5
-    
+
     # 症状数による減点
     symptom_penalty = symptom_count * 5
-    
+
     # 総合スコア計算
-    total_score = [base_score + sleep_score + mood_bonus + fatigue_bonus - symptom_penalty, 100].min
-    total_score = [total_score, 0].max
-    
+    total_score = [ base_score + sleep_score + mood_bonus + fatigue_bonus - symptom_penalty, 100 ].min
+    total_score = [ total_score, 0 ].max
+
     # メモ（気分と疲労感を考慮）
-    notes = case [mood_score, fatigue_score]
-    in [7..8, 1..4]
+    notes = case [ mood_score, fatigue_score ]
+    in [ 7..8, 1..4 ]
       "仕事が順調に進みました。疲れも少なく快調です。"
-    in [5..6, 3..6]
+    in [ 5..6, 3..6 ]
       "普通の一日でした。"
-    in [4..5, 6..8]
+    in [ 4..5, 6..8 ]
       "少し疲れました。"
     else
       "普通の一日でした。"
     end
-    
+
     # デフォルトの都道府県（東京都）を取得
     default_prefecture = Prefecture.find_by(code: '13')
-    
+
     daily_log = DailyLog.create!(
       user: bob,
       prefecture: default_prefecture,
@@ -312,7 +312,7 @@ if bob
       memo: notes,
       score: total_score
     )
-    
+
     # 天候データを別テーブルに保存
     WeatherObservation.create!(
       daily_log: daily_log,
@@ -324,7 +324,7 @@ if bob
         weather_condition: weather_condition
       }
     )
-    
+
     # 症状を関連付け
     selected_symptoms.each do |symptom_code|
       symptom = Symptom.find_by(code: symptom_code)
@@ -335,7 +335,7 @@ if bob
         )
       end
     end
-    
+
     puts "  Created daily log for Bob on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}, score=#{total_score}, symptoms=#{selected_symptoms.join(', ')}"
   end
 end

@@ -28,9 +28,9 @@ module Score
       raw   = 100.0 * (W[:top_body] * b_val + W[:top_env] * e_val) + m
       score = raw.round.clamp(0, 100)
 
-      @log.update!(score:) if persist
+      @log.update!(score: score) if persist
 
-      { score:, details: { norms:, modifiers: m } }
+      { score: score, details: { norms: norms, modifiers: m } }
     end
 
     private
@@ -55,20 +55,20 @@ module Score
     def linear_norm(x, min, max)
       return nil if x.nil?
       v = (x.to_f - min) / (max - min).to_f
-      [[v, 0.0].max, 1.0].min
+      [ [ v, 0.0 ].max, 1.0 ].min
     end
 
     # 上限 cap でクリップ。inverse: true で 1-v（小さいほど良い）
     def cap_norm(x, cap:, inverse:)
       return nil if x.nil?
-      v = [[x.to_f / cap.to_f, 0.0].max, 1.0].min
+      v = [ [ x.to_f / cap.to_f, 0.0 ].max, 1.0 ].min
       inverse ? (1.0 - v) : v
     end
 
     # 0..max を 0..1 に線形。inverse: true で 1-v
     def step_norm(x, max:, inverse:)
       return nil if x.nil?
-      v = [[x.to_f / max.to_f, 0.0].max, 1.0].min
+      v = [ [ x.to_f / max.to_f, 0.0 ].max, 1.0 ].min
       inverse ? (1.0 - v) : v
     end
 
@@ -103,7 +103,7 @@ module Score
       if (40..60).cover?(h)
         1.0
       else
-        pen = [[(h.to_f - 50.0).abs / 40.0, 0.0].max, 1.0].min
+        pen = [ [ (h.to_f - 50.0).abs / 40.0, 0.0 ].max, 1.0 ].min
         1.0 - pen
       end
     end
@@ -115,7 +115,7 @@ module Score
       if (20..25).cover?(t)
         1.0
       else
-        pen = [[(t.to_f - 22.5).abs / 12.5, 0.0].max, 1.0].min
+        pen = [ [ (t.to_f - 22.5).abs / 12.5, 0.0 ].max, 1.0 ].min
         1.0 - pen
       end
     end
@@ -148,7 +148,7 @@ module Score
         val  += w * n[k]
         wsum += w
       end
-      { val:, weight_sum: wsum }
+      { val: val, weight_sum: wsum }
     end
 
     # 有効重みが 0 → 0.5（中立）、それ以外は重み平均を返す

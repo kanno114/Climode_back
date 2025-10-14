@@ -12,5 +12,3 @@ class User < ApplicationRecord
     user_identities.exists?
   end
 end
-
-
