@@ -36,10 +36,10 @@ gem "kaminari"
 gem "httparty"
 
 # Use Dentaku for logical expressions
-gem 'dentaku', '~> 3.5'
+gem "dentaku", "~> 3.5"
 
 # JWT for token-based authentication
-gem 'jwt'
+gem "jwt"
 
 
 group :development, :test do
@@ -52,18 +52,16 @@ group :development, :test do
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
 
-  gem 'dotenv-rails'
-  
+  gem "dotenv-rails"
+
   # Testing gems
-  gem 'rspec-rails'
-  gem 'factory_bot_rails'
-  gem 'faker'
+  gem "rspec-rails"
+  gem "factory_bot_rails"
+  gem "faker"
 end
 
 group :test do
-  gem 'database_cleaner-active_record'
-  gem 'shoulda-matchers'
-  gem 'json_spec'
+  gem "database_cleaner-active_record"
+  gem "shoulda-matchers"
+  gem "json_spec"
 end
-
-

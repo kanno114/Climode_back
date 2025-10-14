@@ -1,10 +1,11 @@
 # frozen_string_literal: true
+
 module Suggestion
   class SuggestionEngine
     Suggestion = Struct.new(:key, :title, :message, :tags, :severity, :triggers, keyword_init: true)
 
     def self.call(user:, date: Date.current)
-      new(user:, date:).call
+      new(user: user, date: date).call
     end
 
     def initialize(user:, date:)
@@ -35,7 +36,7 @@ module Suggestion
         "score"             => @daily_log.score,
         "temperature_c"     => @weather.temperature_c.to_f,
         "humidity_pct"      => @weather.humidity_pct.to_f,
-        "pressure_hpa"      => @weather.pressure_hpa.to_f,
+        "pressure_hpa"      => @weather.pressure_hpa.to_f
       }
     end
 
@@ -63,7 +64,7 @@ module Suggestion
       keys = condition_str.scan(/[a-zA-Z_]\w*/).uniq
       keys.grep_v(/\A(?:AND|OR|NOT|TRUE|FALSE)\z/i)
           .select { |k| ctx.key?(k) }
-          .to_h { |k| [k, ctx[k]] }
+          .to_h { |k| [ k, ctx[k] ] }
     end
 
     # 同タグの連発抑制＋severity優先

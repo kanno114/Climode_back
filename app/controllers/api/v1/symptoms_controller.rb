@@ -10,6 +10,6 @@ class Api::V1::SymptomsController < ApplicationController
     @symptom = Symptom.find(params[:id])
     render json: @symptom
   rescue ActiveRecord::RecordNotFound
-    render json: { error: 'Symptom not found' }, status: :not_found
+    render json: { error: "Symptom not found" }, status: :not_found
   end
 end

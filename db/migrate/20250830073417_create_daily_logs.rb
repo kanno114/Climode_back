@@ -13,6 +13,6 @@ class CreateDailyLogs < ActiveRecord::Migration[7.2]
 
       t.timestamps
     end
-    add_index :daily_logs, [:user_id, :date], unique: true
+    add_index :daily_logs, [ :user_id, :date ], unique: true
   end
 end

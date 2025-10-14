@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Suggestion
   class RuleRegistry
     Rule = Struct.new(:key, :ast, :raw_condition, :title, :message, :tags, :severity, keyword_init: true)
@@ -35,10 +36,10 @@ module Suggestion
       # YAMLをそのまま使えるよう最小正規化（AND/OR/真偽値）
       def normalize_expr(expr)
         expr
-          .gsub('&&', ' AND ')
-          .gsub('||', ' OR ')
-          .gsub(/\btrue\b/i, 'TRUE')
-          .gsub(/\bfalse\b/i, 'FALSE')
+          .gsub("&&", " AND ")
+          .gsub("||", " OR ")
+          .gsub(/\btrue\b/i, "TRUE")
+          .gsub(/\bfalse\b/i, "FALSE")
       end
     end
   end

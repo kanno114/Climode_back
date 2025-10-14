@@ -10,6 +10,6 @@ class Api::V1::PrefecturesController < ApplicationController
     @prefecture = Prefecture.find(params[:id])
     render json: @prefecture
   rescue ActiveRecord::RecordNotFound
-    render json: { error: 'Prefecture not found' }, status: :not_found
+    render json: { error: "Prefecture not found" }, status: :not_found
   end
 end

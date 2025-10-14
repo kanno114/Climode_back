@@ -1,12 +1,11 @@
 class Api::V1::RegistrationsController < ApplicationController
-
   def create
     user = User.new(signup_params)
 
     if user.save
       access_token = Auth::JwtService.generate_access_token(user)
       refresh_token = Auth::JwtService.generate_refresh_token(user)
-      
+
       render json: {
         user: {
           id: user.id,
@@ -64,7 +63,7 @@ class Api::V1::RegistrationsController < ApplicationController
       }, status: :created
     end
   rescue ActiveRecord::RecordInvalid => e
-    render json: { errors: [e.record.errors.full_messages.presence || e.message].flatten }, status: :unprocessable_entity
+    render json: { errors: [ e.record.errors.full_messages.presence || e.message ].flatten }, status: :unprocessable_entity
   end
 
   private

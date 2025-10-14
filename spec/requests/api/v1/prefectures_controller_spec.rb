@@ -10,11 +10,11 @@ RSpec.describe 'Api::V1::Prefectures', type: :request do
       get '/api/v1/prefectures'
 
       expect(response).to have_http_status(:ok)
-      
+
       json_response = JSON.parse(response.body)
       expect(json_response).to be_an(Array)
       expect(json_response.length).to eq(3)
-      
+
       # コード順でソートされていることを確認
       expect(json_response.first['code']).to eq('01') # 北海道
       expect(json_response.second['code']).to eq('13') # 東京都
@@ -26,7 +26,7 @@ RSpec.describe 'Api::V1::Prefectures', type: :request do
 
       json_response = JSON.parse(response.body)
       tokyo_response = json_response.find { |p| p['code'] == '13' }
-      
+
       expect(tokyo_response['id']).to eq(tokyo.id)
       expect(tokyo_response['code']).to eq('13')
       expect(tokyo_response['name_ja']).to eq('東京都')
@@ -43,7 +43,7 @@ RSpec.describe 'Api::V1::Prefectures', type: :request do
         get "/api/v1/prefectures/#{tokyo.id}"
 
         expect(response).to have_http_status(:ok)
-        
+
         json_response = JSON.parse(response.body)
         expect(json_response['id']).to eq(tokyo.id)
         expect(json_response['code']).to eq('13')
@@ -58,7 +58,7 @@ RSpec.describe 'Api::V1::Prefectures', type: :request do
         get '/api/v1/prefectures/99999'
 
         expect(response).to have_http_status(:not_found)
-        
+
         json_response = JSON.parse(response.body)
         expect(json_response['error']).to eq('Prefecture not found')
       end

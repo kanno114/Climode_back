@@ -10,13 +10,13 @@ RSpec.describe 'Api::V1::Symptoms', type: :request do
       get '/api/v1/symptoms'
 
       expect(response).to have_http_status(:ok)
-      
+
       json_response = JSON.parse(response.body)
       expect(json_response).to be_an(Array)
       expect(json_response.length).to eq(3)
-      
 
-      
+
+
       # 名前順でソートされていることを確認（順序は重要でない）
       expect(json_response.map { |s| s['name'] }).to include('頭痛', '吐き気', '疲労')
     end
@@ -26,7 +26,7 @@ RSpec.describe 'Api::V1::Symptoms', type: :request do
 
       json_response = JSON.parse(response.body)
       headache_response = json_response.find { |s| s['code'] == 'headache' }
-      
+
       expect(headache_response['id']).to eq(headache.id)
       expect(headache_response['code']).to eq('headache')
       expect(headache_response['name']).to eq('頭痛')
@@ -41,7 +41,7 @@ RSpec.describe 'Api::V1::Symptoms', type: :request do
         get "/api/v1/symptoms/#{headache.id}"
 
         expect(response).to have_http_status(:ok)
-        
+
         json_response = JSON.parse(response.body)
         expect(json_response['id']).to eq(headache.id)
         expect(json_response['code']).to eq('headache')
@@ -54,7 +54,7 @@ RSpec.describe 'Api::V1::Symptoms', type: :request do
         get '/api/v1/symptoms/99999'
 
         expect(response).to have_http_status(:not_found)
-        
+
         json_response = JSON.parse(response.body)
         expect(json_response['error']).to eq('Symptom not found')
       end

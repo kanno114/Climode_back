@@ -24,7 +24,7 @@ class Api::V1::SuggestionsController < ApplicationController
       message: s.message,
       tags: s.tags,
       severity: s.severity,
-      triggers: s.triggers,
+      triggers: s.triggers
     }
   end
 end

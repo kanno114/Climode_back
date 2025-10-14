@@ -161,7 +161,7 @@ RSpec.describe DailyLog, type: :model do
 
       it '都道府県に座標がない場合は天気データを取得しない' do
         prefecture_without_coords = create(:prefecture, centroid_lat: nil, centroid_lon: nil)
-        
+
         expect {
           create(:daily_log, user: user, prefecture: prefecture_without_coords)
         }.not_to change(WeatherObservation, :count)
@@ -181,7 +181,7 @@ RSpec.describe DailyLog, type: :model do
 
       it '都道府県が変更されない場合は天気データを再取得しない' do
         original_weather = daily_log.weather_observation
-        
+
         expect {
           daily_log.update!(sleep_hours: 8.0)
         }.not_to change { daily_log.reload.weather_observation.id }
