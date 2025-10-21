@@ -41,6 +41,12 @@ gem "dentaku", "~> 3.5"
 # JWT for token-based authentication
 gem "jwt"
 
+# Web Push notifications
+gem "webpush"
+
+# Cron job scheduler
+gem "whenever", require: false
+
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem

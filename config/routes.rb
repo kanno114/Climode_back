@@ -41,6 +41,12 @@ Rails.application.routes.draw do
       resources :symptoms, only: [ :index, :show ]
       resources :prefectures, only: [ :index, :show ]
       resources :suggestions, only: [ :index ]
+
+      resources :push_subscriptions, only: [ :index, :create, :destroy ] do
+        collection do
+          delete :by_endpoint, to: "push_subscriptions#destroy_by_endpoint"
+        end
+      end
     end
   end
 end
