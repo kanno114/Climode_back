@@ -42,7 +42,7 @@ gem "dentaku", "~> 3.5"
 gem "jwt"
 
 # Web Push notifications
-gem "webpush"
+gem "web-push", "~> 3.0"
 
 # Cron job scheduler
 gem "whenever", require: false

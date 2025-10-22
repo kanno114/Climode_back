@@ -37,7 +37,7 @@ class PushNotificationService
       data: options[:data] || {}
     }.to_json
 
-    Webpush.payload_send(
+    WebPush.payload_send(
       message: message,
       endpoint: subscription.endpoint,
       p256dh: subscription.p256dh_key,
@@ -48,7 +48,7 @@ class PushNotificationService
         private_key: ENV["VAPID_PRIVATE_KEY"]
       }
     )
-  rescue Webpush::InvalidSubscription, Webpush::ExpiredSubscription => e
+  rescue WebPush::InvalidSubscription, WebPush::ExpiredSubscription => e
     # Remove invalid or expired subscriptions
     Rails.logger.info "Removing invalid subscription: #{e.message}"
     subscription.destroy
