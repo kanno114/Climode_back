@@ -3,6 +3,9 @@ FactoryBot.define do
     sequence(:code) { |n| "symptom_#{n}" }
     sequence(:name) { |n| "症状#{n}" }
 
+    # find_or_create_by を使って既存のSymptomを再利用
+    initialize_with { Symptom.find_or_create_by(code: code) }
+
     trait :headache do
       code { "headache" }
       name { "頭痛" }

@@ -8,6 +8,7 @@ abort("The Rails environment is running in production mode!") if Rails.env.produ
 # that will avoid rails generators crashing because migrations haven't been run yet
 # return unless Rails.env.test?
 require 'rspec/rails'
+require 'shoulda-matchers'
 # Add additional requires below this line. Rails is not loaded until this point!
 
 # Requires supporting ruby files with custom matchers and macros, etc, in
@@ -83,6 +84,11 @@ RSpec.configure do |config|
     Rails.application.config.hosts << "www.example.com" unless Rails.application.config.hosts.include?("www.example.com")
   end
 
+  # FactoryBotのsequenceをリセット
+  config.before(:each) do
+    FactoryBot.rewind_sequences
+  end
+
   # Database Cleanerの設定（必要に応じて後で追加）
   # config.before(:suite) do
   #   DatabaseCleaner.clean_with(:truncation)
@@ -105,10 +111,10 @@ RSpec.configure do |config|
   # end
 end
 
-# Shoulda Matchersの設定（必要に応じて後で追加）
-# Shoulda::Matchers.configure do |config|
-#   config.integrate do |with|
-#     with.test_framework :rspec
-#     with.library :rails
-#   end
-# end
+# Shoulda Matchersの設定
+Shoulda::Matchers.configure do |config|
+  config.integrate do |with|
+    with.test_framework :rspec
+    with.library :rails
+  end
+end
