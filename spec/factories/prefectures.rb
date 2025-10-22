@@ -1,9 +1,12 @@
 FactoryBot.define do
   factory :prefecture do
-    sequence(:code) { |n| sprintf("%02d", n) }
-    sequence(:name_ja) { |n| "都道府県#{n}" }
+    sequence(:code) { |n| sprintf("%02d", (n % 47) + 1) }
+    sequence(:name_ja) { |n| "都道府県#{(n % 47) + 1}" }
     centroid_lat { Faker::Address.latitude }
     centroid_lon { Faker::Address.longitude }
+
+    # find_or_create_by を使って既存のPrefectureを再利用
+    initialize_with { Prefecture.find_or_create_by(code: code) }
 
     trait :tokyo do
       code { "13" }

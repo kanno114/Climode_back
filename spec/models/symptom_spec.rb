@@ -18,15 +18,21 @@ RSpec.describe Symptom, type: :model do
     end
 
     it '重複したコードの場合は無効である' do
-      create(:symptom, code: 'headache')
-      symptom = build(:symptom, code: 'headache')
+      # 既存のSymptomを作成
+      create(:symptom, code: 'headache', name: '頭痛')
+      # 同じコードで新しいSymptomを作成（find_or_create_byをバイパス）
+      symptom = Symptom.new(code: 'headache', name: '別の頭痛')
       expect(symptom).not_to be_valid
+      expect(symptom.errors[:code]).to include('has already been taken')
     end
 
     it '重複した名前の場合は無効である' do
-      create(:symptom, name: '頭痛')
-      symptom = build(:symptom, name: '頭痛')
+      # 既存のSymptomを作成
+      create(:symptom, code: 'test_headache', name: 'テスト頭痛')
+      # 同じ名前で新しいSymptomを作成（find_or_create_byをバイパス）
+      symptom = Symptom.new(code: 'test_headache2', name: 'テスト頭痛')
       expect(symptom).not_to be_valid
+      expect(symptom.errors[:name]).to include('has already been taken')
     end
   end
 

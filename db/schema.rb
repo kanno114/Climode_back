@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_30_073550) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_16_005338) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -55,6 +55,18 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_30_073550) do
     t.index ["code"], name: "index_prefectures_on_code", unique: true
     t.check_constraint "centroid_lat >= '-90'::integer::numeric AND centroid_lat <= 90::numeric", name: "check_latitude_range"
     t.check_constraint "centroid_lon >= '-180'::integer::numeric AND centroid_lon <= 180::numeric", name: "check_longitude_range"
+  end
+
+  create_table "push_subscriptions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "endpoint", null: false
+    t.string "p256dh_key", null: false
+    t.string "auth_key", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["endpoint"], name: "index_push_subscriptions_on_endpoint", unique: true
+    t.index ["user_id", "endpoint"], name: "index_push_subscriptions_on_user_id_and_endpoint", unique: true
+    t.index ["user_id"], name: "index_push_subscriptions_on_user_id"
   end
 
   create_table "symptoms", force: :cascade do |t|
@@ -109,6 +121,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_30_073550) do
   add_foreign_key "daily_log_symptoms", "symptoms"
   add_foreign_key "daily_logs", "prefectures"
   add_foreign_key "daily_logs", "users"
+  add_foreign_key "push_subscriptions", "users"
   add_foreign_key "user_identities", "users"
   add_foreign_key "users", "prefectures"
   add_foreign_key "weather_observations", "daily_logs"

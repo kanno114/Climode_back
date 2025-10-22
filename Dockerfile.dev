@@ -7,7 +7,7 @@ FROM ruby:3.3.6
 # 2. 必要なパッケージ
 # ─────────────────────────────
 RUN apt-get update -qq && \
-    apt-get install -y --no-install-recommends nodejs build-essential postgresql-client
+    apt-get install -y --no-install-recommends --fix-missing nodejs build-essential postgresql-client cron
 
 # ─────────────────────────────
 # 3. 作業ディレクトリ
@@ -26,11 +26,18 @@ RUN bundle install
 COPY . .
 
 # ─────────────────────────────
-# 6. ポート
+# 6. cron設定スクリプト
+# ─────────────────────────────
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# ─────────────────────────────
+# 7. ポート
 # ─────────────────────────────
 EXPOSE 3000
 
 # ─────────────────────────────
-# 7. Entrypoint
+# 8. Entrypoint
 # ─────────────────────────────
-CMD ["bash", "-lc", "bundle exec rails db:migrate && bundle exec rails server -b 0.0.0.0 -p 3000"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3000"]

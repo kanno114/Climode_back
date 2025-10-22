@@ -6,6 +6,10 @@ module AuthHelper
     }
   end
 
+  def generate_jwt_token(user)
+    Auth::JwtService.generate_access_token(user)
+  end
+
   def json_response
     JSON.parse(response.body)
   end

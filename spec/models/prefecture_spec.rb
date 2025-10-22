@@ -18,9 +18,12 @@ RSpec.describe Prefecture, type: :model do
     end
 
     it '重複したコードの場合は無効である' do
-      create(:prefecture, code: '01')
-      prefecture = build(:prefecture, code: '01')
+      # 既存のPrefectureを作成
+      create(:prefecture, code: '01', name_ja: '北海道')
+      # 同じコードで新しいPrefectureをbuild（find_or_create_byをバイパス）
+      prefecture = Prefecture.new(code: '01', name_ja: '重複都道府県')
       expect(prefecture).not_to be_valid
+      expect(prefecture.errors[:code]).to include('has already been taken')
     end
   end
 
