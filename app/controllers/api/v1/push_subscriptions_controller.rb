@@ -14,18 +14,6 @@ module Api
         end
       end
 
-      # DELETE /api/v1/push_subscriptions/:id
-      def destroy
-        subscription = current_user.push_subscriptions.find_by(id: params[:id])
-
-        if subscription
-          subscription.destroy
-          render json: { message: "Successfully unsubscribed from push notifications" }, status: :ok
-        else
-          render json: { error: "Subscription not found" }, status: :not_found
-        end
-      end
-
       # DELETE /api/v1/push_subscriptions/by_endpoint
       def destroy_by_endpoint
         subscription = current_user.push_subscriptions.find_by(endpoint: params[:endpoint])
@@ -36,12 +24,6 @@ module Api
         else
           render json: { error: "Subscription not found" }, status: :not_found
         end
-      end
-
-      # GET /api/v1/push_subscriptions
-      def index
-        subscriptions = current_user.push_subscriptions
-        render json: subscriptions, status: :ok
       end
 
       private

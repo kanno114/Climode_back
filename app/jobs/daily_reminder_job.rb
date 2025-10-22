@@ -11,7 +11,7 @@ class DailyReminderJob < ApplicationJob
       icon: "/icon-192x192.png",
       badge: "/badge-72x72.png",
       data: {
-        url: "/daily-logs/new",
+        url: "/dashboard",
         action: "open_daily_log"
       }
     }
