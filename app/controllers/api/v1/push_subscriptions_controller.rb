@@ -1,7 +1,7 @@
 module Api
   module V1
     class PushSubscriptionsController < ApplicationController
-      before_action :authenticate_user!
+      include Authenticatable
 
       # POST /api/v1/push_subscriptions
       def create
@@ -48,22 +48,6 @@ module Api
 
       def subscription_params
         params.require(:subscription).permit(:endpoint, :p256dh_key, :auth_key)
-      end
-
-      def authenticate_user!
-        token = request.headers["Authorization"]&.split(" ")&.last
-        return render json: { error: "Unauthorized" }, status: :unauthorized unless token
-
-        begin
-          decoded = JWT.decode(token, Rails.application.credentials.secret_key_base, true, { algorithm: "HS256" })
-          @current_user = User.find(decoded[0]["user_id"])
-        rescue JWT::DecodeError, ActiveRecord::RecordNotFound
-          render json: { error: "Unauthorized" }, status: :unauthorized
-        end
-      end
-
-      def current_user
-        @current_user
       end
     end
   end
