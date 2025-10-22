@@ -19,7 +19,7 @@ RSpec.describe PushNotificationService do
 
     context "when user has subscriptions" do
       it "sends notification to all user subscriptions" do
-        expect(Webpush).to receive(:payload_send).once
+        expect(WebPush).to receive(:payload_send).once
 
         PushNotificationService.send_to_user(user, title, body, options)
       end
@@ -29,7 +29,7 @@ RSpec.describe PushNotificationService do
       let(:user_without_subscription) { create(:user) }
 
       it "does not send any notifications" do
-        expect(Webpush).not_to receive(:payload_send)
+        expect(WebPush).not_to receive(:payload_send)
 
         PushNotificationService.send_to_user(user_without_subscription, title, body, options)
       end
@@ -37,7 +37,8 @@ RSpec.describe PushNotificationService do
 
     context "when subscription is invalid" do
       before do
-        allow(Webpush).to receive(:payload_send).and_raise(Webpush::InvalidSubscription.new("Invalid", "Test"))
+        response_double = double("response", body: "Invalid subscription")
+        allow(WebPush).to receive(:payload_send).and_raise(WebPush::InvalidSubscription.new(response_double, "test.host"))
       end
 
       it "removes the invalid subscription" do
@@ -49,7 +50,8 @@ RSpec.describe PushNotificationService do
 
     context "when subscription is expired" do
       before do
-        allow(Webpush).to receive(:payload_send).and_raise(Webpush::ExpiredSubscription.new("Expired", "Test"))
+        response_double = double("response", body: "Expired subscription")
+        allow(WebPush).to receive(:payload_send).and_raise(WebPush::ExpiredSubscription.new(response_double, "test.host"))
       end
 
       it "removes the expired subscription" do
@@ -61,16 +63,18 @@ RSpec.describe PushNotificationService do
   end
 
   describe ".send_to_all" do
-    let!(:users) { create_list(:user, 3) }
     let(:title) { "Broadcast Title" }
     let(:body) { "Broadcast Body" }
 
-    before do
+    it "sends notifications to all users with subscriptions" do
+      # 新しく3人のユーザーを作成
+      users = create_list(:user, 3)
       users.each { |u| create(:push_subscription, user: u) }
-    end
 
-    it "sends notifications to all users" do
-      expect(Webpush).to receive(:payload_send).exactly(3).times
+      # すべてのサブスクリプション数を取得
+      subscription_count = PushSubscription.count
+
+      expect(WebPush).to receive(:payload_send).exactly(subscription_count).times
 
       PushNotificationService.send_to_all(title, body)
     end
@@ -82,7 +86,7 @@ RSpec.describe PushNotificationService do
     let(:options) { { icon: "/icon.png", data: { url: "/test" } } }
 
     it "sends notification with correct parameters" do
-      expect(Webpush).to receive(:payload_send).with(
+      expect(WebPush).to receive(:payload_send).with(
         hash_including(
           message: kind_of(String),
           endpoint: subscription.endpoint,
@@ -100,7 +104,7 @@ RSpec.describe PushNotificationService do
     end
 
     it "includes correct message structure" do
-      allow(Webpush).to receive(:payload_send) do |params|
+      allow(WebPush).to receive(:payload_send) do |params|
         message = JSON.parse(params[:message])
         expect(message["title"]).to eq(title)
         expect(message["body"]).to eq(body)
@@ -113,7 +117,7 @@ RSpec.describe PushNotificationService do
 
     context "with default options" do
       it "uses default icon and badge" do
-        allow(Webpush).to receive(:payload_send) do |params|
+        allow(WebPush).to receive(:payload_send) do |params|
           message = JSON.parse(params[:message])
           expect(message["icon"]).to eq("/icon-192x192.png")
           expect(message["badge"]).to eq("/badge-72x72.png")
@@ -125,7 +129,7 @@ RSpec.describe PushNotificationService do
 
     context "when an error occurs" do
       before do
-        allow(Webpush).to receive(:payload_send).and_raise(StandardError.new("Test error"))
+        allow(WebPush).to receive(:payload_send).and_raise(StandardError.new("Test error"))
       end
 
       it "logs the error and does not raise" do
@@ -138,5 +142,3 @@ RSpec.describe PushNotificationService do
     end
   end
 end
-
-

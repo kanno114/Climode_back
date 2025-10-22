@@ -6,5 +6,3 @@ FactoryBot.define do
     auth_key { Faker::Alphanumeric.alpha(number: 24) }
   end
 end
-
-

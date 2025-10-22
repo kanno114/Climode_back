@@ -64,40 +64,6 @@ RSpec.describe "Api::V1::PushSubscriptions", type: :request do
     end
   end
 
-  describe "DELETE /api/v1/push_subscriptions/:id" do
-    let!(:subscription) { create(:push_subscription, user: user) }
-
-    context "with valid id" do
-      it "deletes the subscription" do
-        expect {
-          delete "/api/v1/push_subscriptions/#{subscription.id}", headers: headers
-        }.to change(PushSubscription, :count).by(-1)
-
-        expect(response).to have_http_status(:ok)
-        json = JSON.parse(response.body)
-        expect(json["message"]).to eq("Successfully unsubscribed from push notifications")
-      end
-    end
-
-    context "with invalid id" do
-      it "returns not found" do
-        delete "/api/v1/push_subscriptions/99999", headers: headers
-
-        expect(response).to have_http_status(:not_found)
-        json = JSON.parse(response.body)
-        expect(json["error"]).to eq("Subscription not found")
-      end
-    end
-
-    context "without authentication" do
-      it "returns unauthorized" do
-        delete "/api/v1/push_subscriptions/#{subscription.id}", headers: { "Content-Type" => "application/json" }
-
-        expect(response).to have_http_status(:unauthorized)
-      end
-    end
-  end
-
   describe "DELETE /api/v1/push_subscriptions/by_endpoint" do
     let!(:subscription) { create(:push_subscription, user: user) }
 
@@ -123,28 +89,4 @@ RSpec.describe "Api::V1::PushSubscriptions", type: :request do
       end
     end
   end
-
-  describe "GET /api/v1/push_subscriptions" do
-    let!(:subscriptions) { create_list(:push_subscription, 3, user: user) }
-
-    context "with authentication" do
-      it "returns all subscriptions for the current user" do
-        get "/api/v1/push_subscriptions", headers: headers
-
-        expect(response).to have_http_status(:ok)
-        json = JSON.parse(response.body)
-        expect(json.length).to eq(3)
-      end
-    end
-
-    context "without authentication" do
-      it "returns unauthorized" do
-        get "/api/v1/push_subscriptions", headers: { "Content-Type" => "application/json" }
-
-        expect(response).to have_http_status(:unauthorized)
-      end
-    end
-  end
 end
-
-

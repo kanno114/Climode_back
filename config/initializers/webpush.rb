@@ -11,4 +11,3 @@
 #
 # The web-push gem uses these environment variables directly,
 # so no configuration is needed here. This file is just for documentation.
-

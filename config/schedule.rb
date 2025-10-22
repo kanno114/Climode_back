@@ -27,5 +27,3 @@ set :output, { error: "log/cron_error.log", standard: "log/cron.log" }
 every 1.day, at: "8:00 pm" do
   runner "DailyReminderJob.perform_now"
 end
-
-

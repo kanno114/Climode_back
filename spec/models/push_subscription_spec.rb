@@ -43,5 +43,3 @@ RSpec.describe PushSubscription, type: :model do
     end
   end
 end
-
-
