@@ -21,5 +21,3 @@ class DailyReminderJob < ApplicationJob
     Rails.logger.info "Daily reminder job completed."
   end
 end
-
-

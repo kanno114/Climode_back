@@ -56,5 +56,3 @@ class PushNotificationService
     Rails.logger.error "Failed to send push notification: #{e.message}"
   end
 end
-
-
