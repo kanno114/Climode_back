@@ -1,0 +1,71 @@
+- key: pressure_drop
+  label: "気圧低下"
+  category: env
+  is_active: true
+  version: 1
+  rule:
+    metric: pressure_drop_6h
+    operator: lte
+    levels:
+      - id: attention
+        label: "注意"
+        threshold: -3.0
+        priority: 50
+      - id: warning
+        label: "警戒"
+        threshold: -6.0
+        priority: 80
+
+- key: humidity_high
+  label: "高湿度"
+  category: env
+  is_active: true
+  version: 1
+  rule:
+    metric: humidity_pct
+    operator: gte
+    levels:
+      - id: attention
+        label: "注意"
+        threshold: 70
+        priority: 40
+      - id: warning
+        label: "警戒"
+        threshold: 85
+        priority: 75
+
+- key: temperature_drop
+  label: "寒暖差"
+  category: env
+  is_active: true
+  version: 1
+  rule:
+    metric: temperature_drop_12h
+    operator: lte
+    levels:
+      - id: attention
+        label: "注意"
+        threshold: -5.0
+        priority: 45
+      - id: severe
+        label: "厳重警戒"
+        threshold: -10.0
+        priority: 85
+
+- key: sleep_shortage
+  label: "寝不足"
+  category: body
+  is_active: true
+  version: 1
+  rule:
+    metric: sleep_hours
+    operator: lte
+    levels:
+      - id: attention
+        label: "注意"
+        threshold: 6.0
+        priority: 35
+      - id: warning
+        label: "警戒"
+        threshold: 4.5
+        priority: 65
