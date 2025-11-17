@@ -15,7 +15,8 @@ class Api::V1::RegistrationsController < ApplicationController
         },
         access_token: access_token,
         refresh_token: refresh_token,
-        expires_in: Auth::JwtService::ACCESS_TOKEN_EXPIRY
+        expires_in: Auth::JwtService::ACCESS_TOKEN_EXPIRY,
+        is_new_user: true
       }, status: :created
     else
       render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
@@ -25,6 +26,7 @@ class Api::V1::RegistrationsController < ApplicationController
   def oauth_register
     # ユーザーを検索または初期化
     user = User.find_or_initialize_by(email: params[:user][:email])
+    was_new_user = user.new_record?
     user.name = params[:user][:name]
     user.password ||= SecureRandom.urlsafe_base64(16)
     user.image = params[:user][:image]
@@ -38,6 +40,7 @@ class Api::V1::RegistrationsController < ApplicationController
         uid: params[:user][:uid]
       )
 
+      created_identity = false
       unless user_identity
         user_identity = user.user_identities.create!(
           provider: params[:user][:provider] || "oauth",
@@ -45,10 +48,12 @@ class Api::V1::RegistrationsController < ApplicationController
           email: params[:user][:email],
           display_name: params[:user][:name]
         )
+        created_identity = true
       end
 
       access_token = Auth::JwtService.generate_access_token(user)
       refresh_token = Auth::JwtService.generate_refresh_token(user)
+      is_new_user = was_new_user || created_identity
 
       render json: {
         user: {
@@ -59,7 +64,8 @@ class Api::V1::RegistrationsController < ApplicationController
         },
         access_token: access_token,
         refresh_token: refresh_token,
-        expires_in: Auth::JwtService::ACCESS_TOKEN_EXPIRY
+        expires_in: Auth::JwtService::ACCESS_TOKEN_EXPIRY,
+        is_new_user: is_new_user
       }, status: :created
     end
   rescue ActiveRecord::RecordInvalid => e
