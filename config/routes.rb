@@ -41,6 +41,8 @@ Rails.application.routes.draw do
       resources :symptoms, only: [ :index, :show ]
       resources :prefectures, only: [ :index, :show ]
       resources :suggestions, only: [ :index ]
+      resources :triggers, only: [ :index ]
+      resources :user_triggers, only: [ :index, :create, :destroy ]
 
       resources :push_subscriptions, only: [ :create ] do
         collection do

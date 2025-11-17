@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_16_005338) do
+ActiveRecord::Schema[7.2].define(version: 2025_11_12_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -78,6 +78,19 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_16_005338) do
     t.index ["name"], name: "index_symptoms_on_name", unique: true
   end
 
+  create_table "triggers", force: :cascade do |t|
+    t.string "key", null: false
+    t.string "label", null: false
+    t.string "category", null: false
+    t.boolean "is_active", default: true, null: false
+    t.integer "version", null: false
+    t.jsonb "rule", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_triggers_on_key", unique: true
+    t.check_constraint "category::text = ANY (ARRAY['env'::character varying, 'body'::character varying]::text[])", name: "triggers_category_check"
+  end
+
   create_table "user_identities", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "provider", null: false
@@ -88,6 +101,16 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_16_005338) do
     t.datetime "updated_at", null: false
     t.index ["provider", "uid"], name: "index_user_identities_on_provider_and_uid", unique: true
     t.index ["user_id"], name: "index_user_identities_on_user_id"
+  end
+
+  create_table "user_triggers", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "trigger_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["trigger_id"], name: "index_user_triggers_on_trigger_id"
+    t.index ["user_id", "trigger_id"], name: "index_user_triggers_on_user_id_and_trigger_id", unique: true
+    t.index ["user_id"], name: "index_user_triggers_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -123,6 +146,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_16_005338) do
   add_foreign_key "daily_logs", "users"
   add_foreign_key "push_subscriptions", "users"
   add_foreign_key "user_identities", "users"
+  add_foreign_key "user_triggers", "triggers", on_delete: :restrict
+  add_foreign_key "user_triggers", "users", on_delete: :restrict
   add_foreign_key "users", "prefectures"
   add_foreign_key "weather_observations", "daily_logs"
 end

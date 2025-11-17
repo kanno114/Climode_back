@@ -7,6 +7,8 @@ UserIdentity.delete_all
 User.delete_all
 Symptom.delete_all
 Prefecture.delete_all
+UserTrigger.delete_all
+Trigger.delete_all
 
 puts "Seeding users..."
 
@@ -118,15 +120,26 @@ symptoms_data.each do |symptom_data|
     symptom.name = symptom_data[:name]
   end
 end
+# トリガーマスタデータ
+skip_triggers = ENV['SEED_SKIP_TRIGGERS'] == '1'
+unless skip_triggers
+  puts "Syncing trigger presets..."
+  Triggers::PresetLoader.call(force: true)
+else
+  puts "Skipping trigger preset sync (SEED_SKIP_TRIGGERS=1)"
+end
 
 # サンプルの日次記録データ
-puts "Creating sample daily logs..."
+sample_days = ENV.fetch('SEED_DAYS', '7').to_i
+verbose_logs = ENV['SEED_VERBOSE'] == '1'
+puts "Creating sample daily logs... (days=#{sample_days}, verbose=#{verbose_logs})"
 
 # Aliceのサンプル記録
 alice = User.find_by(email: 'alice@example.com')
 if alice
   # 過去30日分のサンプルデータ（今日は除く）
-  (1..30).each do |days_ago|
+  ActiveRecord::Base.transaction do
+  (1..sample_days).each do |days_ago|
     date = Date.current - days_ago.days
 
     # 既存の記録があるかチェック
@@ -139,8 +152,7 @@ if alice
     fatigue_score = rand(2..8) # 疲労感スコア（1-10の範囲）
 
     # ランダムな症状を選択（0-3個）
-    symptom_count = rand(0..3)
-    selected_symptoms = symptoms_data.sample(symptom_count).map { |s| s[:code] }
+    # 症状データ生成を削除
 
     # 天候データ
     weather_conditions = [ '晴れ', '曇り', '雨', '雪', '霧', '雷' ]
@@ -171,7 +183,7 @@ if alice
     fatigue_bonus = (10 - fatigue_score) * 1.5
 
     # 症状数による減点
-    symptom_penalty = symptom_count * 5
+    symptom_penalty = 0
 
     # 総合スコア計算
     total_score = [ base_score + sleep_score + mood_bonus + fatigue_bonus - symptom_penalty, 100 ].min
@@ -217,18 +229,8 @@ if alice
       }
     )
 
-    # 症状を関連付け
-    selected_symptoms.each do |symptom_code|
-      symptom = Symptom.find_by(code: symptom_code)
-      if symptom
-        DailyLogSymptom.create!(
-          daily_log: daily_log,
-          symptom: symptom
-        )
-      end
-    end
-
-    puts "  Created daily log for Alice on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}, score=#{total_score}, symptoms=#{selected_symptoms.join(', ')}"
+    puts "  Created daily log for Alice on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}, score=#{total_score}" if verbose_logs
+  end
   end
 end
 
@@ -236,7 +238,8 @@ end
 bob = User.find_by(email: 'bob@example.com')
 if bob
   # 過去30日分のサンプルデータ（今日は除く）
-  (1..30).each do |days_ago|
+  ActiveRecord::Base.transaction do
+  (1..sample_days).each do |days_ago|
     date = Date.current - days_ago.days
 
     # 既存の記録があるかチェック
@@ -249,8 +252,7 @@ if bob
     fatigue_score = rand(3..7) # 疲労感スコア（1-10の範囲）
 
     # ランダムな症状を選択（0-2個）
-    symptom_count = rand(0..2)
-    selected_symptoms = symptoms_data.sample(symptom_count).map { |s| s[:code] }
+    # 症状データ生成を削除
 
     # 天候データ
     weather_conditions = [ '晴れ', '曇り', '雨' ]
@@ -281,7 +283,7 @@ if bob
     fatigue_bonus = (10 - fatigue_score) * 1.5
 
     # 症状数による減点
-    symptom_penalty = symptom_count * 5
+    symptom_penalty = 0
 
     # 総合スコア計算
     total_score = [ base_score + sleep_score + mood_bonus + fatigue_bonus - symptom_penalty, 100 ].min
@@ -325,18 +327,8 @@ if bob
       }
     )
 
-    # 症状を関連付け
-    selected_symptoms.each do |symptom_code|
-      symptom = Symptom.find_by(code: symptom_code)
-      if symptom
-        DailyLogSymptom.create!(
-          daily_log: daily_log,
-          symptom: symptom
-        )
-      end
-    end
-
-    puts "  Created daily log for Bob on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}, score=#{total_score}, symptoms=#{selected_symptoms.join(', ')}"
+    puts "  Created daily log for Bob on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}, score=#{total_score}" if verbose_logs
+  end
   end
 end
 
