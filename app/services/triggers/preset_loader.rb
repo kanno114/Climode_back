@@ -6,7 +6,7 @@ module Triggers
 
     Result = Struct.new(:created, :updated, :skipped, keyword_init: true) do
       def to_h
-        { created:, updated:, skipped: }
+        { created: created, updated: updated, skipped: skipped }
       end
     end
 
@@ -100,4 +100,3 @@ module Triggers
     end
   end
 end
-

@@ -4,8 +4,3 @@ FactoryBot.define do
     association :trigger
   end
 end
-
-
-
-
-

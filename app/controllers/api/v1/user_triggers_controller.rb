@@ -80,8 +80,6 @@ class Api::V1::UserTriggersController < ApplicationController
 
     if @user_trigger.nil?
       render json: { error: "User trigger not found" }, status: :not_found
-      return
     end
   end
 end
-

@@ -13,4 +13,3 @@ class UserTrigger < ApplicationRecord
     errors.add(:trigger, "is not active")
   end
 end
-

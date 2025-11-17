@@ -24,8 +24,3 @@ RSpec.describe UserTrigger, type: :model do
     end
   end
 end
-
-
-
-
-

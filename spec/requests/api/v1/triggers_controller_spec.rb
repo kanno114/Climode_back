@@ -32,4 +32,3 @@ RSpec.describe "Api::V1::Triggers", type: :request do
     end
   end
 end
-

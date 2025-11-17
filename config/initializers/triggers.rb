@@ -7,4 +7,3 @@ Rails.application.config.after_initialize do
     Rails.logger.info("[Triggers::Initializer] skipped: #{e.class}: #{e.message}")
   end
 end
-

@@ -39,8 +39,3 @@ RSpec.describe Trigger, type: :model do
     end
   end
 end
-
-
-
-
-

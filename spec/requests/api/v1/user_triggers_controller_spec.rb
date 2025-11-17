@@ -118,4 +118,3 @@ RSpec.describe "Api::V1::UserTriggers", type: :request do
     end
   end
 end
-
