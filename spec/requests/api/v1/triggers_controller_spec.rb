@@ -7,6 +7,7 @@ RSpec.describe "Api::V1::Triggers", type: :request do
 
   describe "GET /api/v1/triggers" do
     before do
+      UserTrigger.delete_all
       Trigger.delete_all
       create(:trigger, key: "pressure_drop", label: "気圧低下", category: "env")
       create(:trigger, key: "sleep_shortage", label: "寝不足", category: "body")

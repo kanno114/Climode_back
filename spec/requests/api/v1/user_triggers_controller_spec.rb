@@ -6,7 +6,10 @@ RSpec.describe "Api::V1::UserTriggers", type: :request do
   let(:headers) { { "Authorization" => "Bearer #{token}", "Content-Type" => "application/json" } }
 
   describe "GET /api/v1/user_triggers" do
-    before { Trigger.delete_all }
+    before do
+      UserTrigger.delete_all
+      Trigger.delete_all
+    end
 
     it "ユーザーのトリガー一覧を返す" do
       trigger = create(:trigger, key: "pressure_drop")
@@ -28,7 +31,10 @@ RSpec.describe "Api::V1::UserTriggers", type: :request do
   end
 
   describe "POST /api/v1/user_triggers" do
-    before { Trigger.delete_all }
+    before do
+      UserTrigger.delete_all
+      Trigger.delete_all
+    end
     let(:trigger) { create(:trigger) }
 
     it "trigger_idで登録できる" do
@@ -93,7 +99,10 @@ RSpec.describe "Api::V1::UserTriggers", type: :request do
   end
 
   describe "DELETE /api/v1/user_triggers/:id" do
-    before { Trigger.delete_all }
+    before do
+      UserTrigger.delete_all
+      Trigger.delete_all
+    end
     let!(:user_trigger) { create(:user_trigger, user: user) }
 
     it "自分のトリガーを削除できる" do
