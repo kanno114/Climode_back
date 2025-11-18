@@ -163,6 +163,54 @@ class Api::V1::DailyLogsController < ApplicationController
     head :no_content
   end
 
+  # POST /api/v1/daily_logs/morning
+  def morning
+    today = Date.current
+
+    # 当日のDailyLogを検索
+    @daily_log = current_user.daily_logs.find_by(date: today)
+
+    # prefecture_idを決定（既存のDailyLogから取得、またはユーザーのデフォルト都道府県）
+    prefecture = if @daily_log&.prefecture
+                   @daily_log.prefecture
+                 elsif current_user.prefecture
+                   current_user.prefecture
+                 else
+                   # デフォルト都道府県がない場合は東京を取得
+                   Prefecture.find_by(code: "13") || Prefecture.first
+                 end
+
+    # パラメータから値を取得
+    sleep_hours = params[:sleep_hours]&.to_f
+    mood = params[:mood]&.to_i
+    fatigue = params[:fatigue]&.to_i
+
+    if @daily_log
+      # 既存のDailyLogを更新
+      @daily_log.assign_attributes(
+        sleep_hours: sleep_hours,
+        mood: mood,
+        fatigue: fatigue
+      )
+    else
+      # 新規作成
+      @daily_log = current_user.daily_logs.build(
+        date: today,
+        prefecture: prefecture,
+        sleep_hours: sleep_hours,
+        mood: mood,
+        fatigue: fatigue
+      )
+    end
+
+    if @daily_log.save
+      render json: { status: "ok", next: "/signals/today" }, status: :ok
+    else
+      render json: { errors: @daily_log.errors.full_messages },
+             status: :unprocessable_entity
+    end
+  end
+
   private
 
   def set_daily_log
