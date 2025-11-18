@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_11_12_120000) do
+ActiveRecord::Schema[7.2].define(version: 2025_11_17_052635) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -67,6 +67,21 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_12_120000) do
     t.index ["endpoint"], name: "index_push_subscriptions_on_endpoint", unique: true
     t.index ["user_id", "endpoint"], name: "index_push_subscriptions_on_user_id_and_endpoint", unique: true
     t.index ["user_id"], name: "index_push_subscriptions_on_user_id"
+  end
+
+  create_table "signal_events", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "trigger_key", null: false
+    t.string "category", null: false
+    t.string "level", null: false
+    t.integer "priority", null: false
+    t.datetime "evaluated_at", null: false
+    t.jsonb "meta", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "user_id, trigger_key, date(evaluated_at)", name: "index_signal_events_on_user_trigger_evaluated", unique: true
+    t.index ["user_id"], name: "index_signal_events_on_user_id"
+    t.check_constraint "category::text = ANY (ARRAY['env'::character varying, 'body'::character varying]::text[])", name: "signal_events_category_check"
   end
 
   create_table "symptoms", force: :cascade do |t|
@@ -140,14 +155,26 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_12_120000) do
     t.check_constraint "temperature_c >= '-90'::integer::numeric AND temperature_c <= 60::numeric", name: "check_temperature_range"
   end
 
+  create_table "weather_snapshots", force: :cascade do |t|
+    t.bigint "prefecture_id", null: false
+    t.date "date", null: false
+    t.jsonb "metrics", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["prefecture_id", "date"], name: "index_weather_snapshots_on_prefecture_id_and_date", unique: true
+    t.index ["prefecture_id"], name: "index_weather_snapshots_on_prefecture_id"
+  end
+
   add_foreign_key "daily_log_symptoms", "daily_logs"
   add_foreign_key "daily_log_symptoms", "symptoms"
   add_foreign_key "daily_logs", "prefectures"
   add_foreign_key "daily_logs", "users"
   add_foreign_key "push_subscriptions", "users"
+  add_foreign_key "signal_events", "users"
   add_foreign_key "user_identities", "users"
   add_foreign_key "user_triggers", "triggers", on_delete: :restrict
   add_foreign_key "user_triggers", "users", on_delete: :restrict
   add_foreign_key "users", "prefectures"
   add_foreign_key "weather_observations", "daily_logs"
+  add_foreign_key "weather_snapshots", "prefectures"
 end
