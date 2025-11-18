@@ -91,4 +91,3 @@ RSpec.describe "Api::V1::DailyLogs", type: :request do
     end
   end
 end
-

@@ -172,13 +172,13 @@ class Api::V1::DailyLogsController < ApplicationController
 
     # prefecture_idを決定（既存のDailyLogから取得、またはユーザーのデフォルト都道府県）
     prefecture = if @daily_log&.prefecture
-                   @daily_log.prefecture
-                 elsif current_user.prefecture
-                   current_user.prefecture
-                 else
-                   # デフォルト都道府県がない場合は東京を取得
-                   Prefecture.find_by(code: "13") || Prefecture.first
-                 end
+      @daily_log.prefecture
+    elsif current_user.prefecture
+      current_user.prefecture
+    else
+      # デフォルト都道府県がない場合は東京を取得
+      Prefecture.find_by(code: "13") || Prefecture.first
+    end
 
     # パラメータから値を取得
     sleep_hours = params[:sleep_hours]&.to_f
