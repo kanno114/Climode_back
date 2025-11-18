@@ -119,4 +119,3 @@ RSpec.describe Suggestion::RuleRegistry do
     end
   end
 end
-

@@ -301,4 +301,3 @@ RSpec.describe Suggestion::SuggestionEngine do
     end
   end
 end
-

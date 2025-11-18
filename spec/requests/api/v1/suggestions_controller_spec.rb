@@ -109,4 +109,3 @@ RSpec.describe 'Api::V1::Suggestions', type: :request do
     end
   end
 end
-

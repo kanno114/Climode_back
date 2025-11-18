@@ -49,8 +49,8 @@ module Suggestion
     # よく使われるトリガーキーに対してデフォルト値を設定
     def add_signal_events_to_context(ctx)
       # よく使われるトリガーキーのリスト（Trigger定義に合わせて拡張）
-      common_trigger_keys = ["pressure_drop", "sleep_shortage", "humidity_high", "temperature_drop"]
-      
+      common_trigger_keys = [ "pressure_drop", "sleep_shortage", "humidity_high", "temperature_drop" ]
+
       # デフォルト値を設定（SignalEventが存在しない場合）
       common_trigger_keys.each do |trigger_key|
         ctx["has_#{trigger_key}_signal"] = false
@@ -66,11 +66,11 @@ module Suggestion
         ctx["has_#{trigger_key}_signal"] = true
         # シグナルのレベル（文字列を数値に変換: attention=1, warning=2, strong=3）
         level_value = case signal.level
-                      when "attention" then 1
-                      when "warning" then 2
-                      when "strong" then 3
-                      else 0
-                      end
+        when "attention" then 1
+        when "warning" then 2
+        when "strong" then 3
+        else 0
+        end
         ctx["#{trigger_key}_level"] = level_value
         # シグナルの優先度
         ctx["#{trigger_key}_priority"] = signal.priority.to_f
