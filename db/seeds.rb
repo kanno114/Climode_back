@@ -4,6 +4,7 @@ DailyLogSymptom.delete_all
 WeatherObservation.delete_all
 WeatherSnapshot.delete_all
 DailyLog.delete_all
+SignalEvent.delete_all
 UserIdentity.delete_all
 UserTrigger.delete_all
 User.delete_all
@@ -330,6 +331,113 @@ if bob
 
     puts "  Created daily log for Bob on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}, score=#{total_score}" if verbose_logs
   end
+  end
+end
+
+# シグナル・提案確認用データの作成
+puts "Creating signal and suggestion test data..."
+
+# Aliceにトリガーを登録
+alice = User.find_by(email: 'alice@example.com')
+if alice
+  # デフォルト都道府県を設定（未設定の場合）
+  unless alice.prefecture
+    tokyo = Prefecture.find_by(code: '13')
+    alice.update!(prefecture: tokyo) if tokyo
+  end
+
+  # トリガーを登録
+  trigger_keys = [ 'pressure_drop', 'sleep_shortage', 'humidity_high', 'temperature_drop' ]
+  registered_count = 0
+  trigger_keys.each do |trigger_key|
+    trigger = Trigger.find_by(key: trigger_key)
+    next unless trigger
+
+    ut = UserTrigger.find_or_create_by!(user: alice, trigger: trigger)
+    registered_count += 1 if ut.persisted?
+  end
+  puts "  Registered #{registered_count} triggers for Alice"
+
+  # 今日のDailyLogを作成（シグナルが発火するように設定）
+  today = Date.current
+  today_log = DailyLog.find_by(user: alice, date: today)
+
+  unless today_log
+    prefecture = alice.prefecture || Prefecture.find_by(code: '13')
+
+    # 睡眠不足シグナルが発火するように短めの睡眠時間を設定
+    today_log = DailyLog.create!(
+      user: alice,
+      prefecture: prefecture,
+      date: today,
+      sleep_hours: 5.0, # 6.0以下なのでattentionレベル、4.5以下ならwarningレベル
+      mood: 2, # -5から5の範囲
+      fatigue: 3,
+      memo: "シグナル確認用のテストデータ",
+      score: 60
+    )
+
+    # 天候データを作成（気圧低下シグナルが発火するように設定）
+    if prefecture
+      # WeatherSnapshotを直接作成（API取得は行わない）
+      snapshot = WeatherSnapshot.find_or_initialize_by(
+        prefecture: prefecture,
+        date: today
+      )
+
+      # 気圧低下シグナルが発火するように、pressure_drop_6hを負の値に設定
+      snapshot.metrics = {
+        "pressure_drop_6h" => -7.0, # -6.0以下なのでwarningレベル
+        "pressure_drop_24h" => -10.0,
+        "humidity_avg" => 75.0, # 70以上なのでattentionレベル
+        "temperature_drop_6h" => -2.0,
+        "temperature_drop_12h" => -6.0 # -5.0以下なのでattentionレベル
+      }
+      snapshot.save!
+      puts "  Created/Updated WeatherSnapshot for #{prefecture.name_ja} on #{today}"
+
+      # WeatherObservationも作成
+      unless today_log.weather_observation
+        WeatherObservation.create!(
+          daily_log: today_log,
+          temperature_c: 20.0,
+          humidity_pct: 75.0,
+          pressure_hpa: 1000.0,
+          observed_at: today.to_datetime,
+          snapshot: {
+            weather_condition: "曇り"
+          }
+        )
+      end
+    end
+
+    puts "  Created today's DailyLog for Alice: sleep=5.0h (should trigger sleep_shortage signal)"
+  end
+
+  # シグナルを評価してSignalEventを作成（既存のDailyLogがある場合も評価）
+  today_log ||= DailyLog.find_by(user: alice, date: today)
+  if today_log
+    puts "  Evaluating signals for Alice..."
+    results = Signal::EvaluationService.evaluate_for_user(alice, today)
+    if results.any?
+      results.each do |signal_event|
+        puts "    Created/Updated signal: #{signal_event.trigger_key} (level: #{signal_event.level}, priority: #{signal_event.priority})"
+      end
+      puts "    Total signals: #{results.size}"
+    else
+      puts "    No signals created (triggers may not have matched thresholds)"
+    end
+  end
+
+  # 提案を確認（ログ出力のみ）
+  begin
+    suggestions = Suggestion::SuggestionEngine.call(user: alice, date: today)
+    puts "  Suggestions generated: #{suggestions.size}"
+    suggestions.each do |s|
+      puts "    - #{s.title} (severity: #{s.severity})"
+    end
+  rescue => e
+    puts "  Warning: Could not generate suggestions: #{e.message}"
   end
 end
 
