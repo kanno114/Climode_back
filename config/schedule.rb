@@ -28,7 +28,12 @@ every 1.day, at: "8:00 pm" do
   runner "DailyReminderJob.perform_now"
 end
 
-# Evaluate signal events at 7:00 AM every day
-every 1.day, at: "7:00 am" do
+# Evaluate signal events at 6:00 AM every day
+every 1.day, at: "6:00 am" do
   runner "SignalEvaluationJob.perform_now"
+end
+
+# Send signal notifications at 7:00 AM every day (after signal evaluation)
+every 1.day, at: "7:00 am" do
+  runner "MorningSignalNotificationJob.perform_later"
 end
