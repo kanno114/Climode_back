@@ -10,6 +10,21 @@ class SignalEvent < ApplicationRecord
   validates :evaluated_at, presence: true
   validate :unique_per_user_trigger_date
 
+  # トリガーキーに対応する日本語ラベルを取得
+  def trigger_key_label
+    Trigger.find_by(key: trigger_key)&.label || trigger_key.humanize
+  end
+
+  # レベルを日本語に変換
+  def level_jp
+    case level
+    when "attention" then "注意"
+    when "warning" then "警戒"
+    when "strong" then "強"
+    else level
+    end
+  end
+
   private
 
   def unique_per_user_trigger_date
