@@ -34,8 +34,16 @@ RSpec.describe WeatherSnapshot, type: :model do
 
   describe 'スコープ' do
     let(:prefecture) { create(:prefecture) }
-    let!(:today_snapshot) { create(:weather_snapshot, prefecture: prefecture, date: Date.current) }
-    let!(:yesterday_snapshot) { create(:weather_snapshot, prefecture: prefecture, date: Date.yesterday) }
+    let!(:today_snapshot) do
+      # 既存のデータをクリーンアップしてから作成
+      WeatherSnapshot.where(prefecture: prefecture, date: Date.current).destroy_all
+      create(:weather_snapshot, prefecture: prefecture, date: Date.current)
+    end
+    let!(:yesterday_snapshot) do
+      # 既存のデータをクリーンアップしてから作成
+      WeatherSnapshot.where(prefecture: prefecture, date: Date.yesterday).destroy_all
+      create(:weather_snapshot, prefecture: prefecture, date: Date.yesterday)
+    end
 
     it '指定した日付のスナップショットを取得できる' do
       expect(WeatherSnapshot.for_date(Date.current)).to include(today_snapshot)
@@ -46,4 +54,3 @@ RSpec.describe WeatherSnapshot, type: :model do
     end
   end
 end
-

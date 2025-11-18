@@ -60,8 +60,8 @@ RSpec.describe SignalEvent, type: :model do
 
   describe 'スコープ' do
     let(:user) { create(:user) }
-    let!(:today_event) { create(:signal_event, user: user, evaluated_at: Time.current) }
-    let!(:yesterday_event) { create(:signal_event, user: user, evaluated_at: 1.day.ago) }
+    let!(:today_event) { create(:signal_event, user: user, trigger_key: "trigger_today", evaluated_at: Time.current) }
+    let!(:yesterday_event) { create(:signal_event, user: user, trigger_key: "trigger_yesterday", evaluated_at: 1.day.ago) }
 
     it '指定したユーザーのイベントを取得できる' do
       expect(SignalEvent.for_user(user)).to include(today_event, yesterday_event)
@@ -80,10 +80,10 @@ RSpec.describe SignalEvent, type: :model do
     end
 
     it '優先度順に並べ替えられる' do
-      high_priority = create(:signal_event, user: user, priority: 90)
-      low_priority = create(:signal_event, user: user, priority: 50)
+      # 異なるtrigger_keyを使用してユニーク制約を回避
+      high_priority = create(:signal_event, user: user, trigger_key: "trigger_high", priority: 90)
+      low_priority = create(:signal_event, user: user, trigger_key: "trigger_low", priority: 50)
       expect(SignalEvent.ordered_by_priority.first).to eq(high_priority)
     end
   end
 end
-

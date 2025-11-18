@@ -6,11 +6,11 @@ RSpec.describe Signal::EvaluationService do
   let(:service) { described_class.new(user, date) }
 
   describe '.evaluate_for_user' do
-    let!(:trigger) { create(:trigger, key: "pressure_drop", category: "env", is_active: true) }
+    let!(:trigger) { Trigger.find_by(key: "pressure_drop") || create(:trigger, key: "pressure_drop", category: "env", is_active: true) }
     let!(:user_trigger) { create(:user_trigger, user: user, trigger: trigger) }
     let!(:weather_snapshot) do
-      create(:weather_snapshot, 
-             prefecture: user.prefecture, 
+      create(:weather_snapshot,
+             prefecture: user.prefecture,
              date: date,
              metrics: { "pressure_drop_6h" => -7.0 })
     end
@@ -24,18 +24,31 @@ RSpec.describe Signal::EvaluationService do
 
   describe '#evaluate_trigger' do
     let!(:trigger) do
-      create(:trigger,
-             key: "pressure_drop",
-             category: "env",
-             is_active: true,
-             rule: {
-               "metric" => "pressure_drop_6h",
-               "operator" => "lte",
-               "levels" => [
-                 { "id" => "attention", "label" => "注意", "threshold" => -3.0, "priority" => 50 },
-                 { "id" => "strong", "label" => "警戒", "threshold" => -6.0, "priority" => 80 }
-               ]
-             })
+      existing = Trigger.find_by(key: "pressure_drop")
+      if existing
+        existing.update!(rule: {
+          "metric" => "pressure_drop_6h",
+          "operator" => "lte",
+          "levels" => [
+            { "id" => "attention", "label" => "注意", "threshold" => -3.0, "priority" => 50 },
+            { "id" => "strong", "label" => "警戒", "threshold" => -6.0, "priority" => 80 }
+          ]
+        })
+        existing
+      else
+        create(:trigger,
+               key: "pressure_drop",
+               category: "env",
+               is_active: true,
+               rule: {
+                 "metric" => "pressure_drop_6h",
+                 "operator" => "lte",
+                 "levels" => [
+                   { "id" => "attention", "label" => "注意", "threshold" => -3.0, "priority" => 50 },
+                   { "id" => "strong", "label" => "警戒", "threshold" => -6.0, "priority" => 80 }
+                 ]
+               })
+      end
     end
 
     context 'env系トリガーの場合' do
@@ -69,18 +82,31 @@ RSpec.describe Signal::EvaluationService do
 
     context 'body系トリガーの場合' do
       let!(:trigger) do
-        create(:trigger,
-               key: "sleep_shortage",
-               category: "body",
-               is_active: true,
-               rule: {
-                 "metric" => "sleep_hours",
-                 "operator" => "lte",
-                 "levels" => [
-                   { "id" => "attention", "label" => "注意", "threshold" => 6.0, "priority" => 35 },
-                   { "id" => "warning", "label" => "警戒", "threshold" => 4.5, "priority" => 65 }
-                 ]
-               })
+        existing = Trigger.find_by(key: "sleep_shortage")
+        if existing
+          existing.update!(rule: {
+            "metric" => "sleep_hours",
+            "operator" => "lte",
+            "levels" => [
+              { "id" => "attention", "label" => "注意", "threshold" => 6.0, "priority" => 35 },
+              { "id" => "warning", "label" => "警戒", "threshold" => 4.5, "priority" => 65 }
+            ]
+          })
+          existing
+        else
+          create(:trigger,
+                 key: "sleep_shortage",
+                 category: "body",
+                 is_active: true,
+                 rule: {
+                   "metric" => "sleep_hours",
+                   "operator" => "lte",
+                   "levels" => [
+                     { "id" => "attention", "label" => "注意", "threshold" => 6.0, "priority" => 35 },
+                     { "id" => "warning", "label" => "警戒", "threshold" => 4.5, "priority" => 65 }
+                   ]
+                 })
+        end
       end
       let!(:daily_log) { create(:daily_log, user: user, date: date, sleep_hours: 5.0) }
 
@@ -98,4 +124,3 @@ RSpec.describe Signal::EvaluationService do
     end
   end
 end
-

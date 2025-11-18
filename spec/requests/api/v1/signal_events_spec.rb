@@ -25,7 +25,7 @@ RSpec.describe "Api::V1::SignalEvents", type: :request do
       end
 
       context "シグナルイベントがない場合" do
-        let!(:trigger) { create(:trigger, key: "pressure_drop", category: "env", is_active: true) }
+        let!(:trigger) { Trigger.find_by(key: "pressure_drop") || create(:trigger, key: "pressure_drop", category: "env", is_active: true) }
         let!(:user_trigger) { create(:user_trigger, user: user, trigger: trigger) }
         let!(:weather_snapshot) do
           create(:weather_snapshot,
@@ -55,4 +55,3 @@ RSpec.describe "Api::V1::SignalEvents", type: :request do
     end
   end
 end
-

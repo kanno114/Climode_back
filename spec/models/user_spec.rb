@@ -13,6 +13,8 @@ RSpec.describe User, type: :model do
     end
 
     it '重複したメールアドレスの場合は無効である' do
+      # 既存のデータをクリーンアップ
+      User.where(email: 'test@example.com').destroy_all
       create(:user, email: 'test@example.com')
       user = build(:user, email: 'test@example.com')
       expect(user).not_to be_valid

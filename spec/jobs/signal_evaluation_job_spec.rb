@@ -5,7 +5,7 @@ RSpec.describe SignalEvaluationJob, type: :job do
     let(:date) { Date.current }
     let!(:prefecture) { create(:prefecture) }
     let!(:user) { create(:user, prefecture: prefecture) }
-    let!(:trigger) { create(:trigger, key: "pressure_drop", category: "env", is_active: true) }
+    let!(:trigger) { Trigger.find_by(key: "pressure_drop") || create(:trigger, key: "pressure_drop", category: "env", is_active: true) }
     let!(:user_trigger) { create(:user_trigger, user: user, trigger: trigger) }
 
     before do
@@ -26,7 +26,7 @@ RSpec.describe SignalEvaluationJob, type: :job do
     end
 
     it "body系トリガーは評価しない" do
-      body_trigger = create(:trigger, key: "sleep_shortage", category: "body", is_active: true)
+      body_trigger = Trigger.find_by(key: "sleep_shortage") || create(:trigger, key: "sleep_shortage", category: "body", is_active: true)
       create(:user_trigger, user: user, trigger: body_trigger)
 
       allow(Weather::WeatherSnapshotService).to receive(:update_all_prefectures)
@@ -43,8 +43,9 @@ RSpec.describe SignalEvaluationJob, type: :job do
       create(:user_trigger, user: user_without_prefecture, trigger: trigger)
 
       allow(Weather::WeatherSnapshotService).to receive(:update_all_prefectures)
-      
-      expect_any_instance_of(Signal::EvaluationService).not_to receive(:evaluate_trigger)
+
+      # 都道府県があるuserのトリガーは評価されるが、都道府県がないuser_without_prefectureのトリガーは評価されない
+      expect_any_instance_of(Signal::EvaluationService).to receive(:evaluate_trigger).with(trigger).once
       described_class.perform_now(date)
     end
   end
@@ -55,4 +56,3 @@ RSpec.describe SignalEvaluationJob, type: :job do
     end
   end
 end
-

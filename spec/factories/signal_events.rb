@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :signal_event do
     association :user
-    trigger_key { "pressure_drop" }
+    sequence(:trigger_key) { |n| "trigger_key_#{n}" }
     category { "env" }
     level { "strong" }
     priority { 80 }
@@ -17,7 +17,7 @@ FactoryBot.define do
 
     trait :body do
       category { "body" }
-      trigger_key { "sleep_shortage" }
+      sequence(:trigger_key) { |n| "sleep_shortage_#{n}" }
       level { "attention" }
       priority { 35 }
       meta do
@@ -31,4 +31,3 @@ FactoryBot.define do
     end
   end
 end
-
