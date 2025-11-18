@@ -101,21 +101,21 @@ namespace :test do
       puts "=== シグナル通知ジョブを実行 ==="
       puts "実行時刻: #{Time.current}"
       puts ""
-      
+
       # 実行前の状態を確認
       user_count = User.count
       signal_count = SignalEvent.today.count
       subscription_count = PushSubscription.count
-      
+
       puts "実行前の状態:"
       puts "  - ユーザー数: #{user_count}"
       puts "  - 今日のシグナル数: #{signal_count}"
       puts "  - プッシュ通知登録数: #{subscription_count}"
       puts ""
-      
+
       # ジョブを実行
       MorningSignalNotificationJob.perform_now
-      
+
       puts ""
       puts "=== 実行完了 ==="
       puts "ログを確認してください: docker-compose exec back tail -f log/development.log"
@@ -135,7 +135,7 @@ namespace :test do
     desc "通知送信の動作確認（モック版）"
     task test_mock: :environment do
       puts "=== 通知送信の動作確認（モック版） ==="
-      
+
       user = User.first
       if user.nil?
         puts "エラー: ユーザーが存在しません。"
@@ -158,7 +158,7 @@ namespace :test do
       puts "  URL: /dashboard"
       puts ""
       puts "プッシュ通知登録数: #{user.push_subscriptions.count}"
-      
+
       if user.push_subscriptions.any?
         puts "✅ この内容で通知が送信されます。"
       else
