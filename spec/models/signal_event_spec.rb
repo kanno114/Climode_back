@@ -83,7 +83,10 @@ RSpec.describe SignalEvent, type: :model do
       # 異なるtrigger_keyを使用してユニーク制約を回避
       high_priority = create(:signal_event, user: user, trigger_key: "trigger_high", priority: 90)
       low_priority = create(:signal_event, user: user, trigger_key: "trigger_low", priority: 50)
-      expect(SignalEvent.ordered_by_priority.first).to eq(high_priority)
+      # 特定のユーザーのイベントのみを対象にする
+      user_events = SignalEvent.where(user: user).ordered_by_priority
+      expect(user_events.first).to eq(high_priority)
+      expect(user_events.last).to eq(low_priority)
     end
   end
 end

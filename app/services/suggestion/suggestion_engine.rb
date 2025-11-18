@@ -14,7 +14,7 @@ module Suggestion
       @daily_log = DailyLog.find_by!(user_id: @user.id, date: @date)
       @weather = @daily_log.weather_observation
       @signal_events = SignalEvent.for_user(@user).for_date(@date)
-      @rules = RuleRegistry.all
+      @rules = ::Suggestion::RuleRegistry.all
     end
 
     def call
