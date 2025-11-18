@@ -57,6 +57,12 @@ Rails.application.routes.draw do
           delete :by_endpoint, to: "push_subscriptions#destroy_by_endpoint"
         end
       end
+
+      resources :reports, only: [] do
+        collection do
+          get :weekly
+        end
+      end
     end
   end
 end
