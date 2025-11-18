@@ -44,6 +44,12 @@ Rails.application.routes.draw do
       resources :triggers, only: [ :index ]
       resources :user_triggers, only: [ :index, :create, :destroy ]
 
+      resources :signal_events, only: [] do
+        collection do
+          get :today
+        end
+      end
+
       resources :push_subscriptions, only: [ :create ] do
         collection do
           delete :by_endpoint, to: "push_subscriptions#destroy_by_endpoint"
