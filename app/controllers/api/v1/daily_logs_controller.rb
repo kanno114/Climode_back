@@ -30,17 +30,17 @@ class Api::V1::DailyLogsController < ApplicationController
 
   # GET /api/v1/daily_logs/:id
   def show
-    render json: @daily_log.as_json(include: [ :prefecture, :weather_observation, :symptoms ])
+    render json: @daily_log.as_json(include: [ :prefecture, :weather_observation, :symptoms, :suggestion_feedbacks ])
   end
 
   # GET /api/v1/daily_logs/date/:date
   def show_by_date
     @daily_log = current_user.daily_logs
-                             .includes(:prefecture, :weather_observation, :symptoms)
+                             .includes(:prefecture, :weather_observation, :symptoms, :suggestion_feedbacks)
                              .find_by(date: params[:date])
 
     if @daily_log
-      render json: @daily_log.as_json(include: [ :prefecture, :weather_observation, :symptoms ])
+      render json: @daily_log.as_json(include: [ :prefecture, :weather_observation, :symptoms, :suggestion_feedbacks ])
     else
       render json: { error: "Daily log not found for date: #{params[:date]}" },
              status: :not_found
@@ -75,7 +75,7 @@ class Api::V1::DailyLogsController < ApplicationController
       sleep_hours: daily_log_data[:sleep_hours],
       mood: daily_log_data[:mood] || daily_log_data[:mood_score]&.to_i,
       fatigue: daily_log_data[:fatigue],
-      memo: daily_log_data[:memo] || daily_log_data[:notes] || ""
+      note: daily_log_data[:note] || daily_log_data[:memo] || daily_log_data[:notes] || ""
     )
 
     # 体調スコアを計算
@@ -118,7 +118,7 @@ class Api::V1::DailyLogsController < ApplicationController
       sleep_hours: daily_log_data[:sleep_hours],
       mood: daily_log_data[:mood] || daily_log_data[:mood_score]&.to_i,
       fatigue: daily_log_data[:fatigue],
-      memo: daily_log_data[:memo] || daily_log_data[:notes] || ""
+      note: daily_log_data[:note] || daily_log_data[:memo] || daily_log_data[:notes] || ""
     )
 
     # 体調スコアを再計算
@@ -211,6 +211,88 @@ class Api::V1::DailyLogsController < ApplicationController
     end
   end
 
+  # POST /api/v1/daily_logs/evening
+  def evening
+    today = Date.current
+
+    Rails.logger.info "Evening reflection request received for user #{current_user.id} on #{today}"
+
+    # 当日のDailyLogを取得または作成
+    @daily_log = current_user.daily_logs.find_by(date: today)
+
+    # prefecture_idを決定（既存のDailyLogから取得、またはユーザーのデフォルト都道府県）
+    prefecture = if @daily_log&.prefecture
+      @daily_log.prefecture
+    elsif current_user.prefecture
+      current_user.prefecture
+    else
+      # デフォルト都道府県がない場合は東京を取得
+      Prefecture.find_by(code: "13") || Prefecture.first
+    end
+
+    # パラメータから値を取得
+    note = params[:note]
+    suggestion_feedbacks_params = if params[:suggestion_feedbacks].is_a?(String)
+      JSON.parse(params[:suggestion_feedbacks]) rescue []
+    else
+      params[:suggestion_feedbacks] || []
+    end
+
+    Rails.logger.info "Evening reflection params: note=#{note.present? ? 'present' : 'empty'}, suggestion_feedbacks_count=#{suggestion_feedbacks_params.size}"
+
+    # DailyLogの作成または更新
+    if @daily_log
+      @daily_log.assign_attributes(
+        note: note
+      )
+    else
+      @daily_log = current_user.daily_logs.build(
+        date: today,
+        prefecture: prefecture,
+        note: note
+      )
+    end
+
+    # トランザクション内で保存とフィードバック処理
+    ActiveRecord::Base.transaction do
+      unless @daily_log.save
+        render json: { errors: @daily_log.errors.full_messages },
+               status: :unprocessable_entity
+        return
+      end
+
+      # 提案フィードバックの保存
+      @daily_log.suggestion_feedbacks.destroy_all
+      if suggestion_feedbacks_params.present?
+        suggestion_feedbacks_params.each do |feedback_params|
+          suggestion_key = feedback_params[:key] || feedback_params["key"] || feedback_params[:suggestion_key] || feedback_params["suggestion_key"]
+          helpfulness = feedback_params[:helpfulness] || feedback_params["helpfulness"]
+
+          Rails.logger.info "Processing suggestion feedback: key=#{suggestion_key}, helpfulness=#{helpfulness} (#{helpfulness.class})"
+
+          # helpfulnessのバリデーション（booleanであることを確認）
+          unless [ true, false ].include?(helpfulness)
+            Rails.logger.warn "Invalid helpfulness value: #{helpfulness}, skipping"
+            next
+          end
+
+          @daily_log.suggestion_feedbacks.create!(
+            suggestion_key: suggestion_key,
+            helpfulness: helpfulness
+          )
+        end
+      end
+
+      Rails.logger.info "Evening reflection saved successfully for daily_log #{@daily_log.id}"
+      render json: { status: "ok", next: "/dashboard" }, status: :ok
+    end
+  rescue => e
+    Rails.logger.error "Evening reflection save error: #{e.class} #{e.message}"
+    Rails.logger.error e.backtrace.join("\n")
+    render json: { errors: [ "保存に失敗しました: #{e.message}" ] },
+           status: :internal_server_error
+  end
+
   private
 
   def set_daily_log
@@ -224,7 +306,7 @@ class Api::V1::DailyLogsController < ApplicationController
       :sleep_hours,
       :mood,
       :self_score,
-      :memo,
+      :note,
       symptom_ids: []
     )
   end

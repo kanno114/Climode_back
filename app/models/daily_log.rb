@@ -4,6 +4,8 @@ class DailyLog < ApplicationRecord
   has_one :weather_observation, dependent: :destroy
   has_many :daily_log_symptoms, dependent: :destroy
   has_many :symptoms, through: :daily_log_symptoms
+  has_many :signal_feedbacks, dependent: :destroy
+  has_many :suggestion_feedbacks, dependent: :destroy
 
   validates :date, presence: true
   validates :date, uniqueness: { scope: :user_id }
@@ -12,6 +14,9 @@ class DailyLog < ApplicationRecord
   validates :fatigue, numericality: { greater_than_or_equal_to: -5, less_than_or_equal_to: 5 }, allow_nil: true
   validates :score, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 100 }, allow_nil: true
   validates :self_score, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 100 }, allow_nil: true
+  validates :helpfulness, numericality: { greater_than_or_equal_to: 1, less_than_or_equal_to: 5 }, allow_nil: true
+  validates :match_score, numericality: { greater_than_or_equal_to: 1, less_than_or_equal_to: 5 }, allow_nil: true
+  validates :fatigue_level, numericality: { greater_than_or_equal_to: 1, less_than_or_equal_to: 5 }, allow_nil: true
 
   # 天気データ自動取得のコールバック
   after_create :fetch_weather_data

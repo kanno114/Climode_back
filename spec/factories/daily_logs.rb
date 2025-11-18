@@ -8,7 +8,7 @@ FactoryBot.define do
     fatigue { rand(-5..5) }
     score { rand(0..100) }
     self_score { rand(0..100) }
-    memo { Faker::Lorem.sentence }
+    note { Faker::Lorem.sentence }
 
     trait :yesterday do
       date { Date.yesterday }

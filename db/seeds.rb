@@ -215,7 +215,7 @@ if alice
       sleep_hours: sleep_hours,
       mood: mood_score - 5, # moodは-5から5の範囲なので変換
       fatigue: fatigue_score - 5, # fatigueは-5から5の範囲なので変換
-      memo: notes,
+      note: notes,
       score: total_score
     )
 
@@ -313,7 +313,7 @@ if bob
       sleep_hours: sleep_hours,
       mood: mood_score - 5, # moodは-5から5の範囲なので変換
       fatigue: fatigue_score - 5, # fatigueは-5から5の範囲なので変換
-      memo: notes,
+      note: notes,
       score: total_score
     )
 
@@ -373,7 +373,7 @@ if alice
       sleep_hours: 5.0, # 6.0以下なのでattentionレベル、4.5以下ならwarningレベル
       mood: 2, # -5から5の範囲
       fatigue: 3,
-      memo: "シグナル確認用のテストデータ",
+      note: "シグナル確認用のテストデータ",
       score: 60
     )
 

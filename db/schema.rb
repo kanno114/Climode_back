@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_11_17_052635) do
+ActiveRecord::Schema[7.2].define(version: 2025_11_18_143737) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -32,13 +32,19 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_17_052635) do
     t.integer "fatigue"
     t.integer "score"
     t.integer "self_score"
-    t.text "memo"
+    t.text "note"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "helpfulness"
+    t.integer "match_score"
+    t.integer "fatigue_level"
     t.index ["prefecture_id"], name: "index_daily_logs_on_prefecture_id"
     t.index ["user_id", "date"], name: "index_daily_logs_on_user_id_and_date", unique: true
     t.index ["user_id"], name: "index_daily_logs_on_user_id"
     t.check_constraint "fatigue >= '-5'::integer AND fatigue <= 5", name: "check_fatigue_range"
+    t.check_constraint "fatigue_level >= 1 AND fatigue_level <= 5", name: "check_fatigue_level_range"
+    t.check_constraint "helpfulness >= 1 AND helpfulness <= 5", name: "check_helpfulness_range"
+    t.check_constraint "match_score >= 1 AND match_score <= 5", name: "check_match_score_range"
     t.check_constraint "mood >= '-5'::integer AND mood <= 5", name: "check_mood_range"
     t.check_constraint "score >= 0 AND score <= 100", name: "check_score_range"
     t.check_constraint "self_score >= 0 AND self_score <= 100", name: "check_self_score_range"
@@ -81,7 +87,28 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_17_052635) do
     t.datetime "updated_at", null: false
     t.index "user_id, trigger_key, date(evaluated_at)", name: "index_signal_events_on_user_trigger_evaluated", unique: true
     t.index ["user_id"], name: "index_signal_events_on_user_id"
-    t.check_constraint "category::text = ANY (ARRAY['env'::character varying, 'body'::character varying]::text[])", name: "signal_events_category_check"
+    t.check_constraint "category::text = ANY (ARRAY['env'::character varying::text, 'body'::character varying::text])", name: "signal_events_category_check"
+  end
+
+  create_table "signal_feedbacks", force: :cascade do |t|
+    t.bigint "daily_log_id", null: false
+    t.string "trigger_key", null: false
+    t.integer "match", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["daily_log_id", "trigger_key"], name: "index_signal_feedbacks_on_daily_log_id_and_trigger_key", unique: true
+    t.index ["daily_log_id"], name: "index_signal_feedbacks_on_daily_log_id"
+    t.check_constraint "match >= 1 AND match <= 5", name: "check_signal_feedback_match_range"
+  end
+
+  create_table "suggestion_feedbacks", force: :cascade do |t|
+    t.bigint "daily_log_id", null: false
+    t.string "suggestion_key", null: false
+    t.boolean "helpfulness", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["daily_log_id", "suggestion_key"], name: "index_suggestion_feedbacks_on_daily_log_id_and_suggestion_key", unique: true
+    t.index ["daily_log_id"], name: "index_suggestion_feedbacks_on_daily_log_id"
   end
 
   create_table "symptoms", force: :cascade do |t|
@@ -103,7 +130,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_17_052635) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["key"], name: "index_triggers_on_key", unique: true
-    t.check_constraint "category::text = ANY (ARRAY['env'::character varying, 'body'::character varying]::text[])", name: "triggers_category_check"
+    t.check_constraint "category::text = ANY (ARRAY['env'::character varying::text, 'body'::character varying::text])", name: "triggers_category_check"
   end
 
   create_table "user_identities", force: :cascade do |t|
@@ -171,6 +198,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_17_052635) do
   add_foreign_key "daily_logs", "users"
   add_foreign_key "push_subscriptions", "users"
   add_foreign_key "signal_events", "users"
+  add_foreign_key "signal_feedbacks", "daily_logs", on_delete: :cascade
+  add_foreign_key "suggestion_feedbacks", "daily_logs", on_delete: :cascade
   add_foreign_key "user_identities", "users"
   add_foreign_key "user_triggers", "triggers", on_delete: :restrict
   add_foreign_key "user_triggers", "users", on_delete: :restrict
