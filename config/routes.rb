@@ -28,6 +28,7 @@ Rails.application.routes.draw do
           get "date/:date", to: "daily_logs#show_by_date"
           get "date_range_30days", to: "daily_logs#by_date_range_30days"
           post "morning", to: "daily_logs#morning"
+          post "evening", to: "daily_logs#evening"
         end
         member do
           patch "self_score", to: "daily_logs#update_self_score"
