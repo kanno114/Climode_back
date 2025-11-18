@@ -19,10 +19,16 @@ RSpec.describe SignalEvaluationJob, type: :job do
 
     it "env系トリガーを評価する" do
       allow(Weather::WeatherSnapshotService).to receive(:update_all_prefectures)
-      allow_any_instance_of(Signal::EvaluationService).to receive(:evaluate_trigger).and_return(true)
 
-      expect_any_instance_of(Signal::EvaluationService).to receive(:evaluate_trigger).at_least(:once)
-      described_class.perform_now(date)
+      # WeatherSnapshotを作成（env系トリガー評価に必要）
+      create(:weather_snapshot, prefecture: prefecture, date: date, metrics: {
+        "pressure_drop_6h" => -7.0
+      })
+
+      # シグナルが作成されることを確認
+      expect {
+        described_class.perform_now(date)
+      }.to change(SignalEvent, :count).by_at_least(1)
     end
 
     it "body系トリガーは評価しない" do
@@ -30,12 +36,20 @@ RSpec.describe SignalEvaluationJob, type: :job do
       create(:user_trigger, user: user, trigger: body_trigger)
 
       allow(Weather::WeatherSnapshotService).to receive(:update_all_prefectures)
-      allow_any_instance_of(Signal::EvaluationService).to receive(:evaluate_trigger).and_return(true)
 
-      # env系トリガーのみが評価されることを確認
-      expect_any_instance_of(Signal::EvaluationService).to receive(:evaluate_trigger).with(trigger).once
-      expect_any_instance_of(Signal::EvaluationService).not_to receive(:evaluate_trigger).with(body_trigger)
+      # WeatherSnapshotを作成（env系トリガー評価に必要）
+      create(:weather_snapshot, prefecture: prefecture, date: date, metrics: {
+        "pressure_drop_6h" => -7.0
+      })
+
+      # env系トリガーのみが評価されることを確認（body系は評価されない）
+      env_count_before = SignalEvent.where(trigger_key: trigger.key).count
+      body_count_before = SignalEvent.where(trigger_key: body_trigger.key).count
+
       described_class.perform_now(date)
+
+      expect(SignalEvent.where(trigger_key: trigger.key).count).to eq(env_count_before + 1)
+      expect(SignalEvent.where(trigger_key: body_trigger.key).count).to eq(body_count_before)
     end
 
     it "都道府県が設定されていないユーザーはスキップする" do
@@ -44,9 +58,19 @@ RSpec.describe SignalEvaluationJob, type: :job do
 
       allow(Weather::WeatherSnapshotService).to receive(:update_all_prefectures)
 
+      # WeatherSnapshotを作成（env系トリガー評価に必要）
+      create(:weather_snapshot, prefecture: prefecture, date: date, metrics: {
+        "pressure_drop_6h" => -7.0
+      })
+
       # 都道府県があるuserのトリガーは評価されるが、都道府県がないuser_without_prefectureのトリガーは評価されない
-      expect_any_instance_of(Signal::EvaluationService).to receive(:evaluate_trigger).with(trigger).once
+      user_count_before = SignalEvent.where(user: user, trigger_key: trigger.key).count
+      user_without_pref_count_before = SignalEvent.where(user: user_without_prefecture, trigger_key: trigger.key).count
+
       described_class.perform_now(date)
+
+      expect(SignalEvent.where(user: user, trigger_key: trigger.key).count).to eq(user_count_before + 1)
+      expect(SignalEvent.where(user: user_without_prefecture, trigger_key: trigger.key).count).to eq(user_without_pref_count_before)
     end
   end
 
