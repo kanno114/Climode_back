@@ -7,4 +7,3 @@ class WeatherSnapshot < ApplicationRecord
   scope :for_date, ->(date) { where(date: date) }
   scope :for_prefecture, ->(prefecture) { where(prefecture: prefecture) }
 end
-

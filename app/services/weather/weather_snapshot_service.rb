@@ -43,7 +43,7 @@ module Weather
 
       # 前日のデータを取得（24時間変化の計算用）
       yesterday_data = fetch_weather_data_for_date(@date - 1.day)
-      
+
       # 24時間前の気圧変化
       if today_data[:pressure_hpa] && yesterday_data&.dig(:pressure_hpa)
         metrics["pressure_drop_24h"] = (today_data[:pressure_hpa] - yesterday_data[:pressure_hpa]).round(1)
@@ -53,7 +53,7 @@ module Weather
       # 当日9時から6時間前 = 当日3時
       six_hours_ago_hour = 3
       six_hours_ago_data = fetch_weather_data_for_hour(@date, six_hours_ago_hour)
-      
+
       # 6時間前の気圧変化
       if today_data[:pressure_hpa] && six_hours_ago_data&.dig(:pressure_hpa)
         metrics["pressure_drop_6h"] = (today_data[:pressure_hpa] - six_hours_ago_data[:pressure_hpa]).round(1)
@@ -69,7 +69,7 @@ module Weather
       twelve_hours_ago_date = @date - 1.day
       twelve_hours_ago_hour = 21
       twelve_hours_ago_data = fetch_weather_data_for_hour(twelve_hours_ago_date, twelve_hours_ago_hour)
-      
+
       # 12時間前の気温変化
       if today_data[:temperature_c] && twelve_hours_ago_data&.dig(:temperature_c)
         metrics["temperature_drop_12h"] = (today_data[:temperature_c] - twelve_hours_ago_data[:temperature_c]).round(1)
@@ -90,9 +90,9 @@ module Weather
       # 指定日付・指定時刻のデータを取得
       service = WeatherDataService.new(@prefecture, date, hour: hour)
       data = service.fetch_weather_data
-      
+
       return data if data && data[:observed_at]
-      
+
       nil
     rescue => e
       Rails.logger.error "Failed to fetch weather data for date #{date}, hour #{hour}: #{e.message}"
@@ -100,4 +100,3 @@ module Weather
     end
   end
 end
-

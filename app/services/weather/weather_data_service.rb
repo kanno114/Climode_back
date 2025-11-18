@@ -81,23 +81,23 @@ module Weather
       # 指定時刻のデータを探す
       hour_str = format("%02d:00", target_hour)
       time_index = time_array.index { |time| time.include?("T#{hour_str}") }
-      
+
       # 見つからない場合、前後の時刻を探す
       if time_index.nil?
         # 1時間前後を探す
         (1..3).each do |offset|
           prev_hour = (target_hour - offset) % 24
           next_hour = (target_hour + offset) % 24
-          
+
           prev_str = format("%02d:00", prev_hour)
           next_str = format("%02d:00", next_hour)
-          
+
           time_index ||= time_array.index { |time| time.include?("T#{prev_str}") }
           time_index ||= time_array.index { |time| time.include?("T#{next_str}") }
           break if time_index
         end
       end
-      
+
       # それでも見つからない場合は最初のデータを使用
       time_index || 0
     end

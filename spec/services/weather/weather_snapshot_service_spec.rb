@@ -18,7 +18,7 @@ RSpec.describe Weather::WeatherSnapshotService do
 
     it '既存のWeatherSnapshotを更新する' do
       snapshot = create(:weather_snapshot, prefecture: prefecture, date: date)
-      
+
       allow_any_instance_of(described_class).to receive(:calculate_metrics).and_return({
         "pressure_drop_6h" => -7.0
       })
@@ -36,14 +36,14 @@ RSpec.describe Weather::WeatherSnapshotService do
     it '全ての都道府県のWeatherSnapshotを更新する' do
       # 既存のスナップショットを削除
       WeatherSnapshot.where(date: date).destroy_all
-      
+
       allow_any_instance_of(described_class).to receive(:calculate_metrics).and_return({
         "pressure_drop_6h" => -6.4
       })
 
       initial_count = WeatherSnapshot.count
       described_class.update_all_prefectures(date)
-      
+
       # 全ての都道府県に対してスナップショットが作成されることを確認
       expect(WeatherSnapshot.where(date: date).count).to eq(Prefecture.count)
       expect(WeatherSnapshot.where(date: date, prefecture: prefecture1).exists?).to be true
@@ -82,4 +82,3 @@ RSpec.describe Weather::WeatherSnapshotService do
     end
   end
 end
-

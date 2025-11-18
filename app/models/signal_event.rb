@@ -18,7 +18,7 @@ class SignalEvent < ApplicationRecord
     existing = SignalEvent.where(user_id: user_id, trigger_key: trigger_key)
                           .where("DATE(evaluated_at) = ?", evaluated_at.to_date)
                           .where.not(id: id)
-    
+
     if existing.exists?
       errors.add(:base, "already has a signal event for this trigger on this date")
     end
@@ -30,4 +30,3 @@ class SignalEvent < ApplicationRecord
   scope :today, -> { for_date(Date.current) }
   scope :ordered_by_priority, -> { order(priority: :desc) }
 end
-

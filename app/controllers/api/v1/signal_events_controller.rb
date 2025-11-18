@@ -12,7 +12,7 @@ class Api::V1::SignalEventsController < ApplicationController
     end
 
     render json: signal_events.as_json(
-      only: [:id, :trigger_key, :category, :level, :priority, :evaluated_at, :meta]
+      only: [ :id, :trigger_key, :category, :level, :priority, :evaluated_at, :meta ]
     )
   end
 
@@ -40,4 +40,3 @@ class Api::V1::SignalEventsController < ApplicationController
     SignalEvent.where(id: results.map(&:id))
   end
 end
-

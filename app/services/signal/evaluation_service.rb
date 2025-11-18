@@ -131,4 +131,3 @@ module Signal
     end
   end
 end
-

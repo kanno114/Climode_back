@@ -40,7 +40,7 @@ class SignalEvaluationJob < ApplicationJob
         user_triggers.each do |user_trigger|
           trigger = user_trigger.trigger
           result = Signal::EvaluationService.new(user, date).evaluate_trigger(trigger)
-          
+
           if result
             Rails.logger.info "Created signal event for user #{user.id}, trigger #{trigger.key}, level #{result.level}"
           end
@@ -52,4 +52,3 @@ class SignalEvaluationJob < ApplicationJob
     end
   end
 end
-

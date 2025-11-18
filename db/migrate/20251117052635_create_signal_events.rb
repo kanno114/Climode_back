@@ -12,12 +12,12 @@ class CreateSignalEvents < ActiveRecord::Migration[7.2]
       t.timestamps
     end
 
-    add_index :signal_events, 
-              "user_id, trigger_key, DATE(evaluated_at)", 
-              unique: true, 
+    add_index :signal_events,
+              "user_id, trigger_key, DATE(evaluated_at)",
+              unique: true,
               name: 'index_signal_events_on_user_trigger_evaluated'
-    add_check_constraint :signal_events, 
-                         "category IN ('env', 'body')", 
+    add_check_constraint :signal_events,
+                         "category IN ('env', 'body')",
                          name: 'signal_events_category_check'
   end
 end
