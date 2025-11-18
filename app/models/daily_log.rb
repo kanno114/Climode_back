@@ -17,6 +17,15 @@ class DailyLog < ApplicationRecord
   after_create :fetch_weather_data
   after_update :fetch_weather_data, if: :prefecture_id_changed?
 
+  # 身体指標をハッシュ形式で返す（シグナル判定用）
+  def body_metrics
+    {
+      sleep_hours: sleep_hours,
+      mood: mood,
+      fatigue: fatigue
+    }.compact
+  end
+
   private
 
   def fetch_weather_data
