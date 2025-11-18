@@ -2,12 +2,13 @@ puts "Resetting database..."
 # 既存のデータを削除（外部キー制約を考慮して順序を調整）
 DailyLogSymptom.delete_all
 WeatherObservation.delete_all
+WeatherSnapshot.delete_all
 DailyLog.delete_all
 UserIdentity.delete_all
+UserTrigger.delete_all
 User.delete_all
 Symptom.delete_all
 Prefecture.delete_all
-UserTrigger.delete_all
 Trigger.delete_all
 
 puts "Seeding users..."
