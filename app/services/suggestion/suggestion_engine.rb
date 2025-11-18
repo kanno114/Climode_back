@@ -13,6 +13,7 @@ module Suggestion
       @date = date
       @daily_log = DailyLog.find_by!(user_id: @user.id, date: @date)
       @weather = @daily_log.weather_observation
+      @signal_events = SignalEvent.for_user(@user).for_date(@date)
       @rules = RuleRegistry.all
     end
 
@@ -30,7 +31,7 @@ module Suggestion
 
     # --- 入力文脈を構築 ---
     def build_context
-      {
+      ctx = {
         "sleep_hours"       => (@daily_log.sleep_hours || 0).to_f,
         "mood"              => @daily_log.mood.to_i,
         "score"             => @daily_log.score,
@@ -38,6 +39,45 @@ module Suggestion
         "humidity_pct"      => @weather.humidity_pct.to_f,
         "pressure_hpa"      => @weather.pressure_hpa.to_f
       }
+
+      # SignalEvent情報を追加
+      add_signal_events_to_context(ctx)
+      ctx
+    end
+
+    # SignalEvent情報をコンテキストに追加
+    # よく使われるトリガーキーに対してデフォルト値を設定
+    def add_signal_events_to_context(ctx)
+      # よく使われるトリガーキーのリスト（Trigger定義に合わせて拡張）
+      common_trigger_keys = ["pressure_drop", "sleep_shortage", "humidity_high", "temperature_drop"]
+      
+      # デフォルト値を設定（SignalEventが存在しない場合）
+      common_trigger_keys.each do |trigger_key|
+        ctx["has_#{trigger_key}_signal"] = false
+        ctx["#{trigger_key}_level"] = 0
+        ctx["#{trigger_key}_priority"] = 0.0
+        ctx["#{trigger_key}_category"] = 0
+      end
+
+      # 実際のSignalEventの値を上書き
+      @signal_events.each do |signal|
+        trigger_key = signal.trigger_key
+        # シグナルの存在フラグ
+        ctx["has_#{trigger_key}_signal"] = true
+        # シグナルのレベル（文字列を数値に変換: attention=1, warning=2, strong=3）
+        level_value = case signal.level
+                      when "attention" then 1
+                      when "warning" then 2
+                      when "strong" then 3
+                      else 0
+                      end
+        ctx["#{trigger_key}_level"] = level_value
+        # シグナルの優先度
+        ctx["#{trigger_key}_priority"] = signal.priority.to_f
+        # シグナルのカテゴリ（env=1, body=2）
+        category_value = signal.category == "env" ? 1 : 2
+        ctx["#{trigger_key}_category"] = category_value
+      end
     end
 
     # --- Dentakuで安全評価 ---
