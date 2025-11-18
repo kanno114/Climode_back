@@ -1,21 +1,24 @@
 rules:
-  # 既存のルール
-  - key: sleep_short
-    condition: "sleep_hours < 6.0"
-    title: "睡眠不足。昼に小休止を"
-    message: "今日は睡眠が短め（%{sleep_hours}h）。15–20分の仮眠とカフェイン控えめを。"
-    tags: ["sleep"]
+  # SignalEventを参照するルール（シグナル統合 - 優先使用）
+  # 注意: ユーザーがトリガーを登録している場合のみ有効
+  - key: sleep_shortage_signal_alert
+    title: "睡眠不足シグナル検出。休息を"
+    condition: "has_sleep_shortage_signal == true AND sleep_shortage_priority >= 35"
+    message: "睡眠不足のシグナルが検出されました（優先度%{sleep_shortage_priority}）。昼に短時間の休息を取ることをお勧めします。"
+    tags: ["sleep", "signal", "rest"]
     severity: "80"
 
-  - key: sleep_long
-    condition: "sleep_hours > 9.0"
-    title: "睡眠過多。活動的な一日を"
-    message: "今日は睡眠が長め（%{sleep_hours}h）。適度な運動で体を目覚めさせましょう。"
-    tags: ["sleep"]
-    severity: "60"
+  - key: sleep_shortage_signal_warning
+    title: "睡眠不足が深刻です。十分な休息を"
+    condition: "has_sleep_shortage_signal == true AND sleep_shortage_priority >= 65"
+    message: "深刻な睡眠不足のシグナルが検出されました（優先度%{sleep_shortage_priority}）。無理をせず、可能な限り休息を取るようにしましょう。"
+    tags: ["sleep", "signal", "caution"]
+    severity: "90"
 
+  # フォールバックルール（SignalEventが存在しない場合、またはトリガー未登録の場合）
+  # 注意: これらのルールは、SignalEventで評価できない場合の補完として使用
   - key: sleep_optimal
-    condition: "sleep_hours >= 7.0 AND sleep_hours <= 8.0"
+    condition: "sleep_hours >= 7.0 AND sleep_hours <= 8.0 AND has_sleep_shortage_signal == false"
     title: "理想的な睡眠時間"
     message: "今日は理想的な睡眠時間（%{sleep_hours}h）です。この調子を維持しましょう！"
     tags: ["sleep", "positive"]
@@ -57,38 +60,26 @@ rules:
     tags: ["temperature", "positive"]
     severity: "30"
 
-  # 湿度関連（既存 + 新規）
-  - key: high_humidity
-    title: "湿気が高い日。除湿剤の使用を検討してください。"
-    condition: "humidity_pct > 80"
-    message: "今日は高湿度です（%{humidity_pct}%%）。除湿剤の使用を検討してください。"
-    tags: ["humidity"]
-    severity: "80"
-
-  - key: very_high_humidity
-    title: "非常に湿気が高い日"
-    condition: "humidity_pct > 90"
-    message: "今日は非常に湿気が高いです（%{humidity_pct}%%）。カビ対策も忘れずに。"
-    tags: ["humidity", "caution"]
-    severity: "85"
-
+  # 湿度関連
+  # 注意: humidity_highはSignalEvent参照ルールを優先使用
+  # フォールバックルール（SignalEventが存在しない場合）
   - key: low_humidity
     title: "乾燥日。乾燥に注意してください。"
-    condition: "humidity_pct < 30"
+    condition: "humidity_pct < 30 AND has_humidity_high_signal == false"
     message: "今日は低湿度です（%{humidity_pct}%%）。加湿器の使用を検討してください。"
     tags: ["humidity"]
     severity: "80"
 
   - key: very_low_humidity
     title: "非常に乾燥した日"
-    condition: "humidity_pct < 20"
+    condition: "humidity_pct < 20 AND has_humidity_high_signal == false"
     message: "今日は非常に乾燥しています（%{humidity_pct}%%）。肌の保湿も忘れずに。"
     tags: ["humidity", "caution"]
     severity: "85"
 
   - key: comfortable_humidity
     title: "快適な湿度"
-    condition: "humidity_pct >= 40 AND humidity_pct <= 70"
+    condition: "humidity_pct >= 40 AND humidity_pct <= 70 AND has_humidity_high_signal == false"
     message: "今日は快適な湿度（%{humidity_pct}%%）です。過ごしやすい一日です。"
     tags: ["humidity", "positive"]
     severity: "30"
@@ -158,24 +149,24 @@ rules:
     tags: ["health_score", "positive"]
     severity: "35"
 
-  # 複合条件のルール（新規）
+  # 複合条件のルール
   - key: hot_and_humid
     title: "高温多湿。熱中症に注意"
-    condition: "temperature_c > 28 AND humidity_pct > 70"
-    message: "高温多湿の一日です（%{temperature_c}℃、%{humidity_pct}%%）。熱中症予防を徹底してください。"
+    condition: "temperature_c > 28 AND (humidity_pct > 70 OR (has_humidity_high_signal == true AND humidity_high_priority >= 40))"
+    message: "高温多湿の一日です（%{temperature_c}℃）。熱中症予防を徹底してください。"
     tags: ["temperature", "humidity", "caution"]
     severity: "90"
 
   - key: cold_and_dry
     title: "低温乾燥。風邪予防を"
-    condition: "temperature_c < 15 AND humidity_pct < 40"
+    condition: "temperature_c < 15 AND humidity_pct < 40 AND has_humidity_high_signal == false"
     message: "低温乾燥の一日です（%{temperature_c}℃、%{humidity_pct}%%）。風邪予防と保湿を心がけてください。"
     tags: ["temperature", "humidity", "health"]
     severity: "80"
 
   - key: weather_change_alert
     title: "気圧変動が大きい日"
-    condition: "pressure_hpa < 990 OR pressure_hpa > 1030"
+    condition: "(pressure_hpa < 990 OR pressure_hpa > 1030) OR (has_pressure_drop_signal == true AND pressure_drop_priority >= 50)"
     message: "気圧変動が大きい一日です（%{pressure_hpa}hPa）。体調の変化に注意してください。"
     tags: ["pressure", "caution"]
     severity: "85"
@@ -183,14 +174,14 @@ rules:
   # 季節性のルール（新規）
   - key: spring_allergy
     title: "花粉症シーズン。対策を"
-    condition: "temperature_c >= 15 AND temperature_c <= 25 AND humidity_pct < 60"
+    condition: "temperature_c >= 15 AND temperature_c <= 25 AND humidity_pct < 60 AND has_humidity_high_signal == false"
     message: "花粉症が発生しやすい条件です。マスクやメガネの着用を検討してください。"
     tags: ["seasonal", "allergy"]
     severity: "70"
 
   - key: summer_heat
     title: "夏の暑さ対策"
-    condition: "temperature_c > 25 AND humidity_pct > 60"
+    condition: "temperature_c > 25 AND (humidity_pct > 60 OR (has_humidity_high_signal == true AND humidity_high_priority >= 40))"
     message: "夏らしい暑さです。水分補給と適切な冷房使用で熱中症を防ぎましょう。"
     tags: ["seasonal", "summer"]
     severity: "75"
@@ -204,7 +195,43 @@ rules:
 
   - key: winter_cold
     title: "冬の寒さ対策"
-    condition: "temperature_c < 10 AND humidity_pct < 50"
+    condition: "temperature_c < 10 AND humidity_pct < 50 AND has_humidity_high_signal == false"
     message: "冬らしい寒さと乾燥です。暖房と加湿器で快適な室内環境を作りましょう。"
     tags: ["seasonal", "winter"]
     severity: "80"
+
+  # SignalEventを参照するルール（シグナル統合 - 優先使用）
+  - key: pressure_drop_signal_alert
+    title: "気圧低下シグナル検出。体調管理を"
+    condition: "has_pressure_drop_signal == true AND pressure_drop_priority >= 50"
+    message: "気圧低下のシグナルが検出されました（優先度%{pressure_drop_priority}）。頭痛やめまいに注意し、無理をしないようにしましょう。"
+    tags: ["pressure", "signal", "caution"]
+    severity: "85"
+
+  - key: pressure_drop_signal_warning
+    title: "気圧低下が深刻です。体調に注意"
+    condition: "has_pressure_drop_signal == true AND pressure_drop_priority >= 80"
+    message: "深刻な気圧低下のシグナルが検出されました（優先度%{pressure_drop_priority}）。関節痛や古傷の痛みに注意し、無理をしないようにしましょう。"
+    tags: ["pressure", "signal", "caution"]
+    severity: "90"
+
+  - key: humidity_high_signal_alert
+    title: "高湿度シグナル検出。除湿対策を"
+    condition: "has_humidity_high_signal == true AND humidity_high_priority >= 40"
+    message: "高湿度のシグナルが検出されました（優先度%{humidity_high_priority}）。除湿剤の使用を検討してください。"
+    tags: ["humidity", "signal"]
+    severity: "75"
+
+  - key: temperature_drop_signal_alert
+    title: "寒暖差シグナル検出。体調管理を"
+    condition: "has_temperature_drop_signal == true AND temperature_drop_priority >= 45"
+    message: "寒暖差のシグナルが検出されました（優先度%{temperature_drop_priority}）。体調の変化に注意してください。"
+    tags: ["temperature", "signal", "caution"]
+    severity: "80"
+
+  - key: multiple_signals_alert
+    title: "複数のシグナル検出。体調に注意"
+    condition: "(has_pressure_drop_signal == true AND pressure_drop_priority >= 70) AND (has_sleep_shortage_signal == true AND sleep_shortage_priority >= 50)"
+    message: "気圧低下と睡眠不足のシグナルが同時に検出されました。今日は特に体調管理に気をつけ、無理をしないようにしましょう。"
+    tags: ["signal", "caution", "health"]
+    severity: "90"
