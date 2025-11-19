@@ -90,7 +90,6 @@ RSpec.describe DailyLog, type: :model do
       daily_log = create(:daily_log)
       expect(daily_log.prefecture).to be_present
     end
-
   end
 
   describe 'ファクトリー' do
@@ -111,7 +110,6 @@ RSpec.describe DailyLog, type: :model do
       daily_log = create(:daily_log, :last_week)
       expect(daily_log.date).to eq(1.week.ago.to_date)
     end
-
   end
 
   describe 'スコープ' do
@@ -128,5 +126,4 @@ RSpec.describe DailyLog, type: :model do
       expect(DailyLog.where(user: user)).to include(today_log, yesterday_log, last_week_log)
     end
   end
-
 end
