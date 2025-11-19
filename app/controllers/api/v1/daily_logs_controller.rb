@@ -9,7 +9,7 @@ class Api::V1::DailyLogsController < ApplicationController
     offset = (page - 1) * per_page
 
     @daily_logs = current_user.daily_logs
-                              .includes(:prefecture, :weather_observation, :symptoms)
+                              .includes(:prefecture)
                               .order(date: :desc)
                               .offset(offset)
                               .limit(per_page)
@@ -18,7 +18,7 @@ class Api::V1::DailyLogsController < ApplicationController
     total_pages = (total_count.to_f / per_page).ceil
 
     render json: {
-      daily_logs: @daily_logs.as_json(include: [ :prefecture, :weather_observation, :symptoms ]),
+      daily_logs: @daily_logs.as_json(include: [ :prefecture ]),
       pagination: {
         current_page: page,
         total_pages: total_pages,
@@ -30,17 +30,17 @@ class Api::V1::DailyLogsController < ApplicationController
 
   # GET /api/v1/daily_logs/:id
   def show
-    render json: @daily_log.as_json(include: [ :prefecture, :weather_observation, :symptoms, :suggestion_feedbacks ])
+    render json: @daily_log.as_json(include: [ :prefecture, :suggestion_feedbacks ])
   end
 
   # GET /api/v1/daily_logs/date/:date
   def show_by_date
     @daily_log = current_user.daily_logs
-                             .includes(:prefecture, :weather_observation, :symptoms, :suggestion_feedbacks)
+                             .includes(:prefecture, :suggestion_feedbacks)
                              .find_by(date: params[:date])
 
     if @daily_log
-      render json: @daily_log.as_json(include: [ :prefecture, :weather_observation, :symptoms, :suggestion_feedbacks ])
+      render json: @daily_log.as_json(include: [ :prefecture, :suggestion_feedbacks ])
     else
       render json: { error: "Daily log not found for date: #{params[:date]}" },
              status: :not_found
@@ -54,11 +54,11 @@ class Api::V1::DailyLogsController < ApplicationController
     start_date = end_date - 30.days
 
     @daily_logs = current_user.daily_logs
-                              .includes(:prefecture, :weather_observation, :symptoms)
+                              .includes(:prefecture)
                               .where(date: start_date..end_date)
                               .order(date: :desc)
 
-    render json: @daily_logs.as_json(include: [ :prefecture, :weather_observation, :symptoms ])
+    render json: @daily_logs.as_json(include: [ :prefecture ])
   end
 
   # POST /api/v1/daily_logs
@@ -83,20 +83,7 @@ class Api::V1::DailyLogsController < ApplicationController
     @daily_log.score = score_result[:score]
 
     if @daily_log.save
-      # 症状を関連付け
-      if daily_log_data[:symptoms].present?
-        symptoms = JSON.parse(daily_log_data[:symptoms])
-        symptoms.each do |symptom_code|
-          symptom = Symptom.find_by(code: symptom_code)
-          if symptom
-            @daily_log.daily_log_symptoms.create!(symptom: symptom)
-          end
-        end
-      end
-
-      # 天気データはモデルのコールバックで自動取得される
-
-      render json: @daily_log.as_json(include: [ :prefecture, :weather_observation, :symptoms ]),
+      render json: @daily_log.as_json(include: [ :prefecture ]),
              status: :created
     else
       render json: { errors: @daily_log.errors.full_messages },
@@ -126,21 +113,7 @@ class Api::V1::DailyLogsController < ApplicationController
     @daily_log.score = score_result[:score]
 
     if @daily_log.save
-      # 既存の症状を削除
-      @daily_log.daily_log_symptoms.destroy_all
-
-      # 症状を関連付け
-      if daily_log_data[:symptoms].present?
-        symptoms = JSON.parse(daily_log_data[:symptoms])
-        symptoms.each do |symptom_code|
-          symptom = Symptom.find_by(code: symptom_code)
-          if symptom
-            @daily_log.daily_log_symptoms.create!(symptom: symptom)
-          end
-        end
-      end
-
-      render json: @daily_log.as_json(include: [ :prefecture, :weather_observation, :symptoms ])
+      render json: @daily_log.as_json(include: [ :prefecture ])
     else
       render json: { errors: @daily_log.errors.full_messages },
              status: :unprocessable_entity
@@ -150,7 +123,7 @@ class Api::V1::DailyLogsController < ApplicationController
   # PATCH /api/v1/daily_logs/:id/self_score
   def update_self_score
     if @daily_log.update(self_score: params[:self_score])
-      render json: @daily_log.as_json(include: [ :prefecture, :weather_observation, :symptoms ])
+      render json: @daily_log.as_json(include: [ :prefecture ])
     else
       render json: { errors: @daily_log.errors.full_messages },
              status: :unprocessable_entity
@@ -306,8 +279,7 @@ class Api::V1::DailyLogsController < ApplicationController
       :sleep_hours,
       :mood,
       :self_score,
-      :note,
-      symptom_ids: []
+      :note
     )
   end
 end
