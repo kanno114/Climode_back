@@ -22,6 +22,7 @@ Rails.application.routes.draw do
       post :refresh, to: "sessions#refresh"
       post :signup, to: "registrations#create"
       post :oauth_register, to: "registrations#oauth_register"
+      get :validate_token, to: "sessions#validate_token"
 
       resources :daily_logs do
         collection do
