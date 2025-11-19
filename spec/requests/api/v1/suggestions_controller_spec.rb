@@ -16,18 +16,18 @@ RSpec.describe 'Api::V1::Suggestions', type: :request do
                  date: Date.current,
                  sleep_hours: 5.0,
                  mood: 3,
-                 score: 60).tap do |log|
-            create(:weather_observation, daily_log: log)
-          end
+                 score: 60)
         end
-        let(:weather) { daily_log.weather_observation }
 
-        before do
-          weather.update!(
-            temperature_c: 25.0,
-            humidity_pct: 50.0,
-            pressure_hpa: 1013.0
-          )
+        let!(:weather_snapshot) do
+          create(:weather_snapshot,
+                 prefecture: user.prefecture,
+                 date: Date.current,
+                 metrics: {
+                   "temperature_c" => 25.0,
+                   "humidity_pct" => 50.0,
+                   "pressure_hpa" => 1013.0
+                 })
         end
 
         it '提案一覧を返す' do
@@ -55,7 +55,11 @@ RSpec.describe 'Api::V1::Suggestions', type: :request do
 
         it '最大3件まで返す' do
           daily_log.update!(sleep_hours: 5.0, score: 45)
-          weather.update!(temperature_c: 36.0, humidity_pct: 75.0, pressure_hpa: 970.0)
+          weather_snapshot.update!(metrics: {
+            "temperature_c" => 36.0,
+            "humidity_pct" => 75.0,
+            "pressure_hpa" => 970.0
+          })
 
           get '/api/v1/suggestions', headers: headers
 
@@ -65,7 +69,11 @@ RSpec.describe 'Api::V1::Suggestions', type: :request do
 
         it 'severityの高い順に返す' do
           daily_log.update!(sleep_hours: 5.0)
-          weather.update!(temperature_c: 36.0, humidity_pct: 75.0)
+          weather_snapshot.update!(metrics: {
+            "temperature_c" => 36.0,
+            "humidity_pct" => 75.0,
+            "pressure_hpa" => 1013.0
+          })
 
           get '/api/v1/suggestions', headers: headers
 
@@ -78,7 +86,11 @@ RSpec.describe 'Api::V1::Suggestions', type: :request do
 
         it '提案がない場合でも空配列を返す' do
           daily_log.update!(sleep_hours: 7.5)
-          weather.update!(temperature_c: 20.0, humidity_pct: 50.0, pressure_hpa: 1013.0)
+          weather_snapshot.update!(metrics: {
+            "temperature_c" => 20.0,
+            "humidity_pct" => 50.0,
+            "pressure_hpa" => 1013.0
+          })
 
           get '/api/v1/suggestions', headers: headers
 

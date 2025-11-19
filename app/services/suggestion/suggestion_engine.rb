@@ -12,7 +12,10 @@ module Suggestion
       @user = user
       @date = date
       @daily_log = DailyLog.find_by!(user_id: @user.id, date: @date)
-      @weather = @daily_log.weather_observation
+      @weather_snapshot = WeatherSnapshot.find_by(
+        prefecture: @daily_log.prefecture,
+        date: @date
+      )
       @signal_events = SignalEvent.for_user(@user).for_date(@date)
       @rules = ::Suggestion::RuleRegistry.all
     end
@@ -31,13 +34,14 @@ module Suggestion
 
     # --- 入力文脈を構築 ---
     def build_context
+      metrics = @weather_snapshot&.metrics || {}
       ctx = {
         "sleep_hours"       => (@daily_log.sleep_hours || 0).to_f,
         "mood"              => @daily_log.mood.to_i,
         "score"             => @daily_log.score,
-        "temperature_c"     => @weather.temperature_c.to_f,
-        "humidity_pct"      => @weather.humidity_pct.to_f,
-        "pressure_hpa"      => @weather.pressure_hpa.to_f
+        "temperature_c"     => (metrics["temperature_c"] || 0).to_f,
+        "humidity_pct"      => (metrics["humidity_pct"] || 0).to_f,
+        "pressure_hpa"      => (metrics["pressure_hpa"] || 0).to_f
       }
 
       # SignalEvent情報を追加

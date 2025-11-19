@@ -10,18 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_11_18_143737) do
+ActiveRecord::Schema[7.2].define(version: 2025_11_19_062526) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
-
-  create_table "daily_log_symptoms", force: :cascade do |t|
-    t.bigint "daily_log_id", null: false
-    t.bigint "symptom_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["daily_log_id"], name: "index_daily_log_symptoms_on_daily_log_id"
-    t.index ["symptom_id"], name: "index_daily_log_symptoms_on_symptom_id"
-  end
 
   create_table "daily_logs", force: :cascade do |t|
     t.bigint "user_id", null: false
@@ -111,15 +102,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_18_143737) do
     t.index ["daily_log_id"], name: "index_suggestion_feedbacks_on_daily_log_id"
   end
 
-  create_table "symptoms", force: :cascade do |t|
-    t.string "code"
-    t.string "name"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["code"], name: "index_symptoms_on_code", unique: true
-    t.index ["name"], name: "index_symptoms_on_name", unique: true
-  end
-
   create_table "triggers", force: :cascade do |t|
     t.string "key", null: false
     t.string "label", null: false
@@ -167,21 +149,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_18_143737) do
     t.index ["prefecture_id"], name: "index_users_on_prefecture_id"
   end
 
-  create_table "weather_observations", force: :cascade do |t|
-    t.bigint "daily_log_id", null: false
-    t.decimal "temperature_c", precision: 4, scale: 1
-    t.decimal "humidity_pct", precision: 5, scale: 2
-    t.decimal "pressure_hpa", precision: 6, scale: 1
-    t.datetime "observed_at"
-    t.jsonb "snapshot"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["daily_log_id"], name: "index_weather_observations_on_daily_log_id"
-    t.check_constraint "humidity_pct >= 0::numeric AND humidity_pct <= 100::numeric", name: "check_humidity_range"
-    t.check_constraint "pressure_hpa >= 800::numeric AND pressure_hpa <= 1100::numeric", name: "check_pressure_range"
-    t.check_constraint "temperature_c >= '-90'::integer::numeric AND temperature_c <= 60::numeric", name: "check_temperature_range"
-  end
-
   create_table "weather_snapshots", force: :cascade do |t|
     t.bigint "prefecture_id", null: false
     t.date "date", null: false
@@ -192,8 +159,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_18_143737) do
     t.index ["prefecture_id"], name: "index_weather_snapshots_on_prefecture_id"
   end
 
-  add_foreign_key "daily_log_symptoms", "daily_logs"
-  add_foreign_key "daily_log_symptoms", "symptoms"
   add_foreign_key "daily_logs", "prefectures"
   add_foreign_key "daily_logs", "users"
   add_foreign_key "push_subscriptions", "users"
@@ -204,6 +169,5 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_18_143737) do
   add_foreign_key "user_triggers", "triggers", on_delete: :restrict
   add_foreign_key "user_triggers", "users", on_delete: :restrict
   add_foreign_key "users", "prefectures"
-  add_foreign_key "weather_observations", "daily_logs"
   add_foreign_key "weather_snapshots", "prefectures"
 end
