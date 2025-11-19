@@ -115,4 +115,3 @@ RSpec.describe "Api::V1::SessionsController", type: :request do
     end
   end
 end
-
