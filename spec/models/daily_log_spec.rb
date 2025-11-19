@@ -90,16 +90,6 @@ RSpec.describe DailyLog, type: :model do
       daily_log = create(:daily_log)
       expect(daily_log.prefecture).to be_present
     end
-
-    it '天気観測データを持っている' do
-      daily_log = create(:daily_log, :with_weather_observation)
-      expect(daily_log.weather_observation).to be_present
-    end
-
-    it '複数の症状を持っている' do
-      daily_log = create(:daily_log, :with_symptoms)
-      expect(daily_log.symptoms).to be_present
-    end
   end
 
   describe 'ファクトリー' do
@@ -120,17 +110,6 @@ RSpec.describe DailyLog, type: :model do
       daily_log = create(:daily_log, :last_week)
       expect(daily_log.date).to eq(1.week.ago.to_date)
     end
-
-    it '天気観測データ付きの日次ログを作成する' do
-      daily_log = create(:daily_log, :with_weather_observation)
-      expect(daily_log.weather_observation).to be_present
-      expect(daily_log.weather_observation.temperature_c).to be_present
-    end
-
-    it '症状付きの日次ログを作成する' do
-      daily_log = create(:daily_log, :with_symptoms)
-      expect(daily_log.symptoms).not_to be_empty
-    end
   end
 
   describe 'スコープ' do
@@ -145,47 +124,6 @@ RSpec.describe DailyLog, type: :model do
 
     it '指定したユーザーのログを取得できる' do
       expect(DailyLog.where(user: user)).to include(today_log, yesterday_log, last_week_log)
-    end
-  end
-
-  describe '天気データ自動取得' do
-    let(:user) { create(:user) }
-    let(:prefecture) { create(:prefecture, :tokyo) }
-
-    context 'DailyLog作成時' do
-      it '天気データが自動取得される' do
-        expect {
-          create(:daily_log, user: user, prefecture: prefecture)
-        }.to change(WeatherObservation, :count).by(1)
-      end
-
-      it '都道府県に座標がない場合は天気データを取得しない' do
-        prefecture_without_coords = create(:prefecture, centroid_lat: nil, centroid_lon: nil)
-
-        expect {
-          create(:daily_log, user: user, prefecture: prefecture_without_coords)
-        }.not_to change(WeatherObservation, :count)
-      end
-    end
-
-    context 'DailyLog更新時' do
-      let!(:daily_log) { create(:daily_log, user: user, prefecture: prefecture) }
-      let(:new_prefecture) { create(:prefecture, :osaka) }
-
-      it '都道府県が変更された場合に天気データが更新される' do
-        # 基本的な動作確認：都道府県が変更されることを確認
-        expect {
-          daily_log.update!(prefecture: new_prefecture)
-        }.to change { daily_log.reload.prefecture }.to(new_prefecture)
-      end
-
-      it '都道府県が変更されない場合は天気データを再取得しない' do
-        original_weather = daily_log.weather_observation
-
-        expect {
-          daily_log.update!(sleep_hours: 8.0)
-        }.not_to change { daily_log.reload.weather_observation.id }
-      end
     end
   end
 end

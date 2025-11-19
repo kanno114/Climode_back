@@ -38,6 +38,11 @@ module Weather
       today_data = fetch_weather_data_for_date(@date)
       return metrics unless today_data
 
+      # 生の天気データを保存（スコア計算・提案生成用）
+      metrics["temperature_c"] = today_data[:temperature_c] if today_data[:temperature_c]
+      metrics["humidity_pct"] = today_data[:humidity_pct] if today_data[:humidity_pct]
+      metrics["pressure_hpa"] = today_data[:pressure_hpa] if today_data[:pressure_hpa]
+
       # 湿度の平均値（当日の値を使用）
       metrics["humidity_avg"] = today_data[:humidity_pct] if today_data[:humidity_pct]
 

@@ -40,7 +40,6 @@ Rails.application.routes.draw do
           get :default_prefecture
         end
       end
-      resources :symptoms, only: [ :index, :show ]
       resources :prefectures, only: [ :index, :show ]
       resources :suggestions, only: [ :index ]
       resources :triggers, only: [ :index ]

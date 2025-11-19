@@ -1,14 +1,11 @@
 puts "Resetting database..."
 # 既存のデータを削除（外部キー制約を考慮して順序を調整）
-DailyLogSymptom.delete_all
-WeatherObservation.delete_all
 WeatherSnapshot.delete_all
 DailyLog.delete_all
 SignalEvent.delete_all
 UserIdentity.delete_all
 UserTrigger.delete_all
 User.delete_all
-Symptom.delete_all
 Prefecture.delete_all
 Trigger.delete_all
 
@@ -99,29 +96,6 @@ prefectures_data.each do |prefecture_data|
   end
 end
 
-# 症状マスタデータ（フロントエンドのフォームと一致）
-symptoms_data = [
-  { code: 'headache', name: '頭痛' },
-  { code: 'dizziness', name: 'めまい' },
-  { code: 'nausea', name: '吐き気' },
-  { code: 'fatigue', name: '倦怠感' },
-  { code: 'shoulder_pain', name: '肩こり' },
-  { code: 'back_pain', name: '腰痛' },
-  { code: 'stomach_ache', name: '腹痛' },
-  { code: 'fever', name: '発熱' },
-  { code: 'cough', name: '咳' },
-  { code: 'runny_nose', name: '鼻水' },
-  { code: 'eye_strain', name: '目の疲れ' },
-  { code: 'insomnia', name: '不眠' },
-  { code: 'loss_of_appetite', name: '食欲不振' },
-  { code: 'other', name: 'その他' }
-]
-
-symptoms_data.each do |symptom_data|
-  Symptom.find_or_create_by!(code: symptom_data[:code]) do |symptom|
-    symptom.name = symptom_data[:name]
-  end
-end
 # トリガーマスタデータ
 skip_triggers = ENV['SEED_SKIP_TRIGGERS'] == '1'
 unless skip_triggers
@@ -219,18 +193,6 @@ if alice
       score: total_score
     )
 
-    # 天候データを別テーブルに保存
-    WeatherObservation.create!(
-      daily_log: daily_log,
-      temperature_c: temperature,
-      humidity_pct: humidity,
-      pressure_hpa: pressure,
-      observed_at: date.to_datetime,
-      snapshot: {
-        weather_condition: weather_condition
-      }
-    )
-
     puts "  Created daily log for Alice on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}, score=#{total_score}" if verbose_logs
   end
   end
@@ -317,18 +279,6 @@ if bob
       score: total_score
     )
 
-    # 天候データを別テーブルに保存
-    WeatherObservation.create!(
-      daily_log: daily_log,
-      temperature_c: temperature,
-      humidity_pct: humidity,
-      pressure_hpa: pressure,
-      observed_at: date.to_datetime,
-      snapshot: {
-        weather_condition: weather_condition
-      }
-    )
-
     puts "  Created daily log for Bob on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}, score=#{total_score}" if verbose_logs
   end
   end
@@ -395,20 +345,6 @@ if alice
       }
       snapshot.save!
       puts "  Created/Updated WeatherSnapshot for #{prefecture.name_ja} on #{today}"
-
-      # WeatherObservationも作成
-      unless today_log.weather_observation
-        WeatherObservation.create!(
-          daily_log: today_log,
-          temperature_c: 20.0,
-          humidity_pct: 75.0,
-          pressure_hpa: 1000.0,
-          observed_at: today.to_datetime,
-          snapshot: {
-            weather_condition: "曇り"
-          }
-        )
-      end
     end
 
     puts "  Created today's DailyLog for Alice: sleep=5.0h (should trigger sleep_shortage signal)"

@@ -12,18 +12,18 @@ RSpec.describe Suggestion::SuggestionEngine do
                date: date,
                sleep_hours: 5.0,
                mood: 3,
-               score: 60).tap do |log|
-          create(:weather_observation, daily_log: log)
-        end
+               score: 60)
       end
-      let(:weather) { daily_log.weather_observation }
 
-      before do
-        weather.update!(
-          temperature_c: 25.0,
-          humidity_pct: 50.0,
-          pressure_hpa: 1013.0
-        )
+      let!(:weather_snapshot) do
+        create(:weather_snapshot,
+               prefecture: user.prefecture,
+               date: date,
+               metrics: {
+                 "temperature_c" => 25.0,
+                 "humidity_pct" => 50.0,
+                 "pressure_hpa" => 1013.0
+               })
       end
 
       context '単一条件に一致する場合' do
@@ -67,7 +67,11 @@ RSpec.describe Suggestion::SuggestionEngine do
       context '複数条件に一致する場合' do
         it '複数の提案を返す' do
           daily_log.update!(sleep_hours: 5.0)
-          weather.update!(temperature_c: 32.0, humidity_pct: 75.0)
+          weather_snapshot.update!(metrics: {
+            "temperature_c" => 32.0,
+            "humidity_pct" => 75.0,
+            "pressure_hpa" => 1013.0
+          })
           # SignalEventを作成（sleep_shortage trigger）
           create(:signal_event,
                  user: user,
@@ -84,7 +88,11 @@ RSpec.describe Suggestion::SuggestionEngine do
         end
 
         it 'hot_and_humidルールに一致する場合、適切な提案を返す' do
-          weather.update!(temperature_c: 30.0, humidity_pct: 75.0)
+          weather_snapshot.update!(metrics: {
+            "temperature_c" => 30.0,
+            "humidity_pct" => 75.0,
+            "pressure_hpa" => 1013.0
+          })
 
           suggestions = described_class.call(user: user, date: date)
           hot_humid_suggestion = suggestions.find { |s| s.key == 'hot_and_humid' }
@@ -129,7 +137,11 @@ RSpec.describe Suggestion::SuggestionEngine do
       context 'severity順と最大件数制限' do
         it 'severityの高い順に返す' do
           daily_log.update!(sleep_hours: 5.0)
-          weather.update!(temperature_c: 36.0, humidity_pct: 75.0)
+          weather_snapshot.update!(metrics: {
+            "temperature_c" => 36.0,
+            "humidity_pct" => 75.0,
+            "pressure_hpa" => 1013.0
+          })
 
           suggestions = described_class.call(user: user, date: date)
 
@@ -142,7 +154,11 @@ RSpec.describe Suggestion::SuggestionEngine do
 
         it '最大3件まで返す' do
           daily_log.update!(sleep_hours: 5.0, score: 45)
-          weather.update!(temperature_c: 36.0, humidity_pct: 75.0, pressure_hpa: 970.0)
+          weather_snapshot.update!(metrics: {
+            "temperature_c" => 36.0,
+            "humidity_pct" => 75.0,
+            "pressure_hpa" => 970.0
+          })
 
           suggestions = described_class.call(user: user, date: date)
 
@@ -153,7 +169,11 @@ RSpec.describe Suggestion::SuggestionEngine do
       context '同タグの連発抑制' do
         it '同じタグを持つ提案が複数ある場合、上位のもののみ返す' do
           daily_log.update!(sleep_hours: 5.0)
-          weather.update!(temperature_c: 36.0)
+          weather_snapshot.update!(metrics: {
+            "temperature_c" => 36.0,
+            "humidity_pct" => 50.0,
+            "pressure_hpa" => 1013.0
+          })
 
           suggestions = described_class.call(user: user, date: date)
           sleep_suggestions = suggestions.select { |s| s.tags.include?('sleep') }
@@ -166,7 +186,11 @@ RSpec.describe Suggestion::SuggestionEngine do
       context '条件に一致しない場合' do
         it '提案を返さない' do
           daily_log.update!(sleep_hours: 7.5)
-          weather.update!(temperature_c: 20.0, humidity_pct: 50.0, pressure_hpa: 1013.0)
+          weather_snapshot.update!(metrics: {
+            "temperature_c" => 20.0,
+            "humidity_pct" => 50.0,
+            "pressure_hpa" => 1013.0
+          })
 
           suggestions = described_class.call(user: user, date: date)
 
@@ -191,11 +215,20 @@ RSpec.describe Suggestion::SuggestionEngine do
                date: date,
                sleep_hours: 5.0,
                mood: 3,
-               score: 60).tap do |log|
-          create(:weather_observation, daily_log: log)
-        end
+               score: 60)
       end
-      let(:weather) { daily_log.weather_observation }
+
+      let!(:weather_snapshot) do
+        create(:weather_snapshot,
+               prefecture: user.prefecture,
+               date: date,
+               metrics: {
+                 "temperature_c" => 25.0,
+                 "humidity_pct" => 50.0,
+                 "pressure_hpa" => 1013.0
+               })
+      end
+
       let!(:signal_event) do
         create(:signal_event,
                user: user,
@@ -204,14 +237,6 @@ RSpec.describe Suggestion::SuggestionEngine do
                level: "strong",
                priority: 80,
                evaluated_at: date.beginning_of_day)
-      end
-
-      before do
-        weather.update!(
-          temperature_c: 25.0,
-          humidity_pct: 50.0,
-          pressure_hpa: 1013.0
-        )
       end
 
       it 'SignalEvent情報がコンテキストに含まれる' do
@@ -277,9 +302,7 @@ RSpec.describe Suggestion::SuggestionEngine do
       create(:daily_log,
              user: user,
              date: date,
-             sleep_hours: 5.0).tap do |log|
-        create(:weather_observation, daily_log: log)
-      end
+             sleep_hours: 5.0)
     end
     let(:engine) { described_class.new(user: user, date: date) }
     let(:ctx) do
