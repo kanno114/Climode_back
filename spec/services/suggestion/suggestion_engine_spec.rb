@@ -67,7 +67,11 @@ RSpec.describe Suggestion::SuggestionEngine do
       context '複数条件に一致する場合' do
         it '複数の提案を返す' do
           daily_log.update!(sleep_hours: 5.0)
-          weather.update!(temperature_c: 32.0, humidity_pct: 75.0)
+          weather_snapshot.update!(metrics: {
+            "temperature_c" => 32.0,
+            "humidity_pct" => 75.0,
+            "pressure_hpa" => 1013.0
+          })
           # SignalEventを作成（sleep_shortage trigger）
           create(:signal_event,
                  user: user,
