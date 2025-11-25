@@ -75,6 +75,6 @@ class Api::V1::RegistrationsController < ApplicationController
   private
 
   def signup_params
-    params.require(:user).permit(:email, :password, :password_confirmation, :name, :image)
+    params.require(:user).permit(:email, :password, :password_confirmation, :name, :image, :prefecture_id)
   end
 end
