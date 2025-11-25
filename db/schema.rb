@@ -78,7 +78,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_19_062526) do
     t.datetime "updated_at", null: false
     t.index "user_id, trigger_key, date(evaluated_at)", name: "index_signal_events_on_user_trigger_evaluated", unique: true
     t.index ["user_id"], name: "index_signal_events_on_user_id"
-    t.check_constraint "category::text = ANY (ARRAY['env'::character varying::text, 'body'::character varying::text])", name: "signal_events_category_check"
+    t.check_constraint "category::text = ANY (ARRAY['env'::character varying, 'body'::character varying]::text[])", name: "signal_events_category_check"
   end
 
   create_table "signal_feedbacks", force: :cascade do |t|
@@ -112,7 +112,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_19_062526) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["key"], name: "index_triggers_on_key", unique: true
-    t.check_constraint "category::text = ANY (ARRAY['env'::character varying::text, 'body'::character varying::text])", name: "triggers_category_check"
+    t.check_constraint "category::text = ANY (ARRAY['env'::character varying, 'body'::character varying]::text[])", name: "triggers_category_check"
   end
 
   create_table "user_identities", force: :cascade do |t|

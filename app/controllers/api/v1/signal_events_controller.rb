@@ -2,6 +2,8 @@ class Api::V1::SignalEventsController < ApplicationController
   include Authenticatable
 
   # GET /api/v1/signal_events/today
+  # クエリパラメータ:
+  #   category: "env" または "body" でフィルタリング（省略時は全て）
   def today
     date = Date.current
     signal_events = SignalEvent.for_user(current_user).for_date(date).ordered_by_priority
@@ -11,9 +13,16 @@ class Api::V1::SignalEventsController < ApplicationController
       signal_events = evaluate_env_signals_immediately(date)
     end
 
-    render json: signal_events.as_json(
+    # カテゴリでフィルタリング
+    if params[:category].present?
+      signal_events = signal_events.for_category(params[:category])
+    end
+
+    render json: signal_events.map { |event|
+      event.as_json(
       only: [ :id, :trigger_key, :category, :level, :priority, :evaluated_at, :meta ]
-    )
+      ).merge(trigger_key_label: event.trigger_key_label)
+    }
   end
 
   private
