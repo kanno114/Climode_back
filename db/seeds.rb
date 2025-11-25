@@ -1,3 +1,54 @@
+# ============================================================================
+# データベースシードファイル
+# ============================================================================
+#
+# このファイルは開発・テスト環境用のサンプルデータを作成します。
+#
+# 【作成されるテストデータの概要】
+#
+# 1. ユーザーデータ
+#    - Alice (alice@example.com) : パスワード: password123
+#    - Bob (bob@example.com)     : パスワード: password123
+#    - Carol (carol@example.com) : パスワード: password123
+#
+# 2. 都道府県マスタデータ
+#    - 全国47都道府県のデータ（コード、名称、重心座標）
+#
+# 3. トリガーマスタデータ
+#    - 環境変数 SEED_SKIP_TRIGGERS=1 でスキップ可能
+#    - Triggers::PresetLoader によりマスタデータを同期
+#
+# 4. Aliceのサンプル記録データ
+#    - 過去N日分（デフォルト: 7日、環境変数 SEED_DAYS で変更可能）のDailyLogを作成
+#    - 睡眠時間: 5.0〜9.0時間のランダム
+#    - 気分スコア: 3〜9のランダム（-5〜5の範囲に変換）
+#    - 疲労感スコア: 2〜8のランダム（-5〜5の範囲に変換）
+#    - 総合スコア: 睡眠、気分、疲労感から自動計算
+#    - 都道府県: 東京都（デフォルト）
+#
+# 5. Bobのサンプル記録データ
+#    - Aliceと同じ形式で過去N日分のDailyLogを作成
+#    - データ生成方法はAliceと同じ
+#
+# 6. Aliceのシグナル・提案確認用データ
+#    - トリガー登録: pressure_drop, sleep_shortage, humidity_high, temperature_drop
+#    - 今日のDailyLog: 睡眠不足シグナルが発火するよう設定（睡眠5.0時間）
+#    - WeatherSnapshot: 気圧低下、湿度高、気温低下シグナルが発火するよう設定
+#    - シグナル評価: Signal::EvaluationService によりSignalEventを作成
+#    - 提案生成: Suggestion::SuggestionEngine により提案を生成
+#
+# 7. Bobのシグナル・提案確認用データ
+#    - トリガー登録: pressure_drop, sleep_shortage, humidity_high, temperature_drop
+#    - 今日のDailyLogは作成しない（Aliceのみ作成）
+#    - シグナル評価・提案生成は実行しない
+#
+# 【環境変数】
+#   - SEED_DAYS: 作成する過去日数（デフォルト: 7）
+#   - SEED_SKIP_TRIGGERS: トリガーマスタデータの同期をスキップ（1でスキップ）
+#   - SEED_VERBOSE: 詳細ログを出力（1で有効）
+#
+# ============================================================================
+
 puts "Resetting database..."
 # 既存のデータを削除（外部キー制約を考慮して順序を調整）
 WeatherSnapshot.delete_all
@@ -27,15 +78,6 @@ users.each do |attrs|
     puts "  unchanged: #{user.email}"
   end
 end
-
-# This file should contain all the record creation needed to seed the database with its default values.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
 
 # 都道府県データ
 prefectures_data = [
@@ -127,17 +169,7 @@ if alice
     mood_score = rand(3..9)
     fatigue_score = rand(2..8) # 疲労感スコア（1-10の範囲）
 
-    # ランダムな症状を選択（0-3個）
-    # 症状データ生成を削除
-
-    # 天候データ
-    weather_conditions = [ '晴れ', '曇り', '雨', '雪', '霧', '雷' ]
-    weather_condition = weather_conditions.sample
-    temperature = rand(10.0..30.0).round(1)
-    humidity = rand(30..80)
-    pressure = rand(1000.0..1020.0).round(1)
-
-    # スコア計算（睡眠、気分、疲労感、症状数を考慮）
+    # スコア計算（睡眠、気分、疲労感を考慮）
     base_score = 50 # ベーススコア
 
     # 睡眠スコア（7-8時間が最適）
@@ -158,11 +190,8 @@ if alice
     # 疲労感スコア（疲労感が少ないほど高スコア）
     fatigue_bonus = (10 - fatigue_score) * 1.5
 
-    # 症状数による減点
-    symptom_penalty = 0
-
     # 総合スコア計算
-    total_score = [ base_score + sleep_score + mood_bonus + fatigue_bonus - symptom_penalty, 100 ].min
+    total_score = [ base_score + sleep_score + mood_bonus + fatigue_bonus, 100 ].min
     total_score = [ total_score, 0 ].max
 
     # メモ（気分と疲労感を考慮）
@@ -211,21 +240,11 @@ if bob
     next if existing_log
 
     # ランダムな体調データを生成
-    sleep_hours = rand(6.0..8.5).round(1)
-    mood_score = rand(4..8)
-    fatigue_score = rand(3..7) # 疲労感スコア（1-10の範囲）
+    sleep_hours = rand(5.0..9.0).round(1)
+    mood_score = rand(3..9)
+    fatigue_score = rand(2..8) # 疲労感スコア（1-10の範囲）
 
-    # ランダムな症状を選択（0-2個）
-    # 症状データ生成を削除
-
-    # 天候データ
-    weather_conditions = [ '晴れ', '曇り', '雨' ]
-    weather_condition = weather_conditions.sample
-    temperature = rand(15.0..25.0).round(1)
-    humidity = rand(40..70)
-    pressure = rand(1005.0..1015.0).round(1)
-
-    # スコア計算（睡眠、気分、疲労感、症状数を考慮）
+    # スコア計算（睡眠、気分、疲労感を考慮）
     base_score = 50 # ベーススコア
 
     # 睡眠スコア（7-8時間が最適）
@@ -246,21 +265,20 @@ if bob
     # 疲労感スコア（疲労感が少ないほど高スコア）
     fatigue_bonus = (10 - fatigue_score) * 1.5
 
-    # 症状数による減点
-    symptom_penalty = 0
-
     # 総合スコア計算
-    total_score = [ base_score + sleep_score + mood_bonus + fatigue_bonus - symptom_penalty, 100 ].min
+    total_score = [ base_score + sleep_score + mood_bonus + fatigue_bonus, 100 ].min
     total_score = [ total_score, 0 ].max
 
     # メモ（気分と疲労感を考慮）
     notes = case [ mood_score, fatigue_score ]
-    in [ 7..8, 1..4 ]
-      "仕事が順調に進みました。疲れも少なく快調です。"
-    in [ 5..6, 3..6 ]
-      "普通の一日でした。"
-    in [ 4..5, 6..8 ]
-      "少し疲れました。"
+    in [ 8..9, 1..3 ]
+      "体調が良く、充実した一日でした。疲れも少なく快調です。"
+    in [ 6..7, 1..4 ]
+      "普通の一日でした。特に問題なし。"
+    in [ 4..5, 5..7 ]
+      "少し疲れを感じました。"
+    in [ 1..3, 8..10 ]
+      "体調が優れませんでした。疲労感が強いです。"
     else
       "普通の一日でした。"
     end
@@ -375,6 +393,28 @@ if alice
   rescue => e
     puts "  Warning: Could not generate suggestions: #{e.message}"
   end
+end
+
+# Bobにトリガーを登録
+bob = User.find_by(email: 'bob@example.com')
+if bob
+  # デフォルト都道府県を設定（未設定の場合）
+  unless bob.prefecture
+    tokyo = Prefecture.find_by(code: '13')
+    bob.update!(prefecture: tokyo) if tokyo
+  end
+
+  # トリガーを登録
+  trigger_keys = [ 'pressure_drop', 'sleep_shortage', 'humidity_high', 'temperature_drop' ]
+  registered_count = 0
+  trigger_keys.each do |trigger_key|
+    trigger = Trigger.find_by(key: trigger_key)
+    next unless trigger
+
+    ut = UserTrigger.find_or_create_by!(user: bob, trigger: trigger)
+    registered_count += 1 if ut.persisted?
+  end
+  puts "  Registered #{registered_count} triggers for Bob"
 end
 
 puts "Seed completed."
