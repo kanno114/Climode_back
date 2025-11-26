@@ -19,7 +19,7 @@
 #    - Triggers::PresetLoader によりマスタデータを同期
 #
 # 4. Aliceのサンプル記録データ
-#    - 過去N日分（デフォルト: 7日、環境変数 SEED_DAYS で変更可能）のDailyLogを作成
+#    - 過去N日分（デフォルト: 90日 ≒ 過去3ヶ月、環境変数 SEED_DAYS で変更可能）のDailyLogを作成
 #    - 睡眠時間: 5.0〜9.0時間のランダム
 #    - 気分スコア: 3〜9のランダム（-5〜5の範囲に変換）
 #    - 疲労感スコア: 2〜8のランダム（-5〜5の範囲に変換）
@@ -43,7 +43,7 @@
 #    - シグナル評価・提案生成は実行しない
 #
 # 【環境変数】
-#   - SEED_DAYS: 作成する過去日数（デフォルト: 7）
+#   - SEED_DAYS: 作成する過去日数（デフォルト: 90日 ≒ 過去3ヶ月）
 #   - SEED_SKIP_TRIGGERS: トリガーマスタデータの同期をスキップ（1でスキップ）
 #   - SEED_VERBOSE: 詳細ログを出力（1で有効）
 #
@@ -147,8 +147,8 @@ else
   puts "Skipping trigger preset sync (SEED_SKIP_TRIGGERS=1)"
 end
 
-# サンプルの日次記録データ
-sample_days = ENV.fetch('SEED_DAYS', '7').to_i
+# サンプルの日次記録データ（デフォルトで過去3ヶ月分 ≒ 90日）
+sample_days = ENV.fetch('SEED_DAYS', '90').to_i
 verbose_logs = ENV['SEED_VERBOSE'] == '1'
 puts "Creating sample daily logs... (days=#{sample_days}, verbose=#{verbose_logs})"
 
@@ -166,8 +166,8 @@ if alice
 
     # ランダムな体調データを生成
     sleep_hours = rand(5.0..9.0).round(1)
-    mood_score = rand(3..9)
-    fatigue_score = rand(2..8) # 疲労感スコア（1-10の範囲）
+    mood_score = rand(1..5)      # 気分スコア（1〜5）
+    fatigue_score = rand(1..5)   # 疲労感スコア（1〜5）
 
     # スコア計算（睡眠、気分、疲労感を考慮）
     base_score = 50 # ベーススコア
@@ -184,11 +184,11 @@ if alice
       5
     end
 
-    # 気分スコア
-    mood_bonus = (mood_score - 5) * 2 # -5から5の範囲を-10から10に変換
+    # 気分スコア（1〜5 → -10〜10 にマッピング）
+    mood_bonus = (mood_score - 3) * 5
 
-    # 疲労感スコア（疲労感が少ないほど高スコア）
-    fatigue_bonus = (10 - fatigue_score) * 1.5
+    # 疲労感スコア（1=重い, 5=軽い を 15〜3 にマッピング）
+    fatigue_bonus = (6 - fatigue_score) * 3
 
     # 総合スコア計算
     total_score = [ base_score + sleep_score + mood_bonus + fatigue_bonus, 100 ].min
@@ -216,10 +216,11 @@ if alice
       prefecture: default_prefecture,
       date: date,
       sleep_hours: sleep_hours,
-      mood: mood_score - 5, # moodは-5から5の範囲なので変換
-      fatigue: fatigue_score - 5, # fatigueは-5から5の範囲なので変換
+      mood: mood_score,           # 1〜5 をそのまま保存
+      fatigue: fatigue_score,     # 1〜5 をそのまま保存
       note: notes,
-      score: total_score
+      score: total_score,
+      self_score: rand(1..3)
     )
 
     puts "  Created daily log for Alice on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}, score=#{total_score}" if verbose_logs
@@ -241,8 +242,8 @@ if bob
 
     # ランダムな体調データを生成
     sleep_hours = rand(5.0..9.0).round(1)
-    mood_score = rand(3..9)
-    fatigue_score = rand(2..8) # 疲労感スコア（1-10の範囲）
+    mood_score = rand(1..5)      # 気分スコア（1〜5）
+    fatigue_score = rand(1..5)   # 疲労感スコア（1〜5）
 
     # スコア計算（睡眠、気分、疲労感を考慮）
     base_score = 50 # ベーススコア
@@ -259,11 +260,11 @@ if bob
       5
     end
 
-    # 気分スコア
-    mood_bonus = (mood_score - 5) * 2 # -5から5の範囲を-10から10に変換
+    # 気分スコア（1〜5 → -10〜10 にマッピング）
+    mood_bonus = (mood_score - 3) * 5
 
-    # 疲労感スコア（疲労感が少ないほど高スコア）
-    fatigue_bonus = (10 - fatigue_score) * 1.5
+    # 疲労感スコア（1=重い, 5=軽い を 15〜3 にマッピング）
+    fatigue_bonus = (6 - fatigue_score) * 3
 
     # 総合スコア計算
     total_score = [ base_score + sleep_score + mood_bonus + fatigue_bonus, 100 ].min
@@ -291,10 +292,11 @@ if bob
       prefecture: default_prefecture,
       date: date,
       sleep_hours: sleep_hours,
-      mood: mood_score - 5, # moodは-5から5の範囲なので変換
-      fatigue: fatigue_score - 5, # fatigueは-5から5の範囲なので変換
+      mood: mood_score,           # 1〜5 をそのまま保存
+      fatigue: fatigue_score,     # 1〜5 をそのまま保存
       note: notes,
-      score: total_score
+      score: total_score,
+      self_score: rand(1..3)
     )
 
     puts "  Created daily log for Bob on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}, score=#{total_score}" if verbose_logs
@@ -342,7 +344,8 @@ if alice
       mood: 2, # -5から5の範囲
       fatigue: 3,
       note: "シグナル確認用のテストデータ",
-      score: 60
+      score: 60,
+      self_score: rand(1..3)
     )
 
     # 天候データを作成（気圧低下シグナルが発火するように設定）
