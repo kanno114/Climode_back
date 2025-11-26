@@ -8,9 +8,17 @@ class Api::V1::SignalEventsController < ApplicationController
     date = Date.current
     signal_events = SignalEvent.for_user(current_user).for_date(date).ordered_by_priority
 
-    # 未作成時はenvのみ即時評価して返す
+    # 未作成時はenvとbodyを即時評価して返す
     if signal_events.empty?
-      signal_events = evaluate_env_signals_immediately(date)
+      env_signal_ids = evaluate_env_signals_immediately(date).pluck(:id)
+      body_signal_ids = evaluate_body_signals_immediately(date).pluck(:id)
+      all_signal_ids = env_signal_ids + body_signal_ids
+
+      if all_signal_ids.any?
+        signal_events = SignalEvent.where(id: all_signal_ids)
+      else
+        signal_events = SignalEvent.none
+      end
     end
 
     # カテゴリでフィルタリング
@@ -38,6 +46,27 @@ class Api::V1::SignalEventsController < ApplicationController
     user_triggers = UserTrigger.where(user_id: current_user.id)
                                .joins(:trigger)
                                .where(triggers: { category: "env", is_active: true })
+                               .includes(:trigger)
+
+    user_triggers.each do |user_trigger|
+      trigger = user_trigger.trigger
+      result = Signal::EvaluationService.new(current_user, date).evaluate_trigger(trigger)
+      results << result if result
+    end
+
+    SignalEvent.where(id: results.map(&:id))
+  end
+
+  def evaluate_body_signals_immediately(date)
+    # DailyLogが存在する場合のみ評価
+    daily_log = DailyLog.find_by(user: current_user, date: date)
+    return SignalEvent.none unless daily_log
+
+    # body系トリガーのみを即時評価
+    results = []
+    user_triggers = UserTrigger.where(user_id: current_user.id)
+                               .joins(:trigger)
+                               .where(triggers: { category: "body", is_active: true })
                                .includes(:trigger)
 
     user_triggers.each do |user_trigger|
