@@ -13,7 +13,7 @@ RSpec.describe "Api::V1::DailyLogs", type: :request do
     {
       sleep_hours: 6.5,
       mood: 2,
-      fatigue: -1
+      fatigue: 3
     }
   end
 
@@ -36,7 +36,7 @@ RSpec.describe "Api::V1::DailyLogs", type: :request do
       expect(daily_log).not_to be_nil
       expect(daily_log.sleep_hours.to_f).to eq(6.5)
       expect(daily_log.mood).to eq(2)
-      expect(daily_log.fatigue).to eq(-1)
+      expect(daily_log.fatigue).to eq(3)
       expect(daily_log.prefecture).to eq(user.prefecture)
     end
 
@@ -47,8 +47,8 @@ RSpec.describe "Api::V1::DailyLogs", type: :request do
                prefecture: user.prefecture,
                date: Date.current,
                sleep_hours: 4.0,
-               mood: -3,
-               fatigue: -3)
+               mood: 2,
+               fatigue: 2)
       end
 
       it "既存レコードを更新する" do
@@ -60,7 +60,7 @@ RSpec.describe "Api::V1::DailyLogs", type: :request do
         daily_log.reload
         expect(daily_log.sleep_hours.to_f).to eq(6.5)
         expect(daily_log.mood).to eq(2)
-        expect(daily_log.fatigue).to eq(-1)
+        expect(daily_log.fatigue).to eq(3)
       end
     end
 

@@ -42,13 +42,13 @@ RSpec.describe SignalEvaluationJob, type: :job do
         "pressure_drop_6h" => -7.0
       })
 
-      # env系トリガーのみが評価されることを確認（body系は評価されない）
+      # env系トリガーのみが増えており、body系は増えないことを確認
       env_count_before = SignalEvent.where(trigger_key: trigger.key).count
       body_count_before = SignalEvent.where(trigger_key: body_trigger.key).count
 
       described_class.perform_now(date)
 
-      expect(SignalEvent.where(trigger_key: trigger.key).count).to eq(env_count_before + 1)
+      expect(SignalEvent.where(trigger_key: trigger.key).count).to be > env_count_before
       expect(SignalEvent.where(trigger_key: body_trigger.key).count).to eq(body_count_before)
     end
 

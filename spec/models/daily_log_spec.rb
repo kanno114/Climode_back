@@ -39,8 +39,8 @@ RSpec.describe DailyLog, type: :model do
       expect(daily_log).not_to be_valid
     end
 
-    it '気分が-5未満の場合は無効である' do
-      daily_log = build(:daily_log, mood: -6)
+    it '気分が1未満の場合は無効である' do
+      daily_log = build(:daily_log, mood: 0)
       expect(daily_log).not_to be_valid
     end
 
@@ -49,8 +49,8 @@ RSpec.describe DailyLog, type: :model do
       expect(daily_log).not_to be_valid
     end
 
-    it '疲労度が-5未満の場合は無効である' do
-      daily_log = build(:daily_log, fatigue: -6)
+    it '疲労度が1未満の場合は無効である' do
+      daily_log = build(:daily_log, fatigue: 0)
       expect(daily_log).not_to be_valid
     end
 
@@ -69,14 +69,21 @@ RSpec.describe DailyLog, type: :model do
       expect(daily_log).not_to be_valid
     end
 
-    it '自己評価スコアが0未満の場合は無効である' do
-      daily_log = build(:daily_log, self_score: -1)
+    it '自己評価スコアが1未満の場合は無効である' do
+      daily_log = build(:daily_log, self_score: 0)
       expect(daily_log).not_to be_valid
     end
 
-    it '自己評価スコアが100を超える場合は無効である' do
-      daily_log = build(:daily_log, self_score: 101)
+    it '自己評価スコアが3より大きい場合は無効である' do
+      daily_log = build(:daily_log, self_score: 4)
       expect(daily_log).not_to be_valid
+    end
+
+    it '自己評価スコアが1〜3の範囲内の場合は有効である' do
+      (1..3).each do |score|
+        daily_log = build(:daily_log, self_score: score)
+        expect(daily_log).to be_valid
+      end
     end
   end
 
