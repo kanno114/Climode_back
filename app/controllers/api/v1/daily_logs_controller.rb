@@ -61,6 +61,23 @@ class Api::V1::DailyLogsController < ApplicationController
     render json: @daily_logs.as_json(include: [ :prefecture ])
   end
 
+  # GET /api/v1/daily_logs/by_month?year=2024&month=11
+  def by_month
+    year = params[:year]&.to_i || Date.current.year
+    month = params[:month]&.to_i || Date.current.month
+
+    # 月の範囲を計算
+    start_date = Date.new(year, month, 1)
+    end_date = start_date.end_of_month
+
+    @daily_logs = current_user.daily_logs
+                              .includes(:prefecture)
+                              .where(date: start_date..end_date)
+                              .order(date: :desc)
+
+    render json: @daily_logs.as_json(include: [ :prefecture ])
+  end
+
   # POST /api/v1/daily_logs
   def create
     # フロントエンドからのデータを処理
@@ -126,7 +143,13 @@ class Api::V1::DailyLogsController < ApplicationController
 
   # PATCH /api/v1/daily_logs/:id/self_score
   def update_self_score
-    if @daily_log.update(self_score: params[:self_score])
+    self_score_value = params[:self_score]&.to_i
+    unless self_score_value.nil? || (1..3).cover?(self_score_value)
+      return render json: { errors: [ "self_scoreは1〜3の範囲で指定してください" ] },
+                    status: :unprocessable_entity
+    end
+
+    if @daily_log.update(self_score: self_score_value)
       render json: @daily_log.as_json(include: [ :prefecture ])
     else
       render json: { errors: @daily_log.errors.full_messages },
@@ -211,24 +234,27 @@ class Api::V1::DailyLogsController < ApplicationController
 
     # パラメータから値を取得
     note = params[:note]
+    self_score = params[:self_score]&.to_i
     suggestion_feedbacks_params = if params[:suggestion_feedbacks].is_a?(String)
       JSON.parse(params[:suggestion_feedbacks]) rescue []
     else
       params[:suggestion_feedbacks] || []
     end
 
-    Rails.logger.info "Evening reflection params: note=#{note.present? ? 'present' : 'empty'}, suggestion_feedbacks_count=#{suggestion_feedbacks_params.size}"
+    Rails.logger.info "Evening reflection params: note=#{note.present? ? 'present' : 'empty'}, self_score=#{self_score.present? ? self_score : 'nil'}, suggestion_feedbacks_count=#{suggestion_feedbacks_params.size}"
 
     # DailyLogの作成または更新
     if @daily_log
       @daily_log.assign_attributes(
-        note: note
+        note: note,
+        self_score: self_score
       )
     else
       @daily_log = current_user.daily_logs.build(
         date: today,
         prefecture: prefecture,
-        note: note
+        note: note,
+        self_score: self_score
       )
     end
 
