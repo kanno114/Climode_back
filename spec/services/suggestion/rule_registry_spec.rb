@@ -20,7 +20,8 @@ RSpec.describe Suggestion::RuleRegistry do
           title: be_a(String),
           message: be_a(String),
           tags: be_an(Array),
-          severity: be_a(Integer)
+          severity: be_a(Integer),
+          category: be_a(String)
         )
       end
     end
@@ -116,6 +117,25 @@ RSpec.describe Suggestion::RuleRegistry do
       rules.each do |rule|
         expect(rule.tags).to be_an(Array)
       end
+    end
+  end
+
+  describe 'categoryの設定' do
+    it 'categoryがenvまたはbodyである' do
+      rules = described_class.all
+
+      rules.each do |rule|
+        expect(rule.category).to be_in([ 'env', 'body' ])
+      end
+    end
+
+    it '特定のルールが正しいcategoryを持つ' do
+      rules = described_class.all
+      sleep_rule = rules.find { |r| r.key == 'sleep_shortage_signal_alert' }
+      hot_rule = rules.find { |r| r.key == 'hot_weather' }
+
+      expect(sleep_rule&.category).to eq('body')
+      expect(hot_rule&.category).to eq('env')
     end
   end
 end
