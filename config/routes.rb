@@ -28,6 +28,7 @@ Rails.application.routes.draw do
         collection do
           get "date/:date", to: "daily_logs#show_by_date"
           get "date_range_30days", to: "daily_logs#by_date_range_30days"
+          get "by_month", to: "daily_logs#by_month"
           post "morning", to: "daily_logs#morning"
           post "evening", to: "daily_logs#evening"
         end
@@ -46,11 +47,7 @@ Rails.application.routes.draw do
       resources :triggers, only: [ :index ]
       resources :user_triggers, only: [ :index, :create, :destroy ]
 
-      resources :signal_events, only: [] do
-        collection do
-          get :today
-        end
-      end
+      resources :signal_events, only: [ :index ]
 
       resources :push_subscriptions, only: [ :create ] do
         collection do

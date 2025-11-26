@@ -32,7 +32,7 @@ namespace :api do
           sleep_hours: rand(5.0..9.0).round(1),
           mood: rand(-3..3),
           fatigue: rand(-3..3),
-          self_score: rand(30..90),
+          self_score: rand(1..3),
           note: "テストデータ #{i + 1}日目"
         )
 

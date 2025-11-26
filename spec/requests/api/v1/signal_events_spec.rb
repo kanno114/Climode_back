@@ -7,13 +7,13 @@ RSpec.describe "Api::V1::SignalEvents", type: :request do
   let(:token) { generate_jwt_token(user) }
   let(:headers) { { "Authorization" => "Bearer #{token}", "Content-Type" => "application/json" } }
 
-  describe "GET /api/v1/signal_events/today" do
+  describe "GET /api/v1/signal_events (index)" do
     context "認証済みユーザーの場合" do
       context "既存のシグナルイベントがある場合" do
         let!(:signal_event) { create(:signal_event, user: user, evaluated_at: Time.current) }
 
         it "当日のシグナルイベント一覧を返す" do
-          get "/api/v1/signal_events/today", headers: headers
+          get "/api/v1/signal_events", headers: headers
 
           expect(response).to have_http_status(:success)
           json = JSON.parse(response.body)
@@ -21,6 +21,19 @@ RSpec.describe "Api::V1::SignalEvents", type: :request do
           expect(json.length).to eq(1)
           expect(json[0]["id"]).to eq(signal_event.id)
           expect(json[0]["trigger_key"]).to eq(signal_event.trigger_key)
+        end
+
+        it "日付パラメータで特定の日付のシグナルを取得できる" do
+          past_date = 3.days.ago.to_date
+          past_signal = create(:signal_event, user: user, evaluated_at: past_date.beginning_of_day)
+
+          get "/api/v1/signal_events", params: { date: past_date.to_s }, headers: headers
+
+          expect(response).to have_http_status(:success)
+          json = JSON.parse(response.body)
+          expect(json).to be_an(Array)
+          expect(json.length).to eq(1)
+          expect(json[0]["id"]).to eq(past_signal.id)
         end
       end
 
@@ -37,7 +50,7 @@ RSpec.describe "Api::V1::SignalEvents", type: :request do
         it "env系トリガーを即時評価して返す" do
           allow(Weather::WeatherSnapshotService).to receive(:update_for_prefecture)
 
-          get "/api/v1/signal_events/today", headers: headers
+          get "/api/v1/signal_events", headers: headers
 
           expect(response).to have_http_status(:success)
           json = JSON.parse(response.body)
@@ -48,7 +61,7 @@ RSpec.describe "Api::V1::SignalEvents", type: :request do
 
     context "未認証ユーザーの場合" do
       it "401エラーを返す" do
-        get "/api/v1/signal_events/today"
+        get "/api/v1/signal_events"
 
         expect(response).to have_http_status(:unauthorized)
       end

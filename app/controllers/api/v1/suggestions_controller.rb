@@ -3,8 +3,12 @@ class Api::V1::SuggestionsController < ApplicationController
 
   def index
     begin
-      suggestions = Suggestion::SuggestionEngine.call(user: current_user)
+      date = params[:date] ? Date.parse(params[:date]) : Date.current
+      suggestions = Suggestion::SuggestionEngine.call(user: current_user, date: date)
       render json: suggestions.map { |s| serialize(s) }
+    rescue ArgumentError => e
+      # 日付のパースエラー
+      render json: { error: "無効な日付形式です" }, status: :bad_request
     rescue ActiveRecord::RecordNotFound => e
       # DailyLogが見つからない場合
       render json: { error: "指定された日付のログが見つかりません" }, status: :not_found

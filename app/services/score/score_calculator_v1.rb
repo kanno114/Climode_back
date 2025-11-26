@@ -44,7 +44,7 @@ module Score
 
       {
         sleep:  sleep_norm(log.sleep_hours),               # U字（7–8h ≈ 最高）
-        mood:   linear_norm(log.mood, -5, 5),              # -5..5 → 0..1
+        mood:   linear_norm(log.mood, 1, 5),              # 1..5 → 0..1
         press:  pressure_norm(metrics["pressure_hpa"]),            # 絶対気圧（線形：高いほど良い）
         humid:  metrics["humidity_pct"] ? comfort_humid(metrics["humidity_pct"]) : nil,       # 40–60% で最大
         temp:   metrics["temperature_c"] ? comfort_temp(metrics["temperature_c"]) : nil,       # 20–25℃ で最大

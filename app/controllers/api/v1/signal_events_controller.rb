@@ -1,11 +1,12 @@
 class Api::V1::SignalEventsController < ApplicationController
   include Authenticatable
 
-  # GET /api/v1/signal_events/today
+  # GET /api/v1/signal_events
   # クエリパラメータ:
   #   category: "env" または "body" でフィルタリング（省略時は全て）
-  def today
-    date = Date.current
+  #   date: 日付（YYYY-MM-DD形式、省略時は今日）
+  def index
+    date = params[:date] ? Date.parse(params[:date]) : Date.current
     signal_events = SignalEvent.for_user(current_user).for_date(date).ordered_by_priority
 
     # 未作成時はenvとbodyを即時評価して返す
