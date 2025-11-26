@@ -2,7 +2,7 @@
 
 module Suggestion
   class SuggestionEngine
-    Suggestion = Struct.new(:key, :title, :message, :tags, :severity, :triggers, keyword_init: true)
+    Suggestion = Struct.new(:key, :title, :message, :tags, :severity, :triggers, :category, keyword_init: true)
 
     def self.call(user:, date: Date.current)
       new(user: user, date: date).call
@@ -97,7 +97,8 @@ module Suggestion
         message: rule.message % ctx.symbolize_keys,
         tags: rule.tags,
         severity: rule.severity,
-        triggers: extract_triggers(rule.raw_condition, ctx)
+        triggers: extract_triggers(rule.raw_condition, ctx),
+        category: rule.category
       )
     rescue Dentaku::ParseError, Dentaku::ArgumentError
       nil
