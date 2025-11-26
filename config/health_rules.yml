@@ -7,6 +7,7 @@ rules:
     message: "睡眠不足のシグナルが検出されました（優先度%{sleep_shortage_priority}）。昼に短時間の休息を取ることをお勧めします。"
     tags: ["sleep", "signal", "rest"]
     severity: "80"
+    category: "body"
 
   - key: sleep_shortage_signal_warning
     title: "睡眠不足が深刻です。十分な休息を"
@@ -14,6 +15,7 @@ rules:
     message: "深刻な睡眠不足のシグナルが検出されました（優先度%{sleep_shortage_priority}）。無理をせず、可能な限り休息を取るようにしましょう。"
     tags: ["sleep", "signal", "caution"]
     severity: "90"
+    category: "body"
 
   # フォールバックルール（SignalEventが存在しない場合、またはトリガー未登録の場合）
   # 注意: これらのルールは、SignalEventで評価できない場合の補完として使用
@@ -23,6 +25,7 @@ rules:
     message: "今日は理想的な睡眠時間（%{sleep_hours}h）です。この調子を維持しましょう！"
     tags: ["sleep", "positive"]
     severity: "40"
+    category: "body"
 
   # 気温関連（既存 + 新規）
   - key: hot_weather
@@ -31,6 +34,7 @@ rules:
     message: "今日は猛暑です（%{temperature_c}℃）。水分補給と日差しの遮蔽を。"
     tags: ["temperature"]
     severity: "80"
+    category: "env"
 
   - key: very_hot_weather
     title: "酷暑日。外出を控えめに"
@@ -38,6 +42,7 @@ rules:
     message: "今日は酷暑です（%{temperature_c}℃）。外出を控えめにし、エアコンを適切に使用してください。"
     tags: ["temperature", "caution"]
     severity: "90"
+    category: "env"
 
   - key: cold_weather
     title: "寒い日。暖房の使用を検討してください。"
@@ -45,6 +50,7 @@ rules:
     message: "今日は寒いです（%{temperature_c}℃）。暖房の使用を検討してください。"
     tags: ["temperature"]
     severity: "80"
+    category: "env"
 
   - key: very_cold_weather
     title: "極寒日。防寒対策を万全に"
@@ -52,6 +58,7 @@ rules:
     message: "今日は極寒です（%{temperature_c}℃）。防寒対策を万全にし、外出時は十分注意してください。"
     tags: ["temperature", "caution"]
     severity: "90"
+    category: "env"
 
   - key: comfortable_temperature
     title: "快適な気温"
@@ -59,6 +66,7 @@ rules:
     message: "今日は快適な気温（%{temperature_c}℃）です。屋外活動に最適です。"
     tags: ["temperature", "positive"]
     severity: "30"
+    category: "env"
 
   # 湿度関連
   # 注意: humidity_highはSignalEvent参照ルールを優先使用
@@ -69,6 +77,7 @@ rules:
     message: "今日は低湿度です（%{humidity_pct}%%）。加湿器の使用を検討してください。"
     tags: ["humidity"]
     severity: "80"
+    category: "env"
 
   - key: very_low_humidity
     title: "非常に乾燥した日"
@@ -76,6 +85,7 @@ rules:
     message: "今日は非常に乾燥しています（%{humidity_pct}%%）。肌の保湿も忘れずに。"
     tags: ["humidity", "caution"]
     severity: "85"
+    category: "env"
 
   - key: comfortable_humidity
     title: "快適な湿度"
@@ -83,6 +93,7 @@ rules:
     message: "今日は快適な湿度（%{humidity_pct}%%）です。過ごしやすい一日です。"
     tags: ["humidity", "positive"]
     severity: "30"
+    category: "env"
 
   # 気圧関連（既存 + 新規）
   - key: high_pressure
@@ -91,6 +102,7 @@ rules:
     message: "今日は高気圧です（%{pressure_hpa}hPa）。気圧の急降下を防ぐために。"
     tags: ["pressure"]
     severity: "80"
+    category: "env"
 
   - key: very_high_pressure
     title: "非常に高気圧な日"
@@ -98,6 +110,7 @@ rules:
     message: "今日は非常に高気圧です（%{pressure_hpa}hPa）。頭痛やめまいに注意してください。"
     tags: ["pressure", "caution"]
     severity: "85"
+    category: "env"
 
   - key: low_pressure
     title: "低気圧日。気圧の急上昇を防ぐために。"
@@ -105,6 +118,7 @@ rules:
     message: "今日は低気圧です（%{pressure_hpa}hPa）。気圧の急上昇を防ぐために。"
     tags: ["pressure"]
     severity: "80"
+    category: "env"
 
   - key: very_low_pressure
     title: "非常に低気圧な日"
@@ -112,6 +126,7 @@ rules:
     message: "今日は非常に低気圧です（%{pressure_hpa}hPa）。関節痛や古傷の痛みに注意。"
     tags: ["pressure", "caution"]
     severity: "85"
+    category: "env"
 
   - key: stable_pressure
     title: "安定した気圧"
@@ -119,6 +134,7 @@ rules:
     message: "今日は安定した気圧（%{pressure_hpa}hPa）です。体調が安定しやすい一日です。"
     tags: ["pressure", "positive"]
     severity: "30"
+    category: "env"
 
   # 気分・体調スコア関連（新規）
   - key: low_mood
@@ -127,6 +143,7 @@ rules:
     message: "今日の気分スコアは%{mood}点と低めです。軽い散歩や趣味の時間を作りましょう。"
     tags: ["mood", "mental_health"]
     severity: "75"
+    category: "body"
 
   - key: high_mood
     title: "気分が良好。この調子を維持"
@@ -134,6 +151,7 @@ rules:
     message: "今日の気分スコアは%{mood}点と良好です。この調子を維持しましょう！"
     tags: ["mood", "positive"]
     severity: "40"
+    category: "body"
 
   - key: low_score
     title: "体調スコアが低め。休息を"
@@ -141,6 +159,7 @@ rules:
     message: "今日の体調スコアは%{score}点と低めです。無理をせず、十分な休息を取りましょう。"
     tags: ["health_score", "rest"]
     severity: "85"
+    category: "body"
 
   - key: high_score
     title: "体調スコアが良好"
@@ -148,6 +167,7 @@ rules:
     message: "今日の体調スコアは%{score}点と良好です。健康的な生活を継続しましょう！"
     tags: ["health_score", "positive"]
     severity: "35"
+    category: "body"
 
   # 複合条件のルール
   - key: hot_and_humid
@@ -156,6 +176,7 @@ rules:
     message: "高温多湿の一日です（%{temperature_c}℃）。熱中症予防を徹底してください。"
     tags: ["temperature", "humidity", "caution"]
     severity: "90"
+    category: "env"
 
   - key: cold_and_dry
     title: "低温乾燥。風邪予防を"
@@ -163,6 +184,7 @@ rules:
     message: "低温乾燥の一日です（%{temperature_c}℃、%{humidity_pct}%%）。風邪予防と保湿を心がけてください。"
     tags: ["temperature", "humidity", "health"]
     severity: "80"
+    category: "env"
 
   - key: weather_change_alert
     title: "気圧変動が大きい日"
@@ -170,6 +192,7 @@ rules:
     message: "気圧変動が大きい一日です（%{pressure_hpa}hPa）。体調の変化に注意してください。"
     tags: ["pressure", "caution"]
     severity: "85"
+    category: "env"
 
   # 季節性のルール（新規）
   - key: spring_allergy
@@ -178,6 +201,7 @@ rules:
     message: "花粉症が発生しやすい条件です。マスクやメガネの着用を検討してください。"
     tags: ["seasonal", "allergy"]
     severity: "70"
+    category: "env"
 
   - key: summer_heat
     title: "夏の暑さ対策"
@@ -185,6 +209,7 @@ rules:
     message: "夏らしい暑さです。水分補給と適切な冷房使用で熱中症を防ぎましょう。"
     tags: ["seasonal", "summer"]
     severity: "75"
+    category: "env"
 
   - key: autumn_comfort
     title: "秋の過ごしやすい一日"
@@ -192,6 +217,7 @@ rules:
     message: "秋らしく過ごしやすい一日です。散歩や屋外活動に最適です。"
     tags: ["seasonal", "autumn", "positive"]
     severity: "30"
+    category: "env"
 
   - key: winter_cold
     title: "冬の寒さ対策"
@@ -199,6 +225,7 @@ rules:
     message: "冬らしい寒さと乾燥です。暖房と加湿器で快適な室内環境を作りましょう。"
     tags: ["seasonal", "winter"]
     severity: "80"
+    category: "env"
 
   # SignalEventを参照するルール（シグナル統合 - 優先使用）
   - key: pressure_drop_signal_alert
@@ -207,6 +234,7 @@ rules:
     message: "気圧低下のシグナルが検出されました（優先度%{pressure_drop_priority}）。頭痛やめまいに注意し、無理をしないようにしましょう。"
     tags: ["pressure", "signal", "caution"]
     severity: "85"
+    category: "env"
 
   - key: pressure_drop_signal_warning
     title: "気圧低下が深刻です。体調に注意"
@@ -214,6 +242,7 @@ rules:
     message: "深刻な気圧低下のシグナルが検出されました（優先度%{pressure_drop_priority}）。関節痛や古傷の痛みに注意し、無理をしないようにしましょう。"
     tags: ["pressure", "signal", "caution"]
     severity: "90"
+    category: "env"
 
   - key: humidity_high_signal_alert
     title: "高湿度シグナル検出。除湿対策を"
@@ -221,6 +250,7 @@ rules:
     message: "高湿度のシグナルが検出されました（優先度%{humidity_high_priority}）。除湿剤の使用を検討してください。"
     tags: ["humidity", "signal"]
     severity: "75"
+    category: "env"
 
   - key: temperature_drop_signal_alert
     title: "寒暖差シグナル検出。体調管理を"
@@ -228,6 +258,7 @@ rules:
     message: "寒暖差のシグナルが検出されました（優先度%{temperature_drop_priority}）。体調の変化に注意してください。"
     tags: ["temperature", "signal", "caution"]
     severity: "80"
+    category: "env"
 
   - key: multiple_signals_alert
     title: "複数のシグナル検出。体調に注意"
@@ -235,3 +266,4 @@ rules:
     message: "気圧低下と睡眠不足のシグナルが同時に検出されました。今日は特に体調管理に気をつけ、無理をしないようにしましょう。"
     tags: ["signal", "caution", "health"]
     severity: "90"
+    category: "body"
