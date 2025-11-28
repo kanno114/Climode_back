@@ -96,8 +96,9 @@ class Api::V1::DailyLogsController < ApplicationController
     )
 
     # 体調スコアを計算
-    score_result = ::Score::ScoreCalculatorV1.new(@daily_log).call(persist: false)
-    @daily_log.score = score_result[:score]
+    # スコア計算機能は現在停止中
+    # score_result = ::Score::ScoreCalculatorV1.new(@daily_log).call(persist: false)
+    # @daily_log.score = score_result[:score]
 
     if @daily_log.save
       # 体調系シグナルを評価（シグナルが存在しない場合のみ）
@@ -128,8 +129,9 @@ class Api::V1::DailyLogsController < ApplicationController
     )
 
     # 体調スコアを再計算
-    score_result = ::Score::ScoreCalculatorV1.new(@daily_log).call(persist: false)
-    @daily_log.score = score_result[:score]
+    # スコア計算機能は現在停止中
+    # score_result = ::Score::ScoreCalculatorV1.new(@daily_log).call(persist: false)
+    # @daily_log.score = score_result[:score]
 
     if @daily_log.save
       # 体調系シグナルを評価（シグナルが存在しない場合のみ）
