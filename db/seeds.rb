@@ -426,22 +426,22 @@ puts "Creating weekly report data..."
 alice = User.find_by(email: 'alice@example.com')
 if alice
   prefecture = alice.prefecture || Prefecture.find_by(code: '13')
-  
+
   # 過去7日分のデータを作成
   (0..6).each do |days_ago|
     date = Date.current - days_ago.days
-    
+
     # DailyLogが存在するか確認
     daily_log = DailyLog.find_by(user: alice, date: date)
     next unless daily_log
-    
+
     # WeatherSnapshotを作成（まだ存在しない場合）
     unless WeatherSnapshot.exists?(prefecture: prefecture, date: date)
       snapshot = WeatherSnapshot.find_or_initialize_by(
         prefecture: prefecture,
         date: date
       )
-      
+
       # ランダムな天候データを生成
       snapshot.metrics = {
         "pressure_drop_6h" => rand(-10.0..5.0).round(1),
@@ -455,22 +455,22 @@ if alice
       snapshot.save!
       puts "  Created WeatherSnapshot for #{date}" if verbose_logs
     end
-    
+
     # SignalEventを作成（まだ存在しない場合、ランダムに作成）
     if rand < 0.6 # 60%の確率でシグナルを作成
-      trigger_keys = ['pressure_drop', 'sleep_shortage', 'humidity_high', 'temperature_drop']
+      trigger_keys = [ 'pressure_drop', 'sleep_shortage', 'humidity_high', 'temperature_drop' ]
       trigger_key = trigger_keys.sample
-      
+
       unless SignalEvent.exists?(user: alice, trigger_key: trigger_key, evaluated_at: date.beginning_of_day..date.end_of_day)
-        level = ['attention', 'warning', 'strong'].sample
+        level = [ 'attention', 'warning', 'strong' ].sample
         priority = case level
         when 'strong' then rand(8..10)
         when 'warning' then rand(5..7)
         else rand(1..4)
         end
-        
+
         category = trigger_key == 'sleep_shortage' ? 'body' : 'env'
-        
+
         SignalEvent.create!(
           user: alice,
           trigger_key: trigger_key,
@@ -482,12 +482,12 @@ if alice
         puts "  Created SignalEvent for #{date}: #{trigger_key} (#{level})" if verbose_logs
       end
     end
-    
+
     # SuggestionFeedbackを作成（まだ存在しない場合、ランダムに作成）
     if rand < 0.5 # 50%の確率でフィードバックを作成
-      suggestion_keys = ['pressure_drop_signal_warning', 'sleep_shortage_signal_attention', 'humidity_high_signal_warning', 'low_mood']
+      suggestion_keys = [ 'pressure_drop_signal_warning', 'sleep_shortage_signal_attention', 'humidity_high_signal_warning', 'low_mood' ]
       suggestion_key = suggestion_keys.sample
-      
+
       unless SuggestionFeedback.exists?(daily_log: daily_log, suggestion_key: suggestion_key)
         SuggestionFeedback.create!(
           daily_log: daily_log,
@@ -498,7 +498,7 @@ if alice
       end
     end
   end
-  
+
   puts "  Created weekly report data for Alice (past 7 days)"
 end
 
@@ -506,22 +506,22 @@ end
 bob = User.find_by(email: 'bob@example.com')
 if bob
   prefecture = bob.prefecture || Prefecture.find_by(code: '13')
-  
+
   # 過去7日分のデータを作成
   (0..6).each do |days_ago|
     date = Date.current - days_ago.days
-    
+
     # DailyLogが存在するか確認
     daily_log = DailyLog.find_by(user: bob, date: date)
     next unless daily_log
-    
+
     # WeatherSnapshotを作成（まだ存在しない場合）
     unless WeatherSnapshot.exists?(prefecture: prefecture, date: date)
       snapshot = WeatherSnapshot.find_or_initialize_by(
         prefecture: prefecture,
         date: date
       )
-      
+
       # ランダムな天候データを生成
       snapshot.metrics = {
         "pressure_drop_6h" => rand(-10.0..5.0).round(1),
@@ -535,22 +535,22 @@ if bob
       snapshot.save!
       puts "  Created WeatherSnapshot for #{date}" if verbose_logs
     end
-    
+
     # SignalEventを作成（まだ存在しない場合、ランダムに作成）
     if rand < 0.6 # 60%の確率でシグナルを作成
-      trigger_keys = ['pressure_drop', 'sleep_shortage', 'humidity_high', 'temperature_drop']
+      trigger_keys = [ 'pressure_drop', 'sleep_shortage', 'humidity_high', 'temperature_drop' ]
       trigger_key = trigger_keys.sample
-      
+
       unless SignalEvent.exists?(user: bob, trigger_key: trigger_key, evaluated_at: date.beginning_of_day..date.end_of_day)
-        level = ['attention', 'warning', 'strong'].sample
+        level = [ 'attention', 'warning', 'strong' ].sample
         priority = case level
         when 'strong' then rand(8..10)
         when 'warning' then rand(5..7)
         else rand(1..4)
         end
-        
+
         category = trigger_key == 'sleep_shortage' ? 'body' : 'env'
-        
+
         SignalEvent.create!(
           user: bob,
           trigger_key: trigger_key,
@@ -562,12 +562,12 @@ if bob
         puts "  Created SignalEvent for #{date}: #{trigger_key} (#{level})" if verbose_logs
       end
     end
-    
+
     # SuggestionFeedbackを作成（まだ存在しない場合、ランダムに作成）
     if rand < 0.5 # 50%の確率でフィードバックを作成
-      suggestion_keys = ['pressure_drop_signal_warning', 'sleep_shortage_signal_attention', 'humidity_high_signal_warning', 'low_mood']
+      suggestion_keys = [ 'pressure_drop_signal_warning', 'sleep_shortage_signal_attention', 'humidity_high_signal_warning', 'low_mood' ]
       suggestion_key = suggestion_keys.sample
-      
+
       unless SuggestionFeedback.exists?(daily_log: daily_log, suggestion_key: suggestion_key)
         SuggestionFeedback.create!(
           daily_log: daily_log,
@@ -578,7 +578,7 @@ if bob
       end
     end
   end
-  
+
   puts "  Created weekly report data for Bob (past 7 days)"
 end
 

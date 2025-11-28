@@ -23,7 +23,7 @@ module Reports
       pairs = []
 
       @daily_logs.each do |log|
-        snapshot = @weather_snapshots[[log.prefecture_id, log.date]]
+        snapshot = @weather_snapshots[[ log.prefecture_id, log.date ]]
         next unless snapshot
 
         metrics = snapshot.metrics || {}
@@ -167,4 +167,3 @@ module Reports
     end
   end
 end
-

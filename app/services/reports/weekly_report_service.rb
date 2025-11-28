@@ -152,7 +152,7 @@ module Reports
       dates = (@week_start..@week_end).to_a
 
       WeatherSnapshot.where(prefecture_id: prefecture_ids, date: dates)
-                     .index_by { |ws| [ws.prefecture_id, ws.date] }
+                     .index_by { |ws| [ ws.prefecture_id, ws.date ] }
     end
 
     def generate_insight(daily_logs, correlation_analyzer)
@@ -179,7 +179,7 @@ module Reports
         messages << "特に強いシグナルが#{strong_count}回ありました。"
       else
         messages << "#{trigger_label}が#{count}回検出されました。"
-          end
+      end
         end
       end
 
