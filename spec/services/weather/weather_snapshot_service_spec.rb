@@ -88,5 +88,54 @@ RSpec.describe Weather::WeatherSnapshotService do
         }.not_to change(WeatherSnapshot, :count)
       end
     end
+
+    context '48h時系列から metrics と hourly_forecast を格納する場合' do
+      # 48h 系列: 前日0時〜当日23時。当日8時, 前日8時, 当日2時, 前日20時 を含む
+      let(:series_48h) do
+        (0..47).map do |i|
+          d = (date - 1.day) + (i / 24)
+          h = i % 24
+          temp = 21.0
+          temp = 20.0 if d == date && h == 8   # 当日8時（基準）
+          temp = 22.0 if d == date && h == 2   # 当日2時（6h前）
+          temp = 26.0 if d == date - 1.day && h == 20 # 前日20時（12h前）
+          press = 1012.0
+          press = 1010.0 if d == date && h == 8
+          press = 1015.0 if d == date && h == 2
+          press = 1020.0 if d == date - 1.day && h == 8 # 前日8時（24h前）
+          {
+            time: d.to_datetime.change(hour: h, minute: 0, second: 0),
+            temperature_c: temp,
+            humidity_pct: 60.0,
+            pressure_hpa: press,
+            weather_code: 0
+          }
+        end
+      end
+
+      before do
+        WeatherSnapshot.where(prefecture: prefecture, date: date).destroy_all
+        data_service = instance_double(Weather::WeatherDataService, fetch_forecast_series: series_48h)
+        allow(Weather::WeatherDataService).to receive(:new).with(prefecture, date).and_return(data_service)
+      end
+
+      it 'hourly_forecast と pressure_drop_6h 等が格納される' do
+        expect { service.update_snapshot }.to change(WeatherSnapshot, :count).by(1)
+
+        snapshot = WeatherSnapshot.find_by(prefecture: prefecture, date: date)
+        expect(snapshot.metrics["hourly_forecast"]).to be_present
+        expect(snapshot.metrics["hourly_forecast"]).to be_an(Array)
+        expect(snapshot.metrics["hourly_forecast"].first).to include("time", "temperature_c", "humidity_pct", "pressure_hpa", "weather_code")
+
+        # 当日8時 1010, 当日2時 1015 → pressure_drop_6h = -5.0
+        expect(snapshot.metrics["pressure_drop_6h"]).to eq(-5.0)
+        # 当日8時 1010, 前日8時 1020 → pressure_drop_24h = -10.0
+        expect(snapshot.metrics["pressure_drop_24h"]).to eq(-10.0)
+        # 当日8時 20, 当日2時 22 → temperature_drop_6h = -2.0
+        expect(snapshot.metrics["temperature_drop_6h"]).to eq(-2.0)
+        # 当日8時 20, 前日20時 26 → temperature_drop_12h = -6.0
+        expect(snapshot.metrics["temperature_drop_12h"]).to eq(-6.0)
+      end
+    end
   end
 end
