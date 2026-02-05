@@ -9,7 +9,31 @@ RSpec.describe "Api::V1::Forecasts", type: :request do
   let(:headers) { { "Authorization" => "Bearer #{token}", "Content-Type" => "application/json" } }
 
   describe "GET /api/v1/forecast" do
-    context "認証済みユーザーかつ都道府県設定済みの場合" do
+    context "キャッシュあり（Snapshot に hourly_forecast が存在する場合）" do
+      let(:cached_forecast) do
+        [
+          { "time" => "2024-01-01T08:00:00+09:00", "temperature_c" => 19.0, "humidity_pct" => 65.0, "pressure_hpa" => 1012.0, "weather_code" => 1 },
+          { "time" => "2024-01-01T09:00:00+09:00", "temperature_c" => 20.5, "humidity_pct" => 60.0, "pressure_hpa" => 1013.2, "weather_code" => 3 }
+        ]
+      end
+
+      before do
+        WeatherSnapshot.where(prefecture: prefecture, date: Date.current).destroy_all
+        create(:weather_snapshot, prefecture: prefecture, date: Date.current, metrics: { "hourly_forecast" => cached_forecast })
+        allow(Weather::WeatherDataService).to receive(:new)
+      end
+
+      it "キャッシュから返却し WeatherDataService を呼ばない" do
+        get "/api/v1/forecast", headers: headers
+
+        expect(response).to have_http_status(:success)
+        json = json_response
+        expect(json).to eq(cached_forecast)
+        expect(Weather::WeatherDataService).not_to have_received(:new)
+      end
+    end
+
+    context "認証済みユーザーかつ都道府県設定済みの場合（キャッシュミス）" do
       let(:series) do
         [
           {
@@ -30,11 +54,12 @@ RSpec.describe "Api::V1::Forecasts", type: :request do
       end
 
       before do
+        WeatherSnapshot.where(prefecture: prefecture, date: Date.current).destroy_all
         service_double = instance_double(Weather::WeatherDataService, fetch_forecast_series: series)
         allow(Weather::WeatherDataService).to receive(:new).and_return(service_double)
       end
 
-      it "予報時系列データを返す" do
+      it "予報時系列データを返す（キャッシュミス時は API 取得）" do
         get "/api/v1/forecast", headers: headers
 
         expect(response).to have_http_status(:success)

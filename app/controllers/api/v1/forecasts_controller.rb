@@ -16,10 +16,16 @@ class Api::V1::ForecastsController < ApplicationController
     hours = 24 if hours.nil? || hours <= 0
     hours = 48 if hours > 48
 
+    snapshot = WeatherSnapshot.for_prefecture(current_user.prefecture).for_date(date).first
+    if snapshot.present? && snapshot.metrics["hourly_forecast"].present? && snapshot.metrics["hourly_forecast"].is_a?(Array) && snapshot.metrics["hourly_forecast"].any?
+      cached = snapshot.metrics["hourly_forecast"].first(hours)
+      render json: cached
+      return
+    end
+
     service = Weather::WeatherDataService.new(current_user.prefecture, date)
     series = service.fetch_forecast_series(hours: hours)
-
-    render json: series.map { |point|
+    json = series.map { |point|
       {
         time: point[:time].iso8601,
         temperature_c: point[:temperature_c],
@@ -28,6 +34,8 @@ class Api::V1::ForecastsController < ApplicationController
         weather_code: point[:weather_code]
       }
     }
+    Weather::WeatherSnapshotService.save_hourly_forecast(current_user.prefecture, date, series)
+    render json: json
   rescue ArgumentError => e
     # Date.parse などで不正な日付が渡された場合
     render json: { error: "invalid_date", message: e.message }, status: :bad_request

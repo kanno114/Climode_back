@@ -30,12 +30,16 @@ module Weather
     end
 
     # 指定日の 24時間分などの時系列データを取得する
+    # start_date/end_date を渡すとその範囲で API を叩く（例: 48h で前日〜当日）
     # 戻り値: [{ time: DateTime, temperature_c: Float, pressure_hpa: Float, humidity_pct: Float, weather_code: Integer }, ...]
-    def fetch_forecast_series(hours: 24)
+    def fetch_forecast_series(hours: 24, start_date: nil, end_date: nil)
       return dummy_forecast_series(hours: hours) if Rails.env.test?
 
+      start_date ||= @date
+      end_date ||= @date
+
       begin
-        response = fetch_from_api
+        response = fetch_forecast_api(start_date: start_date, end_date: end_date)
         return dummy_forecast_series(hours: hours) unless response.success?
 
         parse_forecast_series_response(response, hours: hours)
@@ -57,6 +61,25 @@ module Weather
           timezone: "Asia/Tokyo",
           start_date: @date.to_s,
           end_date: @date.to_s
+        },
+        headers: {
+          "User-Agent" => "Climode/1.0"
+        }
+      }
+
+      self.class.get("/forecast", options)
+    end
+
+    # forecast 用の API 呼び出し（start_date/end_date を指定可能、48h など複数日用）
+    def fetch_forecast_api(start_date:, end_date:)
+      options = {
+        query: {
+          latitude: @prefecture.centroid_lat,
+          longitude: @prefecture.centroid_lon,
+          hourly: "temperature_2m,relative_humidity_2m,pressure_msl,weather_code",
+          timezone: "Asia/Tokyo",
+          start_date: start_date.to_s,
+          end_date: end_date.to_s
         },
         headers: {
           "User-Agent" => "Climode/1.0"

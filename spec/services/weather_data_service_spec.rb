@@ -242,6 +242,22 @@ RSpec.describe Weather::WeatherDataService do
           expect(first[:weather_code]).to eq(3)
           expect(first[:time].hour).to eq(9)
         end
+
+        it 'start_date/end_date を渡すと API の query にその日付が含まれる' do
+          start_d = date - 1.day
+          end_d = date
+          service.fetch_forecast_series(hours: 48, start_date: start_d, end_date: end_d)
+
+          expect(described_class).to have_received(:get).with(
+            '/forecast',
+            hash_including(
+              query: hash_including(
+                start_date: start_d.to_s,
+                end_date: end_d.to_s
+              )
+            )
+          )
+        end
       end
 
       context 'API呼び出しが失敗する場合' do
