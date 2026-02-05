@@ -33,4 +33,3 @@ class Api::V1::ForecastsController < ApplicationController
     render json: { error: "invalid_date", message: e.message }, status: :bad_request
   end
 end
-

@@ -86,7 +86,7 @@ module Weather
         weather_codes.length
       ].min
 
-      length = [length, hours].min
+      length = [ length, hours ].min
 
       series = []
       length.times do |i|
@@ -186,7 +186,7 @@ module Weather
           temperature_c: rand(15.0..25.0).round(1),
           humidity_pct: rand(40.0..80.0).round(1),
           pressure_hpa: rand(1000.0..1020.0).round(1),
-          weather_code: [0, 1, 2, 3, 45, 51, 61, 71, 95].sample # Open-Meteo に近いコードをざっくり
+          weather_code: [ 0, 1, 2, 3, 45, 51, 61, 71, 95 ].sample # Open-Meteo に近いコードをざっくり
         }
       end
     end

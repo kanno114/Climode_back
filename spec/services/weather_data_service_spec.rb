@@ -203,10 +203,10 @@ RSpec.describe Weather::WeatherDataService do
                   '2024-01-01T09:00',
                   '2024-01-01T10:00'
                 ],
-                temperature_2m: [20.5, 22.0],
-                relative_humidity_2m: [65.0, 60.0],
-                pressure_msl: [1013.2, 1012.8],
-                weather_code: [3, 61]
+                temperature_2m: [ 20.5, 22.0 ],
+                relative_humidity_2m: [ 65.0, 60.0 ],
+                pressure_msl: [ 1013.2, 1012.8 ],
+                weather_code: [ 3, 61 ]
               }
             }.to_json
           )
