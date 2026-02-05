@@ -60,6 +60,9 @@ Rails.application.routes.draw do
           get :weekly
         end
       end
+
+      # 24時間予報（Open-Meteo 時系列）の取得
+      get :forecast, to: "forecasts#index"
     end
   end
 end
