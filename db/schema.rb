@@ -90,6 +90,23 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_10_100000) do
     t.check_constraint "match >= 1 AND match <= 5", name: "check_signal_feedback_match_range"
   end
 
+  create_table "suggestion_snapshots", force: :cascade do |t|
+    t.date "date", null: false
+    t.string "prefecture", null: false
+    t.string "rule_key", null: false
+    t.string "title", null: false
+    t.text "message"
+    t.jsonb "tags", default: []
+    t.integer "severity", null: false
+    t.string "category", null: false
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["date", "prefecture", "rule_key"], name: "index_suggestion_snapshots_on_date_pref_rule", unique: true
+    t.index ["date", "prefecture"], name: "index_suggestion_snapshots_on_date_and_prefecture"
+    t.index ["tags"], name: "index_suggestion_snapshots_on_tags", using: :gin
+  end
+
   create_table "suggestion_feedbacks", force: :cascade do |t|
     t.bigint "daily_log_id", null: false
     t.string "suggestion_key", null: false
