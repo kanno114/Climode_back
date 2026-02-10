@@ -14,6 +14,18 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_10_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
+  create_table "concern_topics", force: :cascade do |t|
+    t.string "key", null: false
+    t.string "label_ja", null: false
+    t.text "description_ja"
+    t.jsonb "rule_concerns", default: [], null: false
+    t.integer "position"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_concern_topics_on_key", unique: true
+  end
+
   create_table "daily_logs", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "prefecture_id", null: false
@@ -90,6 +102,16 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_10_100000) do
     t.check_constraint "match >= 1 AND match <= 5", name: "check_signal_feedback_match_range"
   end
 
+  create_table "suggestion_feedbacks", force: :cascade do |t|
+    t.bigint "daily_log_id", null: false
+    t.string "suggestion_key", null: false
+    t.boolean "helpfulness", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["daily_log_id", "suggestion_key"], name: "index_suggestion_feedbacks_on_daily_log_id_and_suggestion_key", unique: true
+    t.index ["daily_log_id"], name: "index_suggestion_feedbacks_on_daily_log_id"
+  end
+
   create_table "suggestion_snapshots", force: :cascade do |t|
     t.date "date", null: false
     t.string "prefecture", null: false
@@ -107,16 +129,6 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_10_100000) do
     t.index ["tags"], name: "index_suggestion_snapshots_on_tags", using: :gin
   end
 
-  create_table "suggestion_feedbacks", force: :cascade do |t|
-    t.bigint "daily_log_id", null: false
-    t.string "suggestion_key", null: false
-    t.boolean "helpfulness", default: false, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["daily_log_id", "suggestion_key"], name: "index_suggestion_feedbacks_on_daily_log_id_and_suggestion_key", unique: true
-    t.index ["daily_log_id"], name: "index_suggestion_feedbacks_on_daily_log_id"
-  end
-
   create_table "triggers", force: :cascade do |t|
     t.string "key", null: false
     t.string "label", null: false
@@ -128,6 +140,15 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_10_100000) do
     t.datetime "updated_at", null: false
     t.index ["key"], name: "index_triggers_on_key", unique: true
     t.check_constraint "category::text = ANY (ARRAY['env'::character varying, 'body'::character varying]::text[])", name: "triggers_category_check"
+  end
+
+  create_table "user_concern_topics", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "concern_topic_key", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "concern_topic_key"], name: "index_user_concern_topics_on_user_and_key", unique: true
+    t.index ["user_id"], name: "index_user_concern_topics_on_user_id"
   end
 
   create_table "user_identities", force: :cascade do |t|
@@ -180,6 +201,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_10_100000) do
   add_foreign_key "signal_events", "users"
   add_foreign_key "signal_feedbacks", "daily_logs", on_delete: :cascade
   add_foreign_key "suggestion_feedbacks", "daily_logs", on_delete: :cascade
+  add_foreign_key "user_concern_topics", "users"
   add_foreign_key "user_identities", "users"
   add_foreign_key "user_triggers", "triggers", on_delete: :restrict
   add_foreign_key "user_triggers", "users", on_delete: :restrict

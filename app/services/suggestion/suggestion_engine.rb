@@ -2,6 +2,8 @@
 
 module Suggestion
   class SuggestionEngine
+    GENERAL_CONCERN_KEY = "general".freeze
+
     Suggestion = Struct.new(:key, :title, :message, :tags, :severity, :triggers, :category, :concerns, keyword_init: true)
 
     def self.call(user:, date: Date.current)
@@ -16,7 +18,7 @@ module Suggestion
         prefecture: @daily_log.prefecture,
         date: @date
       )
-      @rules = ::Suggestion::RuleRegistry.all
+      @rules = filter_rules_by_user_concerns
     end
 
     def call
@@ -46,6 +48,19 @@ module Suggestion
         "pressure_jitter_3h_awake"     => (metrics["pressure_jitter_3h_awake"] || 0).to_f
       }
       ctx
+    end
+
+    def filter_rules_by_user_concerns
+      all_rules = ::Suggestion::RuleRegistry.all
+      user_concern_keys = UserConcernTopic.where(user: @user).pluck(:concern_topic_key).to_set
+
+      if user_concern_keys.empty?
+        all_rules.select { |r| r.concerns.include?(GENERAL_CONCERN_KEY) }
+      else
+        all_rules.select do |r|
+          r.concerns.include?(GENERAL_CONCERN_KEY) || (r.concerns.to_set & user_concern_keys).any?
+        end
+      end
     end
   end
 end

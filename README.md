@@ -123,7 +123,6 @@ rails server
 - `Weather::WeatherSnapshotService` - 気象データ取得・保存
 - `Reports::WeeklyReportService` - 週次レポート生成
 - `PushNotificationService` - プッシュ通知送信
-- `Score::ScoreCalculatorV1` - スコア計算
 
 ### ジョブ
 
