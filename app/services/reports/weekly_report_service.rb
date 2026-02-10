@@ -17,7 +17,6 @@ module Reports
           start: @week_start.to_s,
           end: @week_end.to_s
         },
-        signals: aggregate_signals,
         daily: aggregate_daily_logs,
         feedback: aggregate_feedback,
         insight: generate_insight(daily_logs, correlation_analyzer),
@@ -56,11 +55,6 @@ module Reports
         avg_fatigue_level: fatigue_levels.any? ? (fatigue_levels.sum.to_f / fatigue_levels.size).round(1) : nil,
         by_day: by_day
       }
-    end
-
-    # シグナル廃止のため常に空の構造を返す
-    def aggregate_signals
-      { total: 0, by_trigger: [], by_day: [] }
     end
 
     def aggregate_feedback

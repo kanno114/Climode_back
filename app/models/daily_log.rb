@@ -1,7 +1,6 @@
 class DailyLog < ApplicationRecord
   belongs_to :user
   belongs_to :prefecture
-  has_many :signal_feedbacks, dependent: :destroy
   has_many :suggestion_feedbacks, dependent: :destroy
 
   validates :date, presence: true

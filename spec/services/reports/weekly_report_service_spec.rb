@@ -18,9 +18,6 @@ RSpec.describe Reports::WeeklyReportService do
 
         expect(result[:range][:start]).to eq(week_start.to_s)
         expect(result[:range][:end]).to eq(week_end.to_s)
-        expect(result[:signals][:total]).to eq(0)
-        expect(result[:signals][:by_trigger]).to eq([])
-        expect(result[:signals][:by_day]).to eq([])
         expect(result[:daily][:avg_sleep_hours]).to be_nil
         expect(result[:daily][:avg_mood]).to be_nil
         expect(result[:daily][:avg_fatigue_level]).to be_nil
@@ -70,11 +67,6 @@ RSpec.describe Reports::WeeklyReportService do
         expect(result[:range][:start]).to eq(week_start.to_s)
         expect(result[:range][:end]).to eq(week_end.to_s)
 
-        # シグナルは廃止されているため、常に0件
-        expect(result[:signals][:total]).to eq(0)
-        expect(result[:signals][:by_trigger]).to eq([])
-        expect(result[:signals][:by_day]).to eq([])
-
         # 自己申告集計
         expect(result[:daily][:avg_sleep_hours]).to eq(6.8)
         expect(result[:daily][:avg_mood]).to eq(1.5)
@@ -96,7 +88,6 @@ RSpec.describe Reports::WeeklyReportService do
 
         expect(result[:range][:start]).to eq(target_week_start.to_s)
         expect(result[:range][:end]).to eq((target_week_start + 6.days).to_s)
-        expect(result[:signals][:total]).to eq(0)
       end
     end
   end

@@ -193,7 +193,7 @@ class Api::V1::DailyLogsController < ApplicationController
     end
 
     if @daily_log.save
-      render json: { status: "ok", next: "/signals/today" }, status: :ok
+      render json: { status: "ok", next: "/dashboard" }, status: :ok
     else
       render json: { errors: @daily_log.errors.full_messages },
              status: :unprocessable_entity
