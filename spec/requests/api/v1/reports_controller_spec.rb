@@ -37,9 +37,6 @@ RSpec.describe "Api::V1::Reports", type: :request do
 
           expect(json["range"]["start"]).to eq(week_start.to_s)
           expect(json["range"]["end"]).to eq(week_end.to_s)
-          expect(json["signals"]["total"]).to eq(0)
-          expect(json["signals"]["by_trigger"]).to eq([])
-          expect(json["signals"]["by_day"]).to eq([])
           expect(json["daily"]["avg_sleep_hours"]).to be_nil
           expect(json["daily"]["avg_mood"]).to be_nil
           expect(json["daily"]["avg_fatigue_level"]).to be_nil
@@ -91,11 +88,6 @@ RSpec.describe "Api::V1::Reports", type: :request do
           expect(json["range"]["start"]).to eq(week_start.to_s)
           expect(json["range"]["end"]).to eq(week_end.to_s)
 
-          # シグナルは廃止されているため、常に0件
-          expect(json["signals"]["total"]).to eq(0)
-          expect(json["signals"]["by_trigger"]).to eq([])
-          expect(json["signals"]["by_day"]).to eq([])
-
           # 自己申告集計
           expect(json["daily"]["avg_sleep_hours"]).to eq(6.8)
           expect(json["daily"]["avg_mood"]).to eq(1.5)
@@ -119,8 +111,6 @@ RSpec.describe "Api::V1::Reports", type: :request do
 
           expect(json["range"]["start"]).to eq(target_week_start.to_s)
           expect(json["range"]["end"]).to eq((target_week_start + 6.days).to_s)
-          expect(json["signals"]["total"]).to eq(0)
-          expect(json["signals"]["by_trigger"]).to eq([])
         end
 
         it "無効な日付形式の場合は400を返す" do
