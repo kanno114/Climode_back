@@ -32,21 +32,6 @@ RSpec.describe Reports::WeeklyReportService do
     end
 
     context "データがある場合" do
-      let!(:trigger) { Trigger.find_or_create_by(key: "pressure_drop") { |t| t.label = "気圧低下"; t.category = "env"; t.version = 1 } }
-      let!(:signal1) do
-        create(:signal_event,
-               user: user,
-               trigger_key: "pressure_drop",
-               level: "strong",
-               evaluated_at: week_start + 1.day)
-      end
-      let!(:signal2) do
-        create(:signal_event,
-               user: user,
-               trigger_key: "pressure_drop",
-               level: "attention",
-               evaluated_at: week_start + 2.days)
-      end
       let!(:daily_log1) do
         create(:daily_log,
                user: user,
@@ -85,14 +70,10 @@ RSpec.describe Reports::WeeklyReportService do
         expect(result[:range][:start]).to eq(week_start.to_s)
         expect(result[:range][:end]).to eq(week_end.to_s)
 
-        # シグナル集計
-        expect(result[:signals][:total]).to eq(2)
-        expect(result[:signals][:by_trigger].length).to eq(1)
-        expect(result[:signals][:by_trigger][0][:trigger_key]).to eq("pressure_drop")
-        expect(result[:signals][:by_trigger][0][:count]).to eq(2)
-        expect(result[:signals][:by_trigger][0][:strong]).to eq(1)
-        expect(result[:signals][:by_trigger][0][:attention]).to eq(1)
-        expect(result[:signals][:by_day].length).to eq(2)
+        # シグナルは廃止されているため、常に0件
+        expect(result[:signals][:total]).to eq(0)
+        expect(result[:signals][:by_trigger]).to eq([])
+        expect(result[:signals][:by_day]).to eq([])
 
         # 自己申告集計
         expect(result[:daily][:avg_sleep_hours]).to eq(6.8)
