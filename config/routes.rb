@@ -44,10 +44,6 @@ Rails.application.routes.draw do
       end
       resources :prefectures, only: [ :index, :show ]
       resources :suggestions, only: [ :index ]
-      resources :triggers, only: [ :index ]
-      resources :user_triggers, only: [ :index, :create, :destroy ]
-
-      resources :signal_events, only: [ :index ]
 
       resources :push_subscriptions, only: [ :create ] do
         collection do
