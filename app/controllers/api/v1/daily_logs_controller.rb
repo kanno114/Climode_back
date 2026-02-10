@@ -101,8 +101,6 @@ class Api::V1::DailyLogsController < ApplicationController
     # @daily_log.score = score_result[:score]
 
     if @daily_log.save
-      # 体調系シグナルを評価（シグナルが存在しない場合のみ）
-      evaluate_body_signals_if_needed(@daily_log.date)
       render json: @daily_log.as_json(include: [ :prefecture ]),
              status: :created
     else
@@ -134,8 +132,6 @@ class Api::V1::DailyLogsController < ApplicationController
     # @daily_log.score = score_result[:score]
 
     if @daily_log.save
-      # 体調系シグナルを評価（シグナルが存在しない場合のみ）
-      evaluate_body_signals_if_needed(@daily_log.date)
       render json: @daily_log.as_json(include: [ :prefecture ])
     else
       render json: { errors: @daily_log.errors.full_messages },
@@ -206,8 +202,6 @@ class Api::V1::DailyLogsController < ApplicationController
     end
 
     if @daily_log.save
-      # 体調系シグナルを評価（シグナルが存在しない場合のみ）
-      evaluate_body_signals_if_needed(@daily_log.date)
       render json: { status: "ok", next: "/signals/today" }, status: :ok
     else
       render json: { errors: @daily_log.errors.full_messages },
@@ -290,9 +284,6 @@ class Api::V1::DailyLogsController < ApplicationController
         end
       end
 
-      # 体調系シグナルを評価（シグナルが存在しない場合のみ）
-      evaluate_body_signals_if_needed(@daily_log.date)
-
       Rails.logger.info "Evening reflection saved successfully for daily_log #{@daily_log.id}"
       render json: { status: "ok", next: "/dashboard" }, status: :ok
     end
@@ -318,26 +309,5 @@ class Api::V1::DailyLogsController < ApplicationController
       :self_score,
       :note
     )
-  end
-
-  def evaluate_body_signals_if_needed(date)
-    # 当日のbody系シグナルが存在しない場合のみ評価
-    existing_body_signals = SignalEvent.for_user(current_user)
-                                       .for_date(date)
-                                       .for_category("body")
-    return if existing_body_signals.exists?
-
-    # body系トリガーを即時評価
-    user_triggers = UserTrigger.where(user_id: current_user.id)
-                               .joins(:trigger)
-                               .where(triggers: { category: "body", is_active: true })
-                               .includes(:trigger)
-
-    user_triggers.each do |user_trigger|
-      trigger = user_trigger.trigger
-      Signal::EvaluationService.new(current_user, date).evaluate_trigger(trigger)
-    rescue => e
-      Rails.logger.error "Failed to evaluate body signal for trigger #{trigger.key}: #{e.message}"
-    end
   end
 end

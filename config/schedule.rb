@@ -27,13 +27,3 @@ set :output, { error: "log/cron_error.log", standard: "log/cron.log" }
 every 1.day, at: "8:00 pm" do
   runner "DailyReminderJob.perform_now"
 end
-
-# Evaluate signal events at 7:30 AM every day
-every 1.day, at: "7:30 am" do
-  runner "SignalEvaluationJob.perform_now"
-end
-
-# Send signal notifications at 8:00 AM every day (after signal evaluation)
-every 1.day, at: "8:00 am" do
-  runner "MorningSignalNotificationJob.perform_later"
-end
