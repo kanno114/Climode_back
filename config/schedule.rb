@@ -23,6 +23,11 @@
 set :environment, ENV["RAILS_ENV"] || "development"
 set :output, { error: "log/cron_error.log", standard: "log/cron.log" }
 
+# Build prefecture-based suggestion snapshots at 7:30 AM every day
+every 1.day, at: "7:30 am" do
+  runner "MorningSuggestionJob.perform_now"
+end
+
 # Send daily reminder notification at 8:00 PM (20:00) every day
 every 1.day, at: "8:00 pm" do
   runner "DailyReminderJob.perform_now"

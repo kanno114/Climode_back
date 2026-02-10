@@ -95,10 +95,6 @@ class Api::V1::DailyLogsController < ApplicationController
       note: daily_log_data[:note] || daily_log_data[:memo] || daily_log_data[:notes] || ""
     )
 
-    # 体調スコアを計算
-    # スコア計算機能は現在停止中
-    # score_result = ::Score::ScoreCalculatorV1.new(@daily_log).call(persist: false)
-    # @daily_log.score = score_result[:score]
 
     if @daily_log.save
       render json: @daily_log.as_json(include: [ :prefecture ]),
@@ -125,11 +121,6 @@ class Api::V1::DailyLogsController < ApplicationController
       fatigue: daily_log_data[:fatigue],
       note: daily_log_data[:note] || daily_log_data[:memo] || daily_log_data[:notes] || ""
     )
-
-    # 体調スコアを再計算
-    # スコア計算機能は現在停止中
-    # score_result = ::Score::ScoreCalculatorV1.new(@daily_log).call(persist: false)
-    # @daily_log.score = score_result[:score]
 
     if @daily_log.save
       render json: @daily_log.as_json(include: [ :prefecture ])

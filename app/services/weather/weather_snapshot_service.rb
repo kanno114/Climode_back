@@ -69,6 +69,12 @@ module Weather
       metrics["pressure_hpa"] = today_data[:pressure_hpa] if today_data[:pressure_hpa]
       metrics["humidity_avg"] = today_data[:humidity_pct] if today_data[:humidity_pct]
 
+      # 当日の最低気温（ヒートショック等のルール用）
+      min_temp = series
+        .select { |p| p[:time].to_date == @date && p[:temperature_c].present? }
+        .map { |p| p[:temperature_c].to_f }
+      metrics["min_temperature_c"] = min_temp.min.round(1) if min_temp.any?
+
       # 24時間前の気圧変化（当日8時 - 前日8時）
       if today_data[:pressure_hpa] && yesterday_data&.dig(:pressure_hpa)
         metrics["pressure_drop_24h"] = (today_data[:pressure_hpa] - yesterday_data[:pressure_hpa]).round(1)
@@ -89,6 +95,10 @@ module Weather
 
       # 当日24時間分を hourly_forecast に保存（JSON 化可能な形式）
       metrics["hourly_forecast"] = build_hourly_forecast_for_date(series, @date)
+
+      # 起床時間帯（7:30〜22:00 相当）における気圧変動メトリクス
+      awake_metrics = calculate_awake_hours_pressure_metrics(series, @date)
+      metrics.merge!(awake_metrics) if awake_metrics.present?
 
       metrics
     end
@@ -113,6 +123,83 @@ module Weather
             "weather_code" => p[:weather_code]
           }
         }
+    end
+
+    # 起床時間帯（概ね 7:30〜22:00）における気圧差メトリクスを計算する
+    #
+    # - max_pressure_drop_1h_awake: 1時間あたりの気圧低下の最大値（最も急激な低下、負の値）
+    # - low_pressure_duration_1003h: 1003hPa 以下が連続して続いた最長時間（時間）
+    # - low_pressure_duration_1007h: 1007hPa 以下が連続して続いた最長時間（時間）
+    # - pressure_range_3h_awake: 3時間スライディングウィンドウでの気圧変化幅の最小値
+    # - pressure_jitter_3h_awake: 3時間スライディングウィンドウでの気圧標準偏差の最大値
+    def calculate_awake_hours_pressure_metrics(series, date)
+      # 起床時間帯は 8:00〜22:00 として近似する（7:30〜22:00 の要件に対応）
+      awake_points =
+        series
+          .select { |p| p[:time].to_date == date && p[:time].hour.between?(8, 22) }
+          .sort_by { |p| p[:time] }
+
+      return {} if awake_points.size < 2
+
+      pressures = awake_points.map { |p| p[:pressure_hpa] }.compact
+      return {} if pressures.size < 2
+
+      metrics = {}
+
+      # 1時間ごとの気圧変化（低下側の最大値=最も大きなマイナス値）
+      max_drop = nil
+      awake_points.each_cons(2) do |prev, cur|
+        next unless prev[:pressure_hpa] && cur[:pressure_hpa]
+
+        delta = (cur[:pressure_hpa] - prev[:pressure_hpa]).round(1)
+        max_drop = [ max_drop, delta ].compact.min
+      end
+      metrics["max_pressure_drop_1h_awake"] = max_drop if max_drop
+
+      # 低気圧継続時間（1時間刻みの連続時間を時間単位で表現）
+      metrics["low_pressure_duration_1003h"] = max_consecutive_hours(awake_points, 1003.0)
+      metrics["low_pressure_duration_1007h"] = max_consecutive_hours(awake_points, 1007.0)
+
+      # 3時間スライディングウィンドウでの変化幅・標準偏差
+      if awake_points.size >= 3
+        ranges = []
+        jitters = []
+
+        awake_points.each_cons(3) do |window|
+          values = window.map { |p| p[:pressure_hpa] }.compact
+          next if values.size < 3
+
+          min_v = values.min
+          max_v = values.max
+          ranges << (max_v - min_v).round(2)
+
+          mean = values.sum.to_f / values.size
+          variance = values.sum { |v| (v - mean) ** 2 } / values.size
+          jitters << Math.sqrt(variance).round(3)
+        end
+
+        metrics["pressure_range_3h_awake"] = ranges.min if ranges.any?
+        metrics["pressure_jitter_3h_awake"] = jitters.max if jitters.any?
+      end
+
+      metrics
+    end
+
+    # 指定しきい値以下の気圧が連続した最長時間（時間単位）を返す
+    def max_consecutive_hours(points, threshold_hpa)
+      max_count = 0
+      current_count = 0
+
+      points.each do |p|
+        if p[:pressure_hpa] && p[:pressure_hpa] <= threshold_hpa
+          current_count += 1
+          max_count = [ max_count, current_count ].max
+        else
+          current_count = 0
+        end
+      end
+
+      max_count.to_f
     end
   end
 end

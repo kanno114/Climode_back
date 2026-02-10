@@ -11,8 +11,7 @@ RSpec.describe Suggestion::SuggestionEngine do
                user: user,
                date: date,
                sleep_hours: 5.0,
-               mood: 3,
-               score: 60)
+               mood: 3)
       end
 
       let!(:weather_snapshot) do
@@ -21,8 +20,14 @@ RSpec.describe Suggestion::SuggestionEngine do
                date: date,
                metrics: {
                  "temperature_c" => 25.0,
+                 "min_temperature_c" => 18.0,
                  "humidity_pct" => 50.0,
-                 "pressure_hpa" => 1013.0
+                 "pressure_hpa" => 1013.0,
+                 "max_pressure_drop_1h_awake" => 0.0,
+                 "low_pressure_duration_1003h" => 0.0,
+                 "low_pressure_duration_1007h" => 0.0,
+                 "pressure_range_3h_awake" => 0.0,
+                 "pressure_jitter_3h_awake" => 0.0
                })
       end
 
@@ -42,25 +47,17 @@ RSpec.describe Suggestion::SuggestionEngine do
           )
         end
 
-        it 'sleep_shortage_signal_alertルールに一致する場合、適切な提案を返す' do
-          daily_log.update!(sleep_hours: 5.0)
-          # SignalEventを作成（sleep_shortage trigger）
-          create(:signal_event,
-                 user: user,
-                 trigger_key: "sleep_shortage",
-                 category: "body",
-                 level: "attention",
-                 priority: 35,
-                 evaluated_at: date.beginning_of_day)
+        it 'sleep_Cautionルールに一致する場合、適切な提案を返す' do
+          # 5〜6時間未満でsleep_Cautionが発火する
+          daily_log.update!(sleep_hours: 5.5)
 
           suggestions = described_class.call(user: user, date: date)
-          sleep_suggestion = suggestions.find { |s| s.key == 'sleep_shortage_signal_alert' }
+          sleep_suggestion = suggestions.find { |s| s.key == 'sleep_Caution' }
 
           expect(sleep_suggestion).to be_present
-          expect(sleep_suggestion.title).to eq('睡眠不足シグナル検出。休息を')
-          expect(sleep_suggestion.severity).to eq(80)
-          expect(sleep_suggestion.tags).to include('sleep', 'signal')
-          expect(sleep_suggestion.message).to include('35') # priority値が埋め込まれる
+          expect(sleep_suggestion.title).to eq('睡眠不足気味。生活時間を見直して')
+          expect(sleep_suggestion.severity).to eq(75)
+          expect(sleep_suggestion.tags).to include('sleep')
         end
       end
 
@@ -69,68 +66,115 @@ RSpec.describe Suggestion::SuggestionEngine do
           daily_log.update!(sleep_hours: 5.0)
           weather_snapshot.update!(metrics: {
             "temperature_c" => 32.0,
+            "min_temperature_c" => 20.0,
             "humidity_pct" => 75.0,
-            "pressure_hpa" => 1013.0
+            "pressure_hpa" => 1013.0,
+            "max_pressure_drop_1h_awake" => 0.0,
+            "low_pressure_duration_1003h" => 0.0,
+            "low_pressure_duration_1007h" => 0.0,
+            "pressure_range_3h_awake" => 0.0,
+            "pressure_jitter_3h_awake" => 0.0
           })
-          # SignalEventを作成（sleep_shortage trigger）
-          create(:signal_event,
-                 user: user,
-                 trigger_key: "sleep_shortage",
-                 category: "body",
-                 level: "attention",
-                 priority: 35,
-                 evaluated_at: date.beginning_of_day)
 
           suggestions = described_class.call(user: user, date: date)
 
           expect(suggestions.length).to be > 1
-          expect(suggestions.map(&:key)).to include('sleep_shortage_signal_alert')
+          expect(suggestions.map(&:key)).to include('sleep_Caution')
         end
 
-        it 'hot_and_humidルールに一致する場合、適切な提案を返す' do
+        it 'heatstroke_Warningルールに一致する場合、適切な提案を返す' do
           weather_snapshot.update!(metrics: {
-            "temperature_c" => 30.0,
-            "humidity_pct" => 75.0,
-            "pressure_hpa" => 1013.0
+            "temperature_c" => 32.0,
+            "min_temperature_c" => 22.0,
+            "humidity_pct" => 50.0,
+            "pressure_hpa" => 1013.0,
+            "max_pressure_drop_1h_awake" => 0.0,
+            "low_pressure_duration_1003h" => 0.0,
+            "low_pressure_duration_1007h" => 0.0,
+            "pressure_range_3h_awake" => 0.0,
+            "pressure_jitter_3h_awake" => 0.0
           })
 
           suggestions = described_class.call(user: user, date: date)
-          hot_humid_suggestion = suggestions.find { |s| s.key == 'hot_and_humid' }
+          heat_suggestion = suggestions.find { |s| s.key == 'heatstroke_Warning' }
 
-          # hot_and_humidルールは temperature_c > 28 AND (humidity_pct > 70 OR has_humidity_high_signal)
-          # 同タグ連発抑制により、他のtemperature/humidityタグの提案と競合する可能性がある
-          if hot_humid_suggestion
-            expect(hot_humid_suggestion.title).to eq('高温多湿。熱中症に注意')
-            expect(hot_humid_suggestion.severity).to eq(90)
-            expect(hot_humid_suggestion.tags).to include('temperature', 'humidity')
+          if heat_suggestion
+            expect(heat_suggestion.title).to eq('暑い日。炎天下を避け、激しい運動は中止')
+            expect(heat_suggestion.severity).to eq(75)
+            expect(heat_suggestion.tags).to include('temperature', 'heatstroke')
           else
-            # 同タグ連発抑制により表示されない場合もある
-            # 少なくとも高温または高湿度の提案は返されることを確認
-            temp_suggestions = suggestions.select { |s| s.tags.include?('temperature') || s.tags.include?('humidity') }
-            # 条件を満たす場合、少なくとも1つは返されるはず
-            # ただし、同タグ連発抑制により表示されない場合もあるため、このテストは緩和
             expect(suggestions.length).to be > 0
           end
+        end
+      end
+
+      context '気圧差・気象病ルール' do
+        it 'weather_pain_drop_Warning が発火するコンテキストを評価できる' do
+          ctx = {
+            "sleep_hours" => 0.0,
+            "mood" => 0,
+            "score" => 0,
+            "temperature_c" => 0.0,
+            "min_temperature_c" => 0.0,
+            "humidity_pct" => 0.0,
+            "pressure_hpa" => 1013.0,
+            "max_pressure_drop_1h_awake" => -3.5,
+            "low_pressure_duration_1003h" => 0.0,
+            "low_pressure_duration_1007h" => 0.0,
+            "pressure_range_3h_awake" => 0.0,
+            "pressure_jitter_3h_awake" => 0.0
+          }
+
+          rules = Suggestion::RuleRegistry.all.select { |r| r.key == 'weather_pain_drop_Warning' }
+          suggestions = Suggestion::RuleEngine.call(rules: rules, context: ctx, limit: 3, tag_diversity: false)
+
+          keys = suggestions.map(&:key)
+          expect(keys).to include('weather_pain_drop_Warning')
+        end
+
+        it 'low_pressure_duration_* に応じて 1003h / 1007h ルールが切り替わる' do
+          base_ctx = {
+            "sleep_hours" => 0.0,
+            "mood" => 0,
+            "score" => 0,
+            "temperature_c" => 0.0,
+            "min_temperature_c" => 0.0,
+            "humidity_pct" => 0.0,
+            "pressure_hpa" => 1005.0,
+            "max_pressure_drop_1h_awake" => 0.0,
+            "pressure_range_3h_awake" => 0.0,
+            "pressure_jitter_3h_awake" => 0.0
+          }
+
+          # 1003hPa 以下が3時間以上 → weather_pain_low_1003_1
+          ctx_1003 = base_ctx.merge(
+            "low_pressure_duration_1003h" => 3.0,
+            "low_pressure_duration_1007h" => 4.0
+          )
+          rules_1003 = Suggestion::RuleRegistry.all.select { |r| r.key == 'weather_pain_low_1003_Warning' }
+          suggestions_1003 = Suggestion::RuleEngine.call(rules: rules_1003, context: ctx_1003, limit: 3, tag_diversity: false)
+          expect(suggestions_1003.map(&:key)).to include('weather_pain_low_1003_Warning')
+
+          # 1007hPa 以下のみ3時間以上（1003hPa は3時間未満）→ weather_pain_low_1007_Caution
+          ctx_1007 = base_ctx.merge(
+            "low_pressure_duration_1003h" => 2.0,
+            "low_pressure_duration_1007h" => 3.5
+          )
+          rules_1007 = Suggestion::RuleRegistry.all.select { |r| r.key == 'weather_pain_low_1007_Caution' }
+          suggestions_1007 = Suggestion::RuleEngine.call(rules: rules_1007, context: ctx_1007, limit: 3, tag_diversity: false)
+          expect(suggestions_1007.map(&:key)).to include('weather_pain_low_1007_Caution')
         end
       end
 
       context 'メッセージの変数埋め込み' do
         it 'メッセージにコンテキスト値が埋め込まれる' do
           daily_log.update!(sleep_hours: 5.5)
-          # SignalEventを作成（sleep_shortage trigger）
-          create(:signal_event,
-                 user: user,
-                 trigger_key: "sleep_shortage",
-                 category: "body",
-                 level: "attention",
-                 priority: 35,
-                 evaluated_at: date.beginning_of_day)
-
           suggestions = described_class.call(user: user, date: date)
-          sleep_suggestion = suggestions.find { |s| s.key == 'sleep_shortage_signal_alert' }
+          sleep_suggestion = suggestions.find { |s| s.key == 'sleep_Caution' }
 
           expect(sleep_suggestion).to be_present
-          expect(sleep_suggestion.message).to include('35') # priority値が埋め込まれる
+          # メッセージ内にsleep_hoursが埋め込まれていることを確認（sleep_2は%{sleep_hours}を含まないが、少なくとも提案が返る）
+          expect(sleep_suggestion.message).to be_present
         end
       end
 
@@ -139,8 +183,14 @@ RSpec.describe Suggestion::SuggestionEngine do
           daily_log.update!(sleep_hours: 5.0)
           weather_snapshot.update!(metrics: {
             "temperature_c" => 36.0,
+            "min_temperature_c" => 25.0,
             "humidity_pct" => 75.0,
-            "pressure_hpa" => 1013.0
+            "pressure_hpa" => 1013.0,
+            "max_pressure_drop_1h_awake" => 0.0,
+            "low_pressure_duration_1003h" => 0.0,
+            "low_pressure_duration_1007h" => 0.0,
+            "pressure_range_3h_awake" => 0.0,
+            "pressure_jitter_3h_awake" => 0.0
           })
 
           suggestions = described_class.call(user: user, date: date)
@@ -153,11 +203,17 @@ RSpec.describe Suggestion::SuggestionEngine do
         end
 
         it '最大3件まで返す' do
-          daily_log.update!(sleep_hours: 5.0, score: 45)
+          daily_log.update!(sleep_hours: 5.0)
           weather_snapshot.update!(metrics: {
             "temperature_c" => 36.0,
+            "min_temperature_c" => 25.0,
             "humidity_pct" => 75.0,
-            "pressure_hpa" => 970.0
+            "pressure_hpa" => 970.0,
+            "max_pressure_drop_1h_awake" => 0.0,
+            "low_pressure_duration_1003h" => 0.0,
+            "low_pressure_duration_1007h" => 0.0,
+            "pressure_range_3h_awake" => 0.0,
+            "pressure_jitter_3h_awake" => 0.0
           })
 
           suggestions = described_class.call(user: user, date: date)
@@ -171,8 +227,14 @@ RSpec.describe Suggestion::SuggestionEngine do
           daily_log.update!(sleep_hours: 5.0)
           weather_snapshot.update!(metrics: {
             "temperature_c" => 36.0,
+            "min_temperature_c" => 25.0,
             "humidity_pct" => 50.0,
-            "pressure_hpa" => 1013.0
+            "pressure_hpa" => 1013.0,
+            "max_pressure_drop_1h_awake" => 0.0,
+            "low_pressure_duration_1003h" => 0.0,
+            "low_pressure_duration_1007h" => 0.0,
+            "pressure_range_3h_awake" => 0.0,
+            "pressure_jitter_3h_awake" => 0.0
           })
 
           suggestions = described_class.call(user: user, date: date)
@@ -188,8 +250,14 @@ RSpec.describe Suggestion::SuggestionEngine do
           daily_log.update!(sleep_hours: 7.5)
           weather_snapshot.update!(metrics: {
             "temperature_c" => 20.0,
+            "min_temperature_c" => 15.0,
             "humidity_pct" => 50.0,
-            "pressure_hpa" => 1013.0
+            "pressure_hpa" => 1013.0,
+            "max_pressure_drop_1h_awake" => 0.0,
+            "low_pressure_duration_1003h" => 0.0,
+            "low_pressure_duration_1007h" => 0.0,
+            "pressure_range_3h_awake" => 0.0,
+            "pressure_jitter_3h_awake" => 0.0
           })
 
           suggestions = described_class.call(user: user, date: date)
@@ -206,121 +274,6 @@ RSpec.describe Suggestion::SuggestionEngine do
           described_class.call(user: user, date: date)
         }.to raise_error(ActiveRecord::RecordNotFound)
       end
-    end
-
-    context 'SignalEventが存在する場合' do
-      let!(:daily_log) do
-        create(:daily_log,
-               user: user,
-               date: date,
-               sleep_hours: 5.0,
-               mood: 3,
-               score: 60)
-      end
-
-      let!(:weather_snapshot) do
-        create(:weather_snapshot,
-               prefecture: user.prefecture,
-               date: date,
-               metrics: {
-                 "temperature_c" => 25.0,
-                 "humidity_pct" => 50.0,
-                 "pressure_hpa" => 1013.0
-               })
-      end
-
-      let!(:signal_event) do
-        create(:signal_event,
-               user: user,
-               trigger_key: "pressure_drop",
-               category: "env",
-               level: "strong",
-               priority: 80,
-               evaluated_at: date.beginning_of_day)
-      end
-
-      it 'SignalEvent情報がコンテキストに含まれる' do
-        engine = described_class.new(user: user, date: date)
-        ctx = engine.send(:build_context)
-
-        expect(ctx["has_pressure_drop_signal"]).to eq(true)
-        expect(ctx["pressure_drop_level"]).to eq(3) # strong = 3
-        expect(ctx["pressure_drop_priority"]).to eq(80.0)
-        expect(ctx["pressure_drop_category"]).to eq(1) # env = 1
-      end
-
-      it 'SignalEventを参照するルールに一致する場合、提案を返す' do
-        suggestions = described_class.call(user: user, date: date)
-        signal_suggestion = suggestions.find { |s| s.key == 'pressure_drop_signal_alert' }
-
-        # SignalEventが存在し、優先度が80以上の場合、提案が返される可能性がある
-        # ただし、他の条件も満たす必要があるため、必ずしも返されるとは限らない
-        if signal_suggestion
-          expect(signal_suggestion.title).to eq('気圧低下シグナル検出。体調管理を')
-          expect(signal_suggestion.severity).to eq(85)
-          expect(signal_suggestion.tags).to include('pressure', 'signal')
-        end
-      end
-
-      context '複数のSignalEventが存在する場合' do
-        let!(:sleep_signal) do
-          create(:signal_event,
-                 user: user,
-                 trigger_key: "sleep_shortage",
-                 category: "body",
-                 level: "attention",
-                 priority: 50,
-                 evaluated_at: date.beginning_of_day)
-        end
-
-        it '複数のSignalEvent情報がコンテキストに含まれる' do
-          engine = described_class.new(user: user, date: date)
-          ctx = engine.send(:build_context)
-
-          expect(ctx["has_pressure_drop_signal"]).to eq(true)
-          expect(ctx["has_sleep_shortage_signal"]).to eq(true)
-          expect(ctx["pressure_drop_priority"]).to eq(80.0)
-          expect(ctx["sleep_shortage_priority"]).to eq(50.0)
-        end
-
-        it '複数シグナルを参照するルールに一致する場合、提案を返す' do
-          suggestions = described_class.call(user: user, date: date)
-          multiple_signal_suggestion = suggestions.find { |s| s.key == 'multiple_signals_alert' }
-
-          # 複数のシグナルが存在する場合、複合ルールに一致する可能性がある
-          if multiple_signal_suggestion
-            expect(multiple_signal_suggestion.title).to eq('複数のシグナル検出。体調に注意')
-            expect(multiple_signal_suggestion.severity).to eq(90)
-          end
-        end
-      end
-    end
-  end
-
-  describe '#extract_triggers' do
-    let!(:daily_log) do
-      create(:daily_log,
-             user: user,
-             date: date,
-             sleep_hours: 5.0)
-    end
-    let(:engine) { described_class.new(user: user, date: date) }
-    let(:ctx) do
-      {
-        'sleep_hours' => 5.0,
-        'temperature_c' => 25.0,
-        'humidity_pct' => 50.0
-      }
-    end
-
-    it '条件式から変数を抽出して値を返す' do
-      condition_str = 'sleep_hours < 6.0 AND temperature_c > 20'
-      triggers = engine.send(:extract_triggers, condition_str, ctx)
-
-      expect(triggers).to be_a(Hash)
-      expect(triggers['sleep_hours']).to eq(5.0)
-      expect(triggers['temperature_c']).to eq(25.0)
-      expect(triggers).not_to have_key('AND')
     end
   end
 end

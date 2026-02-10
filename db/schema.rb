@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_11_26_203322) do
+ActiveRecord::Schema[7.2].define(version: 2026_02_10_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -21,7 +21,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_26_203322) do
     t.decimal "sleep_hours", precision: 4, scale: 1
     t.integer "mood"
     t.integer "fatigue"
-    t.integer "score"
     t.integer "self_score"
     t.text "note"
     t.datetime "created_at", null: false
@@ -37,7 +36,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_26_203322) do
     t.check_constraint "helpfulness >= 1 AND helpfulness <= 5", name: "check_helpfulness_range"
     t.check_constraint "match_score >= 1 AND match_score <= 5", name: "check_match_score_range"
     t.check_constraint "mood >= 1 AND mood <= 5", name: "check_mood_range"
-    t.check_constraint "score >= 0 AND score <= 100", name: "check_score_range"
     t.check_constraint "self_score >= 1 AND self_score <= 3", name: "check_self_score_range"
     t.check_constraint "sleep_hours >= 0::numeric AND sleep_hours <= 24::numeric", name: "check_sleep_hours_range"
   end
@@ -90,6 +88,23 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_26_203322) do
     t.index ["daily_log_id", "trigger_key"], name: "index_signal_feedbacks_on_daily_log_id_and_trigger_key", unique: true
     t.index ["daily_log_id"], name: "index_signal_feedbacks_on_daily_log_id"
     t.check_constraint "match >= 1 AND match <= 5", name: "check_signal_feedback_match_range"
+  end
+
+  create_table "suggestion_snapshots", force: :cascade do |t|
+    t.date "date", null: false
+    t.string "prefecture", null: false
+    t.string "rule_key", null: false
+    t.string "title", null: false
+    t.text "message"
+    t.jsonb "tags", default: []
+    t.integer "severity", null: false
+    t.string "category", null: false
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["date", "prefecture", "rule_key"], name: "index_suggestion_snapshots_on_date_pref_rule", unique: true
+    t.index ["date", "prefecture"], name: "index_suggestion_snapshots_on_date_and_prefecture"
+    t.index ["tags"], name: "index_suggestion_snapshots_on_tags", using: :gin
   end
 
   create_table "suggestion_feedbacks", force: :cascade do |t|

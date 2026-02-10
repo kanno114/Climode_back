@@ -46,9 +46,6 @@ module Reports
         ),
         fatigue_level: calculate_statistics(
           daily_logs.map(&:fatigue_level).compact.map(&:to_f)
-        ),
-        score: calculate_statistics(
-          daily_logs.map(&:score).compact.map(&:to_f)
         )
       }
     end
@@ -80,27 +77,8 @@ module Reports
       }
     end
 
-    def compare_with_previous_week(daily_logs)
-      previous_week_start = @week_start - 7.days
-      previous_week_end = @week_end - 7.days
-
-      previous_logs = @user.daily_logs
-                           .where(date: previous_week_start..previous_week_end)
-
-      current_scores = daily_logs.map(&:score).compact.map(&:to_f)
-      previous_scores = previous_logs.map(&:score).compact.map(&:to_f)
-
-      return nil if current_scores.empty? || previous_scores.empty?
-
-      current_avg = current_scores.sum / current_scores.size
-      previous_avg = previous_scores.sum / previous_scores.size
-
-      {
-        score_diff: (current_avg - previous_avg).round(1),
-        score_change_rate: previous_avg > 0 ? ((current_avg - previous_avg) / previous_avg * 100).round(1) : nil,
-        current_avg: current_avg.round(1),
-        previous_avg: previous_avg.round(1)
-      }
+    def compare_with_previous_week(_daily_logs)
+      nil
     end
 
     def calculate_statistics(values)

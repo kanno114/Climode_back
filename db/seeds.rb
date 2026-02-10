@@ -15,8 +15,6 @@
 #
 # 1. マスタデータ（本番環境でも投入）
 #    - 都道府県マスタ: 全国47都道府県のデータ（コード、名称、重心座標）
-#    - トリガーマスタ: Triggers::PresetLoader によりマスタデータを同期
-#
 # 2. テストデータ（開発・テスト環境のみ）
 #    - ユーザーデータ: Alice, Bob, Carol
 #    - サンプル記録データ: 過去N日分のDailyLog（環境変数 SEED_DAYS で変更可能）
@@ -123,15 +121,48 @@ prefectures_data.each do |prefecture_data|
   end
 end
 
-# トリガーマスタデータ
-skip_triggers = ENV['SEED_SKIP_TRIGGERS'] == '1'
-unless skip_triggers
-  puts "Syncing trigger presets..."
-  # 本番環境ではforce: false（変更がある場合のみ更新）、開発・テスト環境ではforce: true（常に更新）
-  force_update = !is_production
-  Triggers::PresetLoader.call(force: force_update)
-else
-  puts "Skipping trigger preset sync (SEED_SKIP_TRIGGERS=1)"
+# 関心テーママスタ（関心ワード）
+unless is_production
+  puts "Seeding concern topics..."
+
+  concern_topics = [
+    {
+      key: "heatstroke",
+      label_ja: "熱中症",
+      description_ja: "猛暑や高湿度による熱中症リスクに関する提案を優先します。",
+      rule_concerns: [ "heatstroke" ]
+    },
+    {
+      key: "heat_shock",
+      label_ja: "ヒートショック",
+      description_ja: "気温差や入浴時の急激な温度変化によるヒートショックリスクに関する提案を優先します。",
+      rule_concerns: [ "heat_shock" ]
+    },
+    {
+      key: "weather_pain",
+      label_ja: "気象病・天気痛",
+      description_ja: "気圧変動や低気圧による頭痛・倦怠感など、天気痛に関する提案を優先します。",
+      rule_concerns: [ "weather_pain" ]
+    },
+    {
+      key: "dryness_infection",
+      label_ja: "乾燥・ウイルス感染リスク",
+      description_ja: "乾燥や低湿度によるウイルス感染リスク・喉や肌の不調に関する提案を優先します。",
+      rule_concerns: [ "dryness_infection" ]
+    },
+    {
+      key: "sleep_time",
+      label_ja: "睡眠時間",
+      description_ja: "睡眠時間の過不足に関する提案を優先します。",
+      rule_concerns: [ "sleep_time" ]
+    }
+  ]
+
+  concern_topics.each do |attrs|
+    topic = ConcernTopic.find_or_initialize_by(key: attrs[:key])
+    topic.assign_attributes(attrs)
+    topic.save!
+  end
 end
 
 # サンプルの日次記録データ（開発・テスト環境のみ、デフォルトで過去3ヶ月分 ≒ 90日）
@@ -161,40 +192,15 @@ unless is_production
         mood_score = rand(1..5)      # 気分スコア（1〜5）
         fatigue_score = rand(1..5)   # 疲労感スコア（1〜5）
 
-        # スコア計算（睡眠、気分、疲労感を考慮）
-        base_score = 50 # ベーススコア
-
-        # 睡眠スコア（7-8時間が最適）
-        sleep_score = case sleep_hours
-        when 7.0..8.0
-          20
-        when 6.0..6.9, 8.1..9.0
-          15
-        when 5.0..5.9, 9.1..10.0
-          10
-        else
-          5
-        end
-
-        # 気分スコア（1〜5 → -10〜10 にマッピング）
-        mood_bonus = (mood_score - 3) * 5
-
-        # 疲労感スコア（1=重い, 5=軽い を 15〜3 にマッピング）
-        fatigue_bonus = (6 - fatigue_score) * 3
-
-        # 総合スコア計算
-        total_score = [ base_score + sleep_score + mood_bonus + fatigue_bonus, 100 ].min
-        total_score = [ total_score, 0 ].max
-
         # メモ（気分と疲労感を考慮）
         notes = case [ mood_score, fatigue_score ]
-        in [ 8..9, 1..3 ]
+        in [ 4..5, 1..3 ]
           "体調が良く、充実した一日でした。疲れも少なく快調です。"
-        in [ 6..7, 1..4 ]
+        in [ 3, 1..4 ]
           "普通の一日でした。特に問題なし。"
-        in [ 4..5, 5..7 ]
+        in [ 2..3, 4..5 ]
           "少し疲れを感じました。"
-        in [ 1..3, 8..10 ]
+        in [ 1..2, 4..5 ]
           "体調が優れませんでした。疲労感が強いです。"
         else
           "普通の一日でした。"
@@ -203,7 +209,7 @@ unless is_production
         # デフォルトの都道府県（東京都）を取得
         default_prefecture = Prefecture.find_by(code: '13')
 
-        daily_log = DailyLog.create!(
+        DailyLog.create!(
           user: alice,
           prefecture: default_prefecture,
           date: date,
@@ -211,11 +217,99 @@ unless is_production
           mood: mood_score,           # 1〜5 をそのまま保存
           fatigue: fatigue_score,     # 1〜5 をそのまま保存
           note: notes,
-          score: total_score,
           self_score: rand(1..3)
         )
 
-        puts "  Created daily log for Alice on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}, score=#{total_score}" if verbose_logs
+        puts "  Created daily log for Alice on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}" if verbose_logs
+      end
+    end
+
+    # ==== 今日のAlice用: 固定の天気パターン＋提案が多めに出るセットアップ ====
+    puts "Creating todays context for Alice (fixed weather pattern for suggestions)..."
+
+    today = Date.current
+    # デフォルト都道府県（東京）をAliceに付与
+    default_prefecture = alice.prefecture || Prefecture.find_by(code: '13')
+    if default_prefecture && alice.prefecture.nil?
+      alice.update!(prefecture: default_prefecture)
+    end
+
+    if default_prefecture
+      # 今日のDailyLog（睡眠不足）を固定値で作成
+      DailyLog.find_or_create_by!(user: alice, date: today) do |log|
+        log.prefecture = default_prefecture
+        log.sleep_hours = 5.5
+        log.mood = 2
+        log.fatigue = 4
+        log.note = "シード用テストデータ: 睡眠不足＋環境リスク高めの一日"
+        log.self_score = 2
+      end
+
+      # 今日の固定的な天気パターン（猛暑＋乾燥＋低気圧気味）
+      fixed_metrics = {
+        "temperature_c" => 36.0,   # heatstroke_1
+        "min_temperature_c" => 10.0, # heat_shock_2
+        "humidity_pct"  => 25.0,   # dryness_1
+        "pressure_hpa"  => 975.0,
+        "max_pressure_drop_1h_awake"   => 0.0,
+        "low_pressure_duration_1003h"  => 0.0,
+        "low_pressure_duration_1007h"  => 0.0,
+        "pressure_range_3h_awake"      => 0.0,
+        "pressure_jitter_3h_awake"     => 0.0
+      }
+
+      WeatherSnapshot.find_or_initialize_by(
+        prefecture: default_prefecture,
+        date: today
+      ).tap do |snapshot|
+        snapshot.metrics = (snapshot.metrics || {}).merge(fixed_metrics)
+        snapshot.save!
+      end
+
+      # envカテゴリのルールを使って、Aliceの都道府県向けSuggestionSnapshotを事前生成
+      env_rules = ::Suggestion::RuleRegistry.all.select { |r| r.category == "env" }
+      ctx = {
+        "temperature_c"     => fixed_metrics["temperature_c"].to_f,
+        "min_temperature_c" => fixed_metrics["min_temperature_c"].to_f,
+        "humidity_pct"      => fixed_metrics["humidity_pct"].to_f,
+        "pressure_hpa"      => fixed_metrics["pressure_hpa"].to_f,
+        "max_pressure_drop_1h_awake"   => (fixed_metrics["max_pressure_drop_1h_awake"] || 0).to_f,
+        "low_pressure_duration_1003h"  => (fixed_metrics["low_pressure_duration_1003h"] || 0).to_f,
+        "low_pressure_duration_1007h"  => (fixed_metrics["low_pressure_duration_1007h"] || 0).to_f,
+        "pressure_range_3h_awake"      => (fixed_metrics["pressure_range_3h_awake"] || 0).to_f,
+        "pressure_jitter_3h_awake"     => (fixed_metrics["pressure_jitter_3h_awake"] || 0).to_f
+      }
+
+      env_suggestions = ::Suggestion::RuleEngine.call(
+        rules: env_rules,
+        context: ctx,
+        limit: 20,
+        tag_diversity: false
+      )
+
+      SuggestionSnapshot.where(date: today, prefecture: default_prefecture.code).delete_all
+
+      if env_suggestions.any?
+        SuggestionSnapshot.insert_all!(
+          env_suggestions.map do |s|
+            {
+              date: today,
+              prefecture: default_prefecture.code,
+              rule_key: s.key,
+              title: s.title,
+              message: s.message,
+              tags: s.tags,
+              severity: s.severity,
+              category: s.category,
+              metadata: ctx.dup,
+              created_at: Time.current,
+              updated_at: Time.current
+            }
+          end
+        )
+        puts "  Created #{env_suggestions.size} env suggestions for Alice (#{default_prefecture.name_ja}) on #{today}"
+      else
+        puts "  No env suggestions generated for Alice on #{today}"
       end
     end
   end
@@ -237,40 +331,15 @@ unless is_production
         mood_score = rand(1..5)      # 気分スコア（1〜5）
         fatigue_score = rand(1..5)   # 疲労感スコア（1〜5）
 
-        # スコア計算（睡眠、気分、疲労感を考慮）
-        base_score = 50 # ベーススコア
-
-        # 睡眠スコア（7-8時間が最適）
-        sleep_score = case sleep_hours
-        when 7.0..8.0
-          20
-        when 6.0..6.9, 8.1..9.0
-          15
-        when 5.0..5.9, 9.1..10.0
-          10
-        else
-          5
-        end
-
-        # 気分スコア（1〜5 → -10〜10 にマッピング）
-        mood_bonus = (mood_score - 3) * 5
-
-        # 疲労感スコア（1=重い, 5=軽い を 15〜3 にマッピング）
-        fatigue_bonus = (6 - fatigue_score) * 3
-
-        # 総合スコア計算
-        total_score = [ base_score + sleep_score + mood_bonus + fatigue_bonus, 100 ].min
-        total_score = [ total_score, 0 ].max
-
         # メモ（気分と疲労感を考慮）
         notes = case [ mood_score, fatigue_score ]
-        in [ 8..9, 1..3 ]
+        in [ 4..5, 1..3 ]
           "体調が良く、充実した一日でした。疲れも少なく快調です。"
-        in [ 6..7, 1..4 ]
+        in [ 3, 1..4 ]
           "普通の一日でした。特に問題なし。"
-        in [ 4..5, 5..7 ]
+        in [ 2..3, 4..5 ]
           "少し疲れを感じました。"
-        in [ 1..3, 8..10 ]
+        in [ 1..2, 4..5 ]
           "体調が優れませんでした。疲労感が強いです。"
         else
           "普通の一日でした。"
@@ -279,7 +348,7 @@ unless is_production
         # デフォルトの都道府県（東京都）を取得
         default_prefecture = Prefecture.find_by(code: '13')
 
-        daily_log = DailyLog.create!(
+        DailyLog.create!(
           user: bob,
           prefecture: default_prefecture,
           date: date,
@@ -287,292 +356,14 @@ unless is_production
           mood: mood_score,           # 1〜5 をそのまま保存
           fatigue: fatigue_score,     # 1〜5 をそのまま保存
           note: notes,
-          score: total_score,
           self_score: rand(1..3)
         )
 
-        puts "  Created daily log for Bob on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}, score=#{total_score}" if verbose_logs
+        puts "  Created daily log for Bob on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}" if verbose_logs
       end
     end
   end
 
-  # シグナル・提案確認用データの作成
-  puts "Creating signal and suggestion test data..."
-
-  # Aliceにトリガーを登録
-  alice = User.find_by(email: 'alice@example.com')
-  if alice
-    # デフォルト都道府県を設定（未設定の場合）
-    unless alice.prefecture
-      tokyo = Prefecture.find_by(code: '13')
-      alice.update!(prefecture: tokyo) if tokyo
-    end
-
-    # トリガーを登録
-    trigger_keys = [ 'pressure_drop', 'sleep_shortage', 'humidity_high', 'temperature_drop' ]
-    registered_count = 0
-    trigger_keys.each do |trigger_key|
-      trigger = Trigger.find_by(key: trigger_key)
-      next unless trigger
-
-      ut = UserTrigger.find_or_create_by!(user: alice, trigger: trigger)
-      registered_count += 1 if ut.persisted?
-    end
-    puts "  Registered #{registered_count} triggers for Alice"
-
-    # 今日のDailyLogを作成（シグナルが発火するように設定）
-    today = Date.current
-    today_log = DailyLog.find_by(user: alice, date: today)
-
-    unless today_log
-      prefecture = alice.prefecture || Prefecture.find_by(code: '13')
-
-      # 睡眠不足シグナルが発火するように短めの睡眠時間を設定
-      today_log = DailyLog.create!(
-        user: alice,
-        prefecture: prefecture,
-        date: today,
-        sleep_hours: 5.0, # 6.0以下なのでattentionレベル、4.5以下ならwarningレベル
-        mood: 2, # -5から5の範囲
-        fatigue: 3,
-        note: "シグナル確認用のテストデータ",
-        score: 60,
-        self_score: rand(1..3)
-      )
-
-      # 天候データを作成（気圧低下シグナルが発火するように設定）
-      if prefecture
-        # WeatherSnapshotを直接作成（API取得は行わない）
-        snapshot = WeatherSnapshot.find_or_initialize_by(
-          prefecture: prefecture,
-          date: today
-        )
-
-        # 気圧低下シグナルが発火するように、pressure_drop_6hを負の値に設定
-        snapshot.metrics = {
-          "pressure_drop_6h" => -7.0, # -6.0以下なのでwarningレベル
-          "pressure_drop_24h" => -10.0,
-          "humidity_avg" => 75.0, # 70以上なのでattentionレベル
-          "temperature_drop_6h" => -2.0,
-          "temperature_drop_12h" => -6.0 # -5.0以下なのでattentionレベル
-        }
-        snapshot.save!
-        puts "  Created/Updated WeatherSnapshot for #{prefecture.name_ja} on #{today}"
-      end
-
-      puts "  Created today's DailyLog for Alice: sleep=5.0h (should trigger sleep_shortage signal)"
-    end
-
-    # シグナルを評価してSignalEventを作成（既存のDailyLogがある場合も評価）
-    today_log ||= DailyLog.find_by(user: alice, date: today)
-    if today_log
-      puts "  Evaluating signals for Alice..."
-      results = Signal::EvaluationService.evaluate_for_user(alice, today)
-      if results.any?
-        results.each do |signal_event|
-          puts "    Created/Updated signal: #{signal_event.trigger_key} (level: #{signal_event.level}, priority: #{signal_event.priority})"
-        end
-        puts "    Total signals: #{results.size}"
-      else
-        puts "    No signals created (triggers may not have matched thresholds)"
-      end
-    end
-
-    # 提案を確認（ログ出力のみ）
-    begin
-      suggestions = Suggestion::SuggestionEngine.call(user: alice, date: today)
-      puts "  Suggestions generated: #{suggestions.size}"
-      suggestions.each do |s|
-        puts "    - #{s.title} (severity: #{s.severity})"
-      end
-    rescue => e
-      puts "  Warning: Could not generate suggestions: #{e.message}"
-    end
-  end
-
-  # Bobにトリガーを登録
-  bob = User.find_by(email: 'bob@example.com')
-  if bob
-    # デフォルト都道府県を設定（未設定の場合）
-    unless bob.prefecture
-      tokyo = Prefecture.find_by(code: '13')
-      bob.update!(prefecture: tokyo) if tokyo
-    end
-
-    # トリガーを登録
-    trigger_keys = [ 'pressure_drop', 'sleep_shortage', 'humidity_high', 'temperature_drop' ]
-    registered_count = 0
-    trigger_keys.each do |trigger_key|
-      trigger = Trigger.find_by(key: trigger_key)
-      next unless trigger
-
-      ut = UserTrigger.find_or_create_by!(user: bob, trigger: trigger)
-      registered_count += 1 if ut.persisted?
-    end
-    puts "  Registered #{registered_count} triggers for Bob"
-  end
-
-  # 週間レポート用のデータ作成（過去1週間分）
-  puts "Creating weekly report data..."
-
-  alice = User.find_by(email: 'alice@example.com')
-  if alice
-    prefecture = alice.prefecture || Prefecture.find_by(code: '13')
-
-    # 過去7日分のデータを作成
-    (0..6).each do |days_ago|
-      date = Date.current - days_ago.days
-
-      # DailyLogが存在するか確認
-      daily_log = DailyLog.find_by(user: alice, date: date)
-      next unless daily_log
-
-      # WeatherSnapshotを作成（まだ存在しない場合）
-      unless WeatherSnapshot.exists?(prefecture: prefecture, date: date)
-        snapshot = WeatherSnapshot.find_or_initialize_by(
-          prefecture: prefecture,
-          date: date
-        )
-
-        # ランダムな天候データを生成
-        snapshot.metrics = {
-          "pressure_drop_6h" => rand(-10.0..5.0).round(1),
-          "pressure_drop_24h" => rand(-15.0..5.0).round(1),
-          "humidity_avg" => rand(40.0..80.0).round(1),
-          "temperature_drop_6h" => rand(-5.0..3.0).round(1),
-          "temperature_drop_12h" => rand(-8.0..5.0).round(1),
-          "pressure_hpa" => rand(980.0..1020.0).round(1),
-          "temperature_c" => rand(5.0..30.0).round(1)
-        }
-        snapshot.save!
-        puts "  Created WeatherSnapshot for #{date}" if verbose_logs
-      end
-
-      # SignalEventを作成（まだ存在しない場合、ランダムに作成）
-      if rand < 0.6 # 60%の確率でシグナルを作成
-        trigger_keys = [ 'pressure_drop', 'sleep_shortage', 'humidity_high', 'temperature_drop' ]
-        trigger_key = trigger_keys.sample
-
-        unless SignalEvent.exists?(user: alice, trigger_key: trigger_key, evaluated_at: date.beginning_of_day..date.end_of_day)
-          level = [ 'attention', 'warning', 'strong' ].sample
-          priority = case level
-          when 'strong' then rand(8..10)
-          when 'warning' then rand(5..7)
-          else rand(1..4)
-          end
-
-          category = trigger_key == 'sleep_shortage' ? 'body' : 'env'
-
-          SignalEvent.create!(
-            user: alice,
-            trigger_key: trigger_key,
-            category: category,
-            level: level,
-            priority: priority,
-            evaluated_at: date.beginning_of_day + rand(8..20).hours
-          )
-          puts "  Created SignalEvent for #{date}: #{trigger_key} (#{level})" if verbose_logs
-        end
-      end
-
-      # SuggestionFeedbackを作成（まだ存在しない場合、ランダムに作成）
-      if rand < 0.5 # 50%の確率でフィードバックを作成
-        suggestion_keys = [ 'pressure_drop_signal_warning', 'sleep_shortage_signal_attention', 'humidity_high_signal_warning', 'low_mood' ]
-        suggestion_key = suggestion_keys.sample
-
-        unless SuggestionFeedback.exists?(daily_log: daily_log, suggestion_key: suggestion_key)
-          SuggestionFeedback.create!(
-            daily_log: daily_log,
-            suggestion_key: suggestion_key,
-            helpfulness: rand < 0.7 # 70%の確率で役立った
-          )
-          puts "  Created SuggestionFeedback for #{date}: #{suggestion_key}" if verbose_logs
-        end
-      end
-    end
-
-    puts "  Created weekly report data for Alice (past 7 days)"
-  end
-
-  # Bobにも週間レポート用のデータを作成
-  bob = User.find_by(email: 'bob@example.com')
-  if bob
-    prefecture = bob.prefecture || Prefecture.find_by(code: '13')
-
-    # 過去7日分のデータを作成
-    (0..6).each do |days_ago|
-      date = Date.current - days_ago.days
-
-      # DailyLogが存在するか確認
-      daily_log = DailyLog.find_by(user: bob, date: date)
-      next unless daily_log
-
-      # WeatherSnapshotを作成（まだ存在しない場合）
-      unless WeatherSnapshot.exists?(prefecture: prefecture, date: date)
-        snapshot = WeatherSnapshot.find_or_initialize_by(
-          prefecture: prefecture,
-          date: date
-        )
-
-        # ランダムな天候データを生成
-        snapshot.metrics = {
-          "pressure_drop_6h" => rand(-10.0..5.0).round(1),
-          "pressure_drop_24h" => rand(-15.0..5.0).round(1),
-          "humidity_avg" => rand(40.0..80.0).round(1),
-          "temperature_drop_6h" => rand(-5.0..3.0).round(1),
-          "temperature_drop_12h" => rand(-8.0..5.0).round(1),
-          "pressure_hpa" => rand(980.0..1020.0).round(1),
-          "temperature_c" => rand(5.0..30.0).round(1)
-        }
-        snapshot.save!
-        puts "  Created WeatherSnapshot for #{date}" if verbose_logs
-      end
-
-      # SignalEventを作成（まだ存在しない場合、ランダムに作成）
-      if rand < 0.6 # 60%の確率でシグナルを作成
-        trigger_keys = [ 'pressure_drop', 'sleep_shortage', 'humidity_high', 'temperature_drop' ]
-        trigger_key = trigger_keys.sample
-
-        unless SignalEvent.exists?(user: bob, trigger_key: trigger_key, evaluated_at: date.beginning_of_day..date.end_of_day)
-          level = [ 'attention', 'warning', 'strong' ].sample
-          priority = case level
-          when 'strong' then rand(8..10)
-          when 'warning' then rand(5..7)
-          else rand(1..4)
-          end
-
-          category = trigger_key == 'sleep_shortage' ? 'body' : 'env'
-
-          SignalEvent.create!(
-            user: bob,
-            trigger_key: trigger_key,
-            category: category,
-            level: level,
-            priority: priority,
-            evaluated_at: date.beginning_of_day + rand(8..20).hours
-          )
-          puts "  Created SignalEvent for #{date}: #{trigger_key} (#{level})" if verbose_logs
-        end
-      end
-
-      # SuggestionFeedbackを作成（まだ存在しない場合、ランダムに作成）
-      if rand < 0.5 # 50%の確率でフィードバックを作成
-        suggestion_keys = [ 'pressure_drop_signal_warning', 'sleep_shortage_signal_attention', 'humidity_high_signal_warning', 'low_mood' ]
-        suggestion_key = suggestion_keys.sample
-
-        unless SuggestionFeedback.exists?(daily_log: daily_log, suggestion_key: suggestion_key)
-          SuggestionFeedback.create!(
-            daily_log: daily_log,
-            suggestion_key: suggestion_key,
-            helpfulness: rand < 0.7 # 70%の確率で役立った
-          )
-          puts "  Created SuggestionFeedback for #{date}: #{suggestion_key}" if verbose_logs
-        end
-      end
-    end
-
-    puts "  Created weekly report data for Bob (past 7 days)"
-  end
 end
 
 puts "Seed completed."
