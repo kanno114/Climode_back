@@ -75,4 +75,3 @@ class MorningSuggestionJob < ApplicationJob
     end
   end
 end
-

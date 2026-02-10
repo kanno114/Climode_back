@@ -13,4 +13,3 @@ class SuggestionSnapshot < ApplicationRecord
     where("tags ?| array[:tags]", tags: tags)
   }
 end
-

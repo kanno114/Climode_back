@@ -52,7 +52,7 @@
        keys = condition_str.scan(/[a-zA-Z_]\w*/).uniq
        keys.grep_v(/\A(?:AND|OR|NOT|TRUE|FALSE)\z/i)
            .select { |k| ctx.key?(k) }
-           .to_h { |k| [k, ctx[k]] }
+           .to_h { |k| [ k, ctx[k] ] }
      end
 
      # 同タグの連発抑制＋severity優先
@@ -76,4 +76,3 @@
      end
    end
  end
-

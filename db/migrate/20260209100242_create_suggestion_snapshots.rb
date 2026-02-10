@@ -14,8 +14,8 @@ class CreateSuggestionSnapshots < ActiveRecord::Migration[7.2]
       t.timestamps
     end
 
-    add_index :suggestion_snapshots, [:date, :prefecture]
-    add_index :suggestion_snapshots, [:date, :prefecture, :rule_key], unique: true, name: "index_suggestion_snapshots_on_date_pref_rule"
+    add_index :suggestion_snapshots, [ :date, :prefecture ]
+    add_index :suggestion_snapshots, [ :date, :prefecture, :rule_key ], unique: true, name: "index_suggestion_snapshots_on_date_pref_rule"
     add_index :suggestion_snapshots, :tags, using: :gin
   end
 end
