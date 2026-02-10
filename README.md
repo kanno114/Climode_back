@@ -88,11 +88,6 @@ rails server
 - `POST /api/v1/user_triggers` - トリガー登録
 - `DELETE /api/v1/user_triggers/:id` - トリガー削除
 
-### シグナル
-
-- `GET /api/v1/signal_events` - シグナルイベント一覧
-  - クエリパラメータ: `date`, `category` (env/body)
-
 ### 提案
 
 - `GET /api/v1/suggestions` - 行動提案一覧
@@ -136,11 +131,9 @@ rails server
 - `DailyLog` - 日次ログ
 - `Trigger` - トリガー（プリセット）
 - `UserTrigger` - ユーザー登録トリガー
-- `SignalEvent` - シグナルイベント
 - `WeatherSnapshot` - 気象スナップショット
 - `Prefecture` - 都道府県
 - `PushSubscription` - プッシュ通知購読
-- `SignalFeedback` - シグナルフィードバック
 - `SuggestionFeedback` - 提案フィードバック
 
 ## テスト
