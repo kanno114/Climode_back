@@ -21,7 +21,8 @@ RSpec.describe Suggestion::RuleRegistry do
           message: be_a(String),
           tags: be_an(Array),
           severity: be_a(Integer),
-          category: be_a(String)
+          category: be_a(String),
+          concerns: be_an(Array)
         )
       end
     end
@@ -30,8 +31,11 @@ RSpec.describe Suggestion::RuleRegistry do
       rules = described_class.all
       rule_keys = rules.map(&:key)
 
-      expect(rule_keys).to include('sleep_shortage_signal_alert')
-      expect(rule_keys).to include('hot_and_humid')
+      expect(rule_keys).to include('sleep_Caution')
+      expect(rule_keys).to include('heatstroke_Danger')
+      expect(rule_keys).to include('weather_pain_drop_Warning')
+      expect(rule_keys).to include('weather_pain_low_1003_Warning')
+      expect(rule_keys).to include('weather_pain_low_1007_Caution')
     end
 
     it 'キャッシュされる' do
@@ -120,6 +124,16 @@ RSpec.describe Suggestion::RuleRegistry do
     end
   end
 
+  describe 'concernsの配列化' do
+    it 'concernsが配列として扱われる' do
+      rules = described_class.all
+
+      rules.each do |rule|
+        expect(rule.concerns).to be_an(Array)
+      end
+    end
+  end
+
   describe 'categoryの設定' do
     it 'categoryがenvまたはbodyである' do
       rules = described_class.all
@@ -131,8 +145,8 @@ RSpec.describe Suggestion::RuleRegistry do
 
     it '特定のルールが正しいcategoryを持つ' do
       rules = described_class.all
-      sleep_rule = rules.find { |r| r.key == 'sleep_shortage_signal_alert' }
-      hot_rule = rules.find { |r| r.key == 'hot_weather' }
+      sleep_rule = rules.find { |r| r.key == 'sleep_Caution' }
+      hot_rule = rules.find { |r| r.key == 'heatstroke_Danger' }
 
       expect(sleep_rule&.category).to eq('body')
       expect(hot_rule&.category).to eq('env')

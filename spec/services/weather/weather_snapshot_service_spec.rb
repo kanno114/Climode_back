@@ -136,6 +136,21 @@ RSpec.describe Weather::WeatherSnapshotService do
         # 当日8時 20, 前日20時 26 → temperature_drop_12h = -6.0
         expect(snapshot.metrics["temperature_drop_12h"]).to eq(-6.0)
       end
+
+      context '起床時間帯の気圧差メトリクス' do
+        it 'max_pressure_drop_1h_awake と low_pressure_duration_* を計算する' do
+          service.update_snapshot
+
+          snapshot = WeatherSnapshot.find_by(prefecture: prefecture, date: date)
+          metrics = snapshot.metrics
+
+          # 起床時間帯は 8:00〜22:00 としており、series_48h ではすべて 1012hPa なので
+          # 1時間あたりの気圧変化は 0、低気圧継続時間は 0 となる想定
+          expect(metrics).to have_key("max_pressure_drop_1h_awake")
+          expect(metrics["low_pressure_duration_1003h"]).to be_a(Float)
+          expect(metrics["low_pressure_duration_1007h"]).to be_a(Float)
+        end
+      end
     end
   end
 end

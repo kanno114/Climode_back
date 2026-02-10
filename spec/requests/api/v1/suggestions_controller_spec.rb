@@ -15,8 +15,7 @@ RSpec.describe 'Api::V1::Suggestions', type: :request do
                  user: user,
                  date: Date.current,
                  sleep_hours: 5.0,
-                 mood: 3,
-                 score: 60)
+                 mood: 3)
         end
 
         let!(:weather_snapshot) do
@@ -54,7 +53,7 @@ RSpec.describe 'Api::V1::Suggestions', type: :request do
         end
 
         it '最大3件まで返す' do
-          daily_log.update!(sleep_hours: 5.0, score: 45)
+          daily_log.update!(sleep_hours: 5.0)
           weather_snapshot.update!(metrics: {
             "temperature_c" => 36.0,
             "humidity_pct" => 75.0,

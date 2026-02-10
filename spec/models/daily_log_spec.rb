@@ -59,16 +59,6 @@ RSpec.describe DailyLog, type: :model do
       expect(daily_log).not_to be_valid
     end
 
-    it 'スコアが0未満の場合は無効である' do
-      daily_log = build(:daily_log, score: -1)
-      expect(daily_log).not_to be_valid
-    end
-
-    it 'スコアが100を超える場合は無効である' do
-      daily_log = build(:daily_log, score: 101)
-      expect(daily_log).not_to be_valid
-    end
-
     it '自己評価スコアが1未満の場合は無効である' do
       daily_log = build(:daily_log, self_score: 0)
       expect(daily_log).not_to be_valid

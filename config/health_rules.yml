@@ -1,269 +1,215 @@
+# TSV: Climode_ロジックとエビデンス - ロジック.tsv に基づく（18ルール）
 rules:
-  # SignalEventを参照するルール（シグナル統合 - 優先使用）
-  # 注意: ユーザーがトリガーを登録している場合のみ有効
-  - key: sleep_shortage_signal_alert
-    title: "睡眠不足シグナル検出。休息を"
-    condition: "has_sleep_shortage_signal == true AND sleep_shortage_priority >= 35"
-    message: "睡眠不足のシグナルが検出されました（優先度%{sleep_shortage_priority}）。昼に短時間の休息を取ることをお勧めします。"
-    tags: ["sleep", "signal", "rest"]
-    severity: "80"
-    category: "body"
-
-  - key: sleep_shortage_signal_warning
-    title: "睡眠不足が深刻です。十分な休息を"
-    condition: "has_sleep_shortage_signal == true AND sleep_shortage_priority >= 65"
-    message: "深刻な睡眠不足のシグナルが検出されました（優先度%{sleep_shortage_priority}）。無理をせず、可能な限り休息を取るようにしましょう。"
-    tags: ["sleep", "signal", "caution"]
-    severity: "90"
-    category: "body"
-
-  # フォールバックルール（SignalEventが存在しない場合、またはトリガー未登録の場合）
-  # 注意: これらのルールは、SignalEventで評価できない場合の補完として使用
-  - key: sleep_optimal
-    condition: "sleep_hours >= 7.0 AND sleep_hours <= 8.0 AND has_sleep_shortage_signal == false"
-    title: "理想的な睡眠時間"
-    message: "今日は理想的な睡眠時間（%{sleep_hours}h）です。この調子を維持しましょう！"
-    tags: ["sleep", "positive"]
-    severity: "40"
-    category: "body"
-
-  # 気温関連（既存 + 新規）
-  - key: hot_weather
-    title: "猛暑日。水分補給と日差しの遮蔽を。"
-    condition: "temperature_c > 30"
-    message: "今日は猛暑です（%{temperature_c}℃）。水分補給と日差しの遮蔽を。"
-    tags: ["temperature"]
-    severity: "80"
-    category: "env"
-
-  - key: very_hot_weather
-    title: "酷暑日。外出を控えめに"
-    condition: "temperature_c > 35"
-    message: "今日は酷暑です（%{temperature_c}℃）。外出を控えめにし、エアコンを適切に使用してください。"
-    tags: ["temperature", "caution"]
+  # 熱中症（3）
+  - key: heatstroke_Danger
+    title: "猛暑日。外出はなるべく避け、涼しい室内へ"
+    condition: "temperature_c >= 35"
+    message: "外出はなるべく避け、涼しい室内に移動する。運動は原則中止。"
+    tags: ["temperature", "heatstroke"]
+    concerns: ["heatstroke"]
     severity: "90"
     category: "env"
 
-  - key: cold_weather
-    title: "寒い日。暖房の使用を検討してください。"
-    condition: "temperature_c < 10"
-    message: "今日は寒いです（%{temperature_c}℃）。暖房の使用を検討してください。"
-    tags: ["temperature"]
-    severity: "80"
-    category: "env"
-
-  - key: very_cold_weather
-    title: "極寒日。防寒対策を万全に"
-    condition: "temperature_c < 0"
-    message: "今日は極寒です（%{temperature_c}℃）。防寒対策を万全にし、外出時は十分注意してください。"
-    tags: ["temperature", "caution"]
-    severity: "90"
-    category: "env"
-
-  - key: comfortable_temperature
-    title: "快適な気温"
-    condition: "temperature_c >= 18 AND temperature_c <= 25"
-    message: "今日は快適な気温（%{temperature_c}℃）です。屋外活動に最適です。"
-    tags: ["temperature", "positive"]
-    severity: "30"
-    category: "env"
-
-  # 湿度関連
-  # 注意: humidity_highはSignalEvent参照ルールを優先使用
-  # フォールバックルール（SignalEventが存在しない場合）
-  - key: low_humidity
-    title: "乾燥日。乾燥に注意してください。"
-    condition: "humidity_pct < 30 AND has_humidity_high_signal == false"
-    message: "今日は低湿度です（%{humidity_pct}%%）。加湿器の使用を検討してください。"
-    tags: ["humidity"]
-    severity: "80"
-    category: "env"
-
-  - key: very_low_humidity
-    title: "非常に乾燥した日"
-    condition: "humidity_pct < 20 AND has_humidity_high_signal == false"
-    message: "今日は非常に乾燥しています（%{humidity_pct}%%）。肌の保湿も忘れずに。"
-    tags: ["humidity", "caution"]
-    severity: "85"
-    category: "env"
-
-  - key: comfortable_humidity
-    title: "快適な湿度"
-    condition: "humidity_pct >= 40 AND humidity_pct <= 70 AND has_humidity_high_signal == false"
-    message: "今日は快適な湿度（%{humidity_pct}%%）です。過ごしやすい一日です。"
-    tags: ["humidity", "positive"]
-    severity: "30"
-    category: "env"
-
-  # 気圧関連（既存 + 新規）
-  - key: high_pressure
-    title: "高気圧日。気圧の急降下を防ぐために。"
-    condition: "pressure_hpa > 1020"
-    message: "今日は高気圧です（%{pressure_hpa}hPa）。気圧の急降下を防ぐために。"
-    tags: ["pressure"]
-    severity: "80"
-    category: "env"
-
-  - key: very_high_pressure
-    title: "非常に高気圧な日"
-    condition: "pressure_hpa > 1030"
-    message: "今日は非常に高気圧です（%{pressure_hpa}hPa）。頭痛やめまいに注意してください。"
-    tags: ["pressure", "caution"]
-    severity: "85"
-    category: "env"
-
-  - key: low_pressure
-    title: "低気圧日。気圧の急上昇を防ぐために。"
-    condition: "pressure_hpa < 980"
-    message: "今日は低気圧です（%{pressure_hpa}hPa）。気圧の急上昇を防ぐために。"
-    tags: ["pressure"]
-    severity: "80"
-    category: "env"
-
-  - key: very_low_pressure
-    title: "非常に低気圧な日"
-    condition: "pressure_hpa < 970"
-    message: "今日は非常に低気圧です（%{pressure_hpa}hPa）。関節痛や古傷の痛みに注意。"
-    tags: ["pressure", "caution"]
-    severity: "85"
-    category: "env"
-
-  - key: stable_pressure
-    title: "安定した気圧"
-    condition: "pressure_hpa >= 1000 AND pressure_hpa <= 1020"
-    message: "今日は安定した気圧（%{pressure_hpa}hPa）です。体調が安定しやすい一日です。"
-    tags: ["pressure", "positive"]
-    severity: "30"
-    category: "env"
-
-  # 気分・体調スコア関連（新規）
-  - key: low_mood
-    title: "気分が低め。リフレッシュを"
-    condition: "mood < 3"
-    message: "今日の気分スコアは%{mood}点と低めです。軽い散歩や趣味の時間を作りましょう。"
-    tags: ["mood", "mental_health"]
+  - key: heatstroke_Warning
+    title: "暑い日。炎天下を避け、激しい運動は中止"
+    condition: "temperature_c >= 31 AND temperature_c < 35"
+    message: "外出時は炎天下を避け、室内では室温の上昇に注意する。激しい運動は中止。"
+    tags: ["temperature", "heatstroke"]
+    concerns: ["heatstroke"]
     severity: "75"
-    category: "body"
+    category: "env"
 
-  - key: high_mood
-    title: "気分が良好。この調子を維持"
-    condition: "mood >= 7"
-    message: "今日の気分スコアは%{mood}点と良好です。この調子を維持しましょう！"
-    tags: ["mood", "positive"]
-    severity: "40"
-    category: "body"
+  - key: heatstroke_Caution
+    title: "やや暑い日。休息を充分に"
+    condition: "temperature_c >= 28 AND temperature_c < 31"
+    message: "運動や激しい作業をする際は、定期的に充分に休息を取り入れる。"
+    tags: ["temperature", "heatstroke"]
+    concerns: ["heatstroke"]
+    severity: "60"
+    category: "env"
 
-  - key: low_score
-    title: "体調スコアが低め。休息を"
-    condition: "score < 50"
-    message: "今日の体調スコアは%{score}点と低めです。無理をせず、十分な休息を取りましょう。"
-    tags: ["health_score", "rest"]
-    severity: "85"
-    category: "body"
-
-  - key: high_score
-    title: "体調スコアが良好"
-    condition: "score >= 80"
-    message: "今日の体調スコアは%{score}点と良好です。健康的な生活を継続しましょう！"
-    tags: ["health_score", "positive"]
-    severity: "35"
-    category: "body"
-
-  # 複合条件のルール
-  - key: hot_and_humid
-    title: "高温多湿。熱中症に注意"
-    condition: "temperature_c > 28 AND (humidity_pct > 70 OR (has_humidity_high_signal == true AND humidity_high_priority >= 40))"
-    message: "高温多湿の一日です（%{temperature_c}℃）。熱中症予防を徹底してください。"
-    tags: ["temperature", "humidity", "caution"]
+  # ヒートショック（3）
+  - key: heat_shock_Danger
+    title: "入浴死の危険性が最も高い状態です"
+    condition: "min_temperature_c < 3"
+    message: "原則として入浴を控える。入浴する場合は脱衣所・浴室を完全に温め、家族がこまめに声をかける。"
+    tags: ["temperature", "heat_shock"]
+    concerns: ["heat_shock"]
     severity: "90"
     category: "env"
 
-  - key: cold_and_dry
-    title: "低温乾燥。風邪予防を"
-    condition: "temperature_c < 15 AND humidity_pct < 40 AND has_humidity_high_signal == false"
-    message: "低温乾燥の一日です（%{temperature_c}℃、%{humidity_pct}%%）。風邪予防と保湿を心がけてください。"
-    tags: ["temperature", "humidity", "health"]
-    severity: "80"
+  - key: heat_shock_Warning
+    title: "入浴死が発生しやすい環境温度です"
+    condition: "min_temperature_c >= 3 AND min_temperature_c < 13"
+    message: "脱衣所と浴室を事前に温める。お湯の温度は41℃以下にし、長風呂や一番風呂を避ける。"
+    tags: ["temperature", "heat_shock"]
+    concerns: ["heat_shock"]
+    severity: "75"
     category: "env"
 
-  - key: weather_change_alert
-    title: "気圧変動が大きい日"
-    condition: "(pressure_hpa < 990 OR pressure_hpa > 1030) OR (has_pressure_drop_signal == true AND pressure_drop_priority >= 50)"
-    message: "気圧変動が大きい一日です（%{pressure_hpa}hPa）。体調の変化に注意してください。"
-    tags: ["pressure", "caution"]
+  - key: heat_shock_Caution
+    title: "油断は禁物。入浴前後の対策を"
+    condition: "min_temperature_c >= 13"
+    message: "入浴前後に水分補給を行う。居室と脱衣所の温度差に気をつけ、食事直後や飲酒後の入浴は避ける。"
+    tags: ["temperature", "heat_shock"]
+    concerns: ["heat_shock"]
+    severity: "55"
+    category: "env"
+
+  # 気象病・天気痛（5）
+  - key: weather_pain_drop_Warning
+    title: "急激な気圧低下です。酔い止めや休憩の準備を"
+    condition: "max_pressure_drop_1h_awake <= -3.0"
+    message: "急激な気圧低下です。酔い止めや休憩の準備を。"
+    tags: ["pressure", "weather_pain"]
+    concerns: ["weather_pain"]
     severity: "85"
     category: "env"
 
-  # 季節性のルール（新規）
-  - key: spring_allergy
-    title: "花粉症シーズン。対策を"
-    condition: "temperature_c >= 15 AND temperature_c <= 25 AND humidity_pct < 60 AND has_humidity_high_signal == false"
-    message: "花粉症が発生しやすい条件です。マスクやメガネの着用を検討してください。"
-    tags: ["seasonal", "allergy"]
+  - key: weather_pain_drop_Caution
+    title: "気圧が下がり始めています。無理は禁物です"
+    condition: "max_pressure_drop_1h_awake <= -1.0"
+    message: "気圧が下がり始めています。無理は禁物です。"
+    tags: ["pressure", "weather_pain"]
+    concerns: ["weather_pain"]
     severity: "70"
     category: "env"
 
-  - key: summer_heat
-    title: "夏の暑さ対策"
-    condition: "temperature_c > 25 AND (humidity_pct > 60 OR (has_humidity_high_signal == true AND humidity_high_priority >= 40))"
-    message: "夏らしい暑さです。水分補給と適切な冷房使用で熱中症を防ぎましょう。"
-    tags: ["seasonal", "summer"]
-    severity: "75"
-    category: "env"
-
-  - key: autumn_comfort
-    title: "秋の過ごしやすい一日"
-    condition: "temperature_c >= 15 AND temperature_c <= 22 AND humidity_pct >= 50 AND humidity_pct <= 70"
-    message: "秋らしく過ごしやすい一日です。散歩や屋外活動に最適です。"
-    tags: ["seasonal", "autumn", "positive"]
-    severity: "30"
-    category: "env"
-
-  - key: winter_cold
-    title: "冬の寒さ対策"
-    condition: "temperature_c < 10 AND humidity_pct < 50 AND has_humidity_high_signal == false"
-    message: "冬らしい寒さと乾燥です。暖房と加湿器で快適な室内環境を作りましょう。"
-    tags: ["seasonal", "winter"]
-    severity: "80"
-    category: "env"
-
-  # SignalEventを参照するルール（シグナル統合 - 優先使用）
-  - key: pressure_drop_signal_alert
-    title: "気圧低下シグナル検出。体調管理を"
-    condition: "has_pressure_drop_signal == true AND pressure_drop_priority >= 50"
-    message: "気圧低下のシグナルが検出されました（優先度%{pressure_drop_priority}）。頭痛やめまいに注意し、無理をしないようにしましょう。"
-    tags: ["pressure", "signal", "caution"]
+  - key: weather_pain_low_1003_Warning
+    title: "警戒レベルの低気圧です。頭痛薬等の準備を"
+    condition: "low_pressure_duration_1003h >= 3.0"
+    message: "警戒レベルの低気圧です。頭痛薬等の準備を。"
+    tags: ["pressure", "weather_pain"]
+    concerns: ["weather_pain"]
     severity: "85"
     category: "env"
 
-  - key: pressure_drop_signal_warning
-    title: "気圧低下が深刻です。体調に注意"
-    condition: "has_pressure_drop_signal == true AND pressure_drop_priority >= 80"
-    message: "深刻な気圧低下のシグナルが検出されました（優先度%{pressure_drop_priority}）。関節痛や古傷の痛みに注意し、無理をしないようにしましょう。"
-    tags: ["pressure", "signal", "caution"]
-    severity: "90"
+  - key: weather_pain_low_1007_Caution
+    title: "低い気圧が続いています。疲れが溜まっているかも"
+    condition: "low_pressure_duration_1007h >= 3.0 AND low_pressure_duration_1003h < 3.0"
+    message: "低い気圧が続いています。疲れが溜まっているかも。"
+    tags: ["pressure", "weather_pain"]
+    concerns: ["weather_pain"]
+    severity: "70"
     category: "env"
 
-  - key: humidity_high_signal_alert
-    title: "高湿度シグナル検出。除湿対策を"
-    condition: "has_humidity_high_signal == true AND humidity_high_priority >= 40"
-    message: "高湿度のシグナルが検出されました（優先度%{humidity_high_priority}）。除湿剤の使用を検討してください。"
-    tags: ["humidity", "signal"]
+  - key: weather_pain_jitter_Caution
+    title: "気圧が細かく波打っています。不調の予兆かもしれません"
+    condition: "pressure_range_3h_awake < 1.0 AND pressure_jitter_3h_awake > 0.3"
+    message: "気圧が細かく波打っています。不調の予兆かもしれません。大きな変化の前の「小さなゆらぎ」が症状を悪化させることがあります。"
+    tags: ["pressure", "weather_pain"]
+    concerns: ["weather_pain"]
+    severity: "70"
+    category: "env"
+
+  # 乾燥・ウイルス感染リスク（3）
+  - key: dryness_Warning
+    title: "非常に乾燥しています。加湿と保湿を"
+    condition: "humidity_pct < 30"
+    message: "加湿器をフル稼働させる。濡れタオルを干す。室内にいても不織布マスクを着用し、のどの保湿を心がける。"
+    tags: ["humidity", "dryness_infection"]
+    concerns: ["dryness_infection"]
+    severity: "85"
+    category: "env"
+
+  - key: dryness_Caution
+    title: "乾燥しています。湿度40%以上を目指して"
+    condition: "humidity_pct >= 30 AND humidity_pct < 40"
+    message: "加湿器を使用し、湿度40%以上を目指す。こまめなうがいと水分補給を行う。"
+    tags: ["humidity", "dryness_infection"]
+    concerns: ["dryness_infection"]
     severity: "75"
     category: "env"
 
-  - key: temperature_drop_signal_alert
-    title: "寒暖差シグナル検出。体調管理を"
-    condition: "has_temperature_drop_signal == true AND temperature_drop_priority >= 45"
-    message: "寒暖差のシグナルが検出されました（優先度%{temperature_drop_priority}）。体調の変化に注意してください。"
-    tags: ["temperature", "signal", "caution"]
-    severity: "80"
+  - key: dryness_Notice
+    title: "やや乾燥気味。50〜60%を目安に調整を"
+    condition: "humidity_pct >= 40 AND humidity_pct < 50"
+    message: "湿度が50%〜60%になるよう調整する。過度な加湿（結露）には注意しつつ、換気も定期的に行う。"
+    tags: ["humidity", "dryness_infection"]
+    concerns: ["dryness_infection"]
+    severity: "60"
     category: "env"
 
-  - key: multiple_signals_alert
-    title: "複数のシグナル検出。体調に注意"
-    condition: "(has_pressure_drop_signal == true AND pressure_drop_priority >= 70) AND (has_sleep_shortage_signal == true AND sleep_shortage_priority >= 50)"
-    message: "気圧低下と睡眠不足のシグナルが同時に検出されました。今日は特に体調管理に気をつけ、無理をしないようにしましょう。"
-    tags: ["signal", "caution", "health"]
+  # 睡眠時間（4）
+  - key: sleep_Warning
+    title: "睡眠が極端に不足しています。最優先で休息を"
+    condition: "sleep_hours > 0 AND sleep_hours < 5"
+    message: "直ちに睡眠時間を確保する。日中のパフォーマンスも低下しているため、他の活動よりも睡眠を最優先にする。「プラス10分」からでも延長を試みる。"
+    tags: ["sleep", "rest"]
+    concerns: ["sleep_time"]
     severity: "90"
     category: "body"
+
+  - key: sleep_Caution
+    title: "睡眠不足気味。生活時間を見直して"
+    condition: "sleep_hours >= 5 AND sleep_hours < 6"
+    message: "生活時間を見直し、睡眠時間を増やす。就寝前1〜2時間のスマホ使用や飲酒を控え、リラックスする時間を設けて質の向上と時間の確保（あと30分）を目指す。"
+    tags: ["sleep", "rest"]
+    concerns: ["sleep_time"]
+    severity: "75"
+    category: "body"
+
+  - key: sleep_Optimal
+    title: "理想的な睡眠時間です。この習慣を維持して"
+    condition: "sleep_hours >= 6 AND sleep_hours < 8"
+    message: "現在の睡眠習慣を維持し、質を高める。起床時に日光を浴びる、朝食をとる、寝室を暗く静かに保つなどの環境整備を行う。"
+    tags: ["sleep", "positive"]
+    concerns: ["sleep_time"]
+    severity: "40"
+    category: "body"
+
+  - key: sleep_Good
+    title: "十分な睡眠が確保できています"
+    condition: "sleep_hours >= 8"
+    message: "十分な睡眠が確保されており、睡眠による休養感が非常に高い、エネルギー満タンの状態です。"
+    tags: ["sleep", "positive"]
+    concerns: ["sleep_time"]
+    severity: "35"
+    category: "body"
+
+  # ポジティブ系（環境・整いやすい日）
+  - key: comfort_Temperature
+    title: "過ごしやすい気温です。今日は整いやすい日"
+    condition: "temperature_c >= 18 AND temperature_c <= 25"
+    message: "気温が快適な範囲です。活動や休息のバランスを取りやすく、体調を整えやすい一日です。"
+    tags: ["temperature", "positive"]
+    concerns: []
+    severity: "35"
+    category: "env"
+
+  - key: comfort_Humidity
+    title: "過ごしやすい湿度です。乾燥・蒸れの心配が少ない日"
+    condition: "humidity_pct >= 50 AND humidity_pct <= 70"
+    message: "湿度が快適な範囲です。乾燥や蒸れによる不調が出にくく、過ごしやすい一日です。"
+    tags: ["humidity", "positive"]
+    concerns: []
+    severity: "35"
+    category: "env"
+
+  - key: stable_Pressure
+    title: "気圧が安定しています。体調を整えやすい日"
+    condition: "pressure_hpa >= 1000 AND pressure_hpa <= 1015"
+    message: "気圧が安定した範囲です。気圧変動による不調が出にくく、体調を整えやすい一日です。"
+    tags: ["pressure", "positive"]
+    concerns: []
+    severity: "40"
+    category: "env"
+
+  # 寒さ・冷え（外出・日常生活）
+  - key: cold_Warning
+    title: "とても寒い日です。防寒と体調管理を"
+    condition: "temperature_c < 5"
+    message: "最高気温が5℃未満です。外出時は防寒をしっかりとし、体を冷やさないよう心がけて。"
+    tags: ["temperature", "cold"]
+    concerns: []
+    severity: "75"
+    category: "env"
+
+  - key: cold_Caution
+    title: "寒い日です。上着や暖かさの準備を"
+    condition: "temperature_c >= 5 AND temperature_c < 10"
+    message: "最高気温が10℃未満です。上着やカイロなどで冷え対策をし、無理のない過ごし方を。"
+    tags: ["temperature", "cold"]
+    concerns: []
+    severity: "60"
+    category: "env"
