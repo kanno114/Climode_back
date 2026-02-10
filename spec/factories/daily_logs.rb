@@ -6,7 +6,6 @@ FactoryBot.define do
     sleep_hours { rand(6.0..9.0).round(1) }
     mood { rand(1..5) }
     fatigue { rand(1..5) }
-    score { rand(0..100) }
     self_score { rand(1..3) }
     note { Faker::Lorem.sentence }
 
