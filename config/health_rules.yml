@@ -173,7 +173,7 @@ rules:
     condition: "temperature_c >= 18 AND temperature_c <= 25"
     message: "気温が快適な範囲です。活動や休息のバランスを取りやすく、体調を整えやすい一日です。"
     tags: ["temperature", "positive"]
-    concerns: []
+    concerns: ["general"]
     severity: "35"
     category: "env"
 
@@ -182,7 +182,7 @@ rules:
     condition: "humidity_pct >= 50 AND humidity_pct <= 70"
     message: "湿度が快適な範囲です。乾燥や蒸れによる不調が出にくく、過ごしやすい一日です。"
     tags: ["humidity", "positive"]
-    concerns: []
+    concerns: ["general"]
     severity: "35"
     category: "env"
 
@@ -191,7 +191,7 @@ rules:
     condition: "pressure_hpa >= 1000 AND pressure_hpa <= 1015"
     message: "気圧が安定した範囲です。気圧変動による不調が出にくく、体調を整えやすい一日です。"
     tags: ["pressure", "positive"]
-    concerns: []
+    concerns: ["general"]
     severity: "40"
     category: "env"
 
@@ -201,7 +201,7 @@ rules:
     condition: "temperature_c < 5"
     message: "最高気温が5℃未満です。外出時は防寒をしっかりとし、体を冷やさないよう心がけて。"
     tags: ["temperature", "cold"]
-    concerns: []
+    concerns: ["general"]
     severity: "75"
     category: "env"
 
@@ -210,6 +210,6 @@ rules:
     condition: "temperature_c >= 5 AND temperature_c < 10"
     message: "最高気温が10℃未満です。上着やカイロなどで冷え対策をし、無理のない過ごし方を。"
     tags: ["temperature", "cold"]
-    concerns: []
+    concerns: ["general"]
     severity: "60"
     category: "env"

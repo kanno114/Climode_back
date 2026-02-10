@@ -14,6 +14,13 @@ RSpec.describe Suggestion::SuggestionEngine do
                mood: 3)
       end
 
+      let!(:user_concern_topics) do
+        [
+          create(:user_concern_topic, user: user, concern_topic_key: "sleep_time"),
+          create(:user_concern_topic, user: user, concern_topic_key: "heatstroke")
+        ]
+      end
+
       let!(:weather_snapshot) do
         create(:weather_snapshot,
                prefecture: user.prefecture,
@@ -264,6 +271,115 @@ RSpec.describe Suggestion::SuggestionEngine do
 
           # すべての条件に一致しない場合、提案は空配列または少ない件数になる
           expect(suggestions).to be_an(Array)
+        end
+      end
+
+      context '関心ワードによるフィルタリング' do
+        before { Suggestion::RuleRegistry.reload! }
+
+        let(:user_without_concerns) { create(:user, prefecture: create(:prefecture)) }
+        let!(:daily_log_without_concerns) do
+          create(:daily_log,
+                 user: user_without_concerns,
+                 prefecture: user_without_concerns.prefecture,
+                 date: date,
+                 sleep_hours: 5.0,
+                 mood: 3)
+        end
+        let!(:weather_snapshot_without_concerns) do
+          create(:weather_snapshot,
+                 prefecture: user_without_concerns.prefecture,
+                 date: date,
+                 metrics: {
+                   "temperature_c" => 22.0,
+                   "min_temperature_c" => 18.0,
+                   "humidity_pct" => 55.0,
+                   "pressure_hpa" => 1010.0,
+                   "max_pressure_drop_1h_awake" => 0.0,
+                   "low_pressure_duration_1003h" => 0.0,
+                   "low_pressure_duration_1007h" => 0.0,
+                   "pressure_range_3h_awake" => 0.0,
+                   "pressure_jitter_3h_awake" => 0.0
+                 })
+        end
+
+        it '関心ワード未登録の場合、general のルールのみ返す' do
+          suggestions = described_class.call(user: user_without_concerns, date: date)
+          heat_suggestion = suggestions.find { |s| s.key == 'heatstroke_Warning' }
+          general_suggestions = suggestions.select do |s|
+            rule = Suggestion::RuleRegistry.all.find { |r| r.key == s.key }
+            rule&.concerns&.include?('general')
+          end
+
+          expect(heat_suggestion).to be_nil
+          expect(suggestions).to be_an(Array)
+          expect(suggestions.length).to eq(general_suggestions.length)
+          expect(suggestions).not_to be_empty
+        end
+
+        it '関心ワード登録時、該当するルールのみ返す' do
+          create(:user_concern_topic, user: user_without_concerns, concern_topic_key: 'heatstroke')
+          weather_snapshot_without_concerns.update!(metrics: {
+            "temperature_c" => 32.0,
+            "min_temperature_c" => 22.0,
+            "humidity_pct" => 50.0,
+            "pressure_hpa" => 1013.0,
+            "max_pressure_drop_1h_awake" => 0.0,
+            "low_pressure_duration_1003h" => 0.0,
+            "low_pressure_duration_1007h" => 0.0,
+            "pressure_range_3h_awake" => 0.0,
+            "pressure_jitter_3h_awake" => 0.0
+          })
+
+          suggestions = described_class.call(user: user_without_concerns, date: date)
+          heat_suggestion = suggestions.find { |s| s.key == 'heatstroke_Warning' }
+
+          expect(heat_suggestion).to be_present
+          expect(heat_suggestion.title).to eq('暑い日。炎天下を避け、激しい運動は中止')
+        end
+
+        it '登録した関心ワードに含まないルールは返さない' do
+          create(:user_concern_topic, user: user_without_concerns, concern_topic_key: 'heatstroke')
+          weather_snapshot_without_concerns.update!(metrics: {
+            "temperature_c" => 20.0,
+            "min_temperature_c" => 15.0,
+            "humidity_pct" => 50.0,
+            "pressure_hpa" => 1005.0,
+            "max_pressure_drop_1h_awake" => -3.5,
+            "low_pressure_duration_1003h" => 3.0,
+            "low_pressure_duration_1007h" => 4.0,
+            "pressure_range_3h_awake" => 0.0,
+            "pressure_jitter_3h_awake" => 0.0
+          })
+
+          suggestions = described_class.call(user: user_without_concerns, date: date)
+          weather_pain_suggestion = suggestions.find { |s| s.key == 'weather_pain_drop_Warning' }
+
+          expect(weather_pain_suggestion).to be_nil
+        end
+
+        it 'concerns: ["general"] の一般ルールは常に返す' do
+          create(:user_concern_topic, user: user_without_concerns, concern_topic_key: 'heatstroke')
+          weather_snapshot_without_concerns.update!(metrics: {
+            "temperature_c" => 22.0,
+            "min_temperature_c" => 18.0,
+            "humidity_pct" => 55.0,
+            "pressure_hpa" => 1010.0,
+            "max_pressure_drop_1h_awake" => 0.0,
+            "low_pressure_duration_1003h" => 0.0,
+            "low_pressure_duration_1007h" => 0.0,
+            "pressure_range_3h_awake" => 0.0,
+            "pressure_jitter_3h_awake" => 0.0
+          })
+
+          suggestions = described_class.call(user: user_without_concerns, date: date)
+          general_suggestion = suggestions.find do |s|
+            rule = Suggestion::RuleRegistry.all.find { |r| r.key == s.key }
+            rule&.concerns&.include?('general')
+          end
+
+          expect(general_suggestion).to be_present
+          expect(%w[comfort_Temperature comfort_Humidity stable_Pressure]).to include(general_suggestion.key)
         end
       end
     end

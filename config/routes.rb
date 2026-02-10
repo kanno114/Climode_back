@@ -44,6 +44,8 @@ Rails.application.routes.draw do
       end
       resources :prefectures, only: [ :index, :show ]
       resources :suggestions, only: [ :index ]
+      resources :concern_topics, only: [ :index ]
+      resource :user_concern_topics, only: [ :show, :update ]
 
       resources :push_subscriptions, only: [ :create ] do
         collection do
