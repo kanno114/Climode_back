@@ -16,7 +16,7 @@ RSpec.describe UserConcernTopic, type: :model do
     user = create(:user)
     concern_topic = ConcernTopic.find_or_create_by!(key: "heatstroke") do |c|
       c.label_ja = "熱中症"
-      c.rule_concerns = ["heatstroke"]
+      c.rule_concerns = [ "heatstroke" ]
       c.position = 1
       c.active = true
     end

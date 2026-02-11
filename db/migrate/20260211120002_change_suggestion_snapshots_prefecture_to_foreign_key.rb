@@ -28,7 +28,7 @@ class ChangeSuggestionSnapshotsPrefectureToForeignKey < ActiveRecord::Migration[
     remove_column :suggestion_snapshots, :prefecture
 
     # 6. ユニークインデックスの更新（date, prefecture_id, rule_key）
-    add_index :suggestion_snapshots, [:date, :prefecture_id, :rule_key], unique: true, name: "index_suggestion_snapshots_on_date_pref_rule"
-    add_index :suggestion_snapshots, [:date, :prefecture_id], name: "index_suggestion_snapshots_on_date_and_prefecture"
+    add_index :suggestion_snapshots, [ :date, :prefecture_id, :rule_key ], unique: true, name: "index_suggestion_snapshots_on_date_pref_rule"
+    add_index :suggestion_snapshots, [ :date, :prefecture_id ], name: "index_suggestion_snapshots_on_date_and_prefecture"
   end
 end

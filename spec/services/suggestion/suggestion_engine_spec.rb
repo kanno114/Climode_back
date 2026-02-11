@@ -17,13 +17,13 @@ RSpec.describe Suggestion::SuggestionEngine do
       let!(:user_concern_topics) do
         sleep_topic = ConcernTopic.find_or_create_by!(key: "sleep_time") do |c|
           c.label_ja = "睡眠時間"
-          c.rule_concerns = ["sleep_time"]
+          c.rule_concerns = [ "sleep_time" ]
           c.position = 1
           c.active = true
         end
         heat_topic = ConcernTopic.find_or_create_by!(key: "heatstroke") do |c|
           c.label_ja = "熱中症"
-          c.rule_concerns = ["heatstroke"]
+          c.rule_concerns = [ "heatstroke" ]
           c.position = 1
           c.active = true
         end
@@ -332,7 +332,7 @@ RSpec.describe Suggestion::SuggestionEngine do
         it '関心ワード登録時、該当するルールのみ返す' do
           heat_topic = ConcernTopic.find_or_create_by!(key: 'heatstroke') do |c|
             c.label_ja = "熱中症"
-            c.rule_concerns = ["heatstroke"]
+            c.rule_concerns = [ "heatstroke" ]
             c.position = 1
             c.active = true
           end
@@ -359,7 +359,7 @@ RSpec.describe Suggestion::SuggestionEngine do
         it '登録した関心ワードに含まないルールは返さない' do
           heat_topic = ConcernTopic.find_or_create_by!(key: 'heatstroke') do |c|
             c.label_ja = "熱中症"
-            c.rule_concerns = ["heatstroke"]
+            c.rule_concerns = [ "heatstroke" ]
             c.position = 1
             c.active = true
           end
@@ -385,7 +385,7 @@ RSpec.describe Suggestion::SuggestionEngine do
         it 'concerns: ["general"] の一般ルールは常に返す' do
           heat_topic = ConcernTopic.find_or_create_by!(key: 'heatstroke') do |c|
             c.label_ja = "熱中症"
-            c.rule_concerns = ["heatstroke"]
+            c.rule_concerns = [ "heatstroke" ]
             c.position = 1
             c.active = true
           end

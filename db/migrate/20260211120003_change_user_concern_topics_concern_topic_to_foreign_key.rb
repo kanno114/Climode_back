@@ -25,6 +25,6 @@ class ChangeUserConcernTopicsConcernTopicToForeignKey < ActiveRecord::Migration[
     remove_column :user_concern_topics, :concern_topic_key
 
     # 5. ユニークインデックス（user_id, concern_topic_id）
-    add_index :user_concern_topics, [:user_id, :concern_topic_id], unique: true, name: "index_user_concern_topics_on_user_and_concern_topic"
+    add_index :user_concern_topics, [ :user_id, :concern_topic_id ], unique: true, name: "index_user_concern_topics_on_user_and_concern_topic"
   end
 end
