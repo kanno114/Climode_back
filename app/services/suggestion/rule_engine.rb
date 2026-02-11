@@ -79,6 +79,5 @@
     def extract_triggers(condition_str, ctx)
       self.class.extract_triggers(condition_str, ctx)
     end
-
-  end
-end
+   end
+ end

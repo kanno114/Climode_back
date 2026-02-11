@@ -48,7 +48,7 @@ module Suggestion
       return nil if snapshots.empty?
 
       allowed_rule_keys = @rules.select { |r| r.category == "env" }.map(&:key).to_set
-      registry_by_key = ::Suggestion::RuleRegistry.all.to_h { |r| [r.key, r] }
+      registry_by_key = ::Suggestion::RuleRegistry.all.to_h { |r| [ r.key, r ] }
 
       snapshots
         .select { |s| allowed_rule_keys.include?(s.rule_key) }

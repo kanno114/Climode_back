@@ -422,7 +422,7 @@ RSpec.describe Suggestion::SuggestionEngine do
                  rule_key: 'heatstroke_Warning',
                  title: '暑い日。炎天下を避け、激しい運動は中止',
                  message: '外出時は炎天下を避け、室内では室温の上昇に注意する。激しい運動は中止。',
-                 tags: ['temperature', 'heatstroke'],
+                 tags: [ 'temperature', 'heatstroke' ],
                  severity: 75,
                  category: 'env',
                  metadata: {
@@ -442,7 +442,7 @@ RSpec.describe Suggestion::SuggestionEngine do
                  rule_key: 'comfort_Temperature',
                  title: '過ごしやすい気温です。今日は整いやすい日',
                  message: '気温が快適な範囲です。',
-                 tags: ['temperature', 'positive'],
+                 tags: [ 'temperature', 'positive' ],
                  severity: 35,
                  category: 'env',
                  metadata: {
@@ -533,7 +533,7 @@ RSpec.describe Suggestion::SuggestionEngine do
         let!(:heatstroke_topic) do
           ConcernTopic.find_or_create_by!(key: 'heatstroke') do |c|
             c.label_ja = "熱中症"
-            c.rule_concerns = ["heatstroke"]
+            c.rule_concerns = [ "heatstroke" ]
             c.position = 1
             c.active = true
           end
@@ -548,7 +548,7 @@ RSpec.describe Suggestion::SuggestionEngine do
                  rule_key: 'heatstroke_Warning',
                  title: '暑い日。炎天下を避け、激しい運動は中止',
                  message: '外出時は炎天下を避け、室内では室温の上昇に注意する。激しい運動は中止。',
-                 tags: ['temperature', 'heatstroke'],
+                 tags: [ 'temperature', 'heatstroke' ],
                  severity: 75,
                  category: 'env',
                  metadata: { 'temperature_c' => 32.0, 'humidity_pct' => 50.0, 'pressure_hpa' => 1013.0 })
@@ -558,7 +558,7 @@ RSpec.describe Suggestion::SuggestionEngine do
                  rule_key: 'weather_pain_drop_Warning',
                  title: '急激な気圧低下です。酔い止めや休憩の準備を',
                  message: '急激な気圧低下です。酔い止めや休憩の準備を。',
-                 tags: ['pressure', 'weather_pain'],
+                 tags: [ 'pressure', 'weather_pain' ],
                  severity: 85,
                  category: 'env',
                  metadata: { 'max_pressure_drop_1h_awake' => -3.5, 'humidity_pct' => 50.0, 'pressure_hpa' => 1013.0 })
