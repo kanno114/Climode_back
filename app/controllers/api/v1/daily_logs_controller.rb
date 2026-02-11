@@ -30,7 +30,28 @@ class Api::V1::DailyLogsController < ApplicationController
 
   # GET /api/v1/daily_logs/:id
   def show
-    render json: @daily_log.as_json(include: [ :prefecture, :suggestion_feedbacks ])
+    daily_log_json = @daily_log.as_json(
+      include: [
+        :prefecture,
+        :suggestion_feedbacks,
+        daily_log_suggestions: { only: [ :suggestion_key, :title, :message, :tags, :severity, :category ] }
+      ]
+    )
+
+    # フロントで扱いやすい形式（key, title, message, tags, severity, category, triggers）に変換
+    daily_log_json["daily_log_suggestions"] = @daily_log.daily_log_suggestions.order(:position, :id).map do |s|
+      {
+        key: s.suggestion_key,
+        title: s.title,
+        message: s.message.to_s,
+        tags: Array(s.tags),
+        severity: s.severity,
+        triggers: [],
+        category: s.category
+      }
+    end
+
+    render json: daily_log_json
   end
 
   # GET /api/v1/daily_logs/date/:date
@@ -288,7 +309,9 @@ class Api::V1::DailyLogsController < ApplicationController
   private
 
   def set_daily_log
-    @daily_log = current_user.daily_logs.find(params[:id])
+    @daily_log = current_user.daily_logs
+                            .includes(:prefecture, :suggestion_feedbacks, :daily_log_suggestions)
+                            .find(params[:id])
   end
 
   def daily_log_params
