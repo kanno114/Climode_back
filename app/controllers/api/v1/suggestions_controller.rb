@@ -4,7 +4,9 @@ class Api::V1::SuggestionsController < ApplicationController
   def index
     begin
       date = params[:date] ? Date.parse(params[:date]) : Date.current
-      suggestions = Suggestion::SuggestionEngine.call(user: current_user, date: date)
+      daily_log = DailyLog.find_by!(user_id: current_user.id, date: date)
+      suggestions = Suggestion::SuggestionEngine.call(user: current_user, date: date, daily_log: daily_log)
+      Suggestion::SuggestionPersistence.call(daily_log: daily_log, suggestions: suggestions)
       render json: suggestions.map { |s| serialize(s) }
     rescue ArgumentError => e
       # 日付のパースエラー

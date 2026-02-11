@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_02_11_120003) do
+ActiveRecord::Schema[7.2].define(version: 2026_02_11_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -24,6 +24,21 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_11_120003) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["key"], name: "index_concern_topics_on_key", unique: true
+  end
+
+  create_table "daily_log_suggestions", force: :cascade do |t|
+    t.bigint "daily_log_id", null: false
+    t.string "suggestion_key", null: false
+    t.string "title", null: false
+    t.text "message"
+    t.jsonb "tags", default: [], null: false
+    t.integer "severity", null: false
+    t.string "category", null: false
+    t.integer "position"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["daily_log_id", "suggestion_key"], name: "index_daily_log_suggestions_on_daily_log_and_suggestion_key", unique: true
+    t.index ["daily_log_id"], name: "index_daily_log_suggestions_on_daily_log_id"
   end
 
   create_table "daily_logs", force: :cascade do |t|
@@ -148,6 +163,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_11_120003) do
     t.index ["prefecture_id"], name: "index_weather_snapshots_on_prefecture_id"
   end
 
+  add_foreign_key "daily_log_suggestions", "daily_logs"
   add_foreign_key "daily_logs", "prefectures"
   add_foreign_key "daily_logs", "users"
   add_foreign_key "push_subscriptions", "users"

@@ -6,14 +6,14 @@ module Suggestion
 
     Suggestion = Struct.new(:key, :title, :message, :tags, :severity, :triggers, :category, :concerns, keyword_init: true)
 
-    def self.call(user:, date: Date.current)
-      new(user: user, date: date).call
+    def self.call(user:, date: Date.current, daily_log: nil)
+      new(user: user, date: date, daily_log: daily_log).call
     end
 
-    def initialize(user:, date:)
+    def initialize(user:, date:, daily_log: nil)
       @user = user
       @date = date
-      @daily_log = DailyLog.find_by!(user_id: @user.id, date: @date)
+      @daily_log = daily_log || DailyLog.find_by!(user_id: @user.id, date: @date)
       @weather_snapshot = WeatherSnapshot.find_by(
         prefecture: @daily_log.prefecture,
         date: @date

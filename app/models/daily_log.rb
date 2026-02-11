@@ -2,6 +2,7 @@ class DailyLog < ApplicationRecord
   belongs_to :user
   belongs_to :prefecture
   has_many :suggestion_feedbacks, dependent: :destroy
+  has_many :daily_log_suggestions, dependent: :destroy
 
   validates :date, presence: true
   validates :date, uniqueness: { scope: :user_id }
