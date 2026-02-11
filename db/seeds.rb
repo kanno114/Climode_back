@@ -162,6 +162,15 @@ unless is_production
     topic.assign_attributes(attrs)
     topic.save!
   end
+
+  # Alice に全関心ワードを登録
+  alice = User.find_by(email: 'alice@example.com')
+  if alice
+    ConcernTopic.find_each do |topic|
+      UserConcernTopic.find_or_create_by!(user: alice, concern_topic: topic)
+    end
+    puts "  Registered all concern topics for Alice (#{ConcernTopic.count} topics)"
+  end
 end
 
 # サンプルの日次記録データ（開発・テスト環境のみ、デフォルトで過去3ヶ月分 ≒ 90日）
