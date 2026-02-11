@@ -19,6 +19,7 @@ module Reports
         },
         daily: aggregate_daily_logs,
         feedback: aggregate_feedback,
+        suggestions: aggregate_suggestions,
         insight: generate_insight(daily_logs, correlation_analyzer),
         statistics: analysis_service.call,
         correlations: correlation_analyzer.call,
@@ -100,6 +101,47 @@ module Reports
         self_score_distribution: self_score_distribution,
         by_day: by_day
       }
+    end
+
+    def aggregate_suggestions
+      daily_logs = @user.daily_logs.where(date: @week_start..@week_end).order(:date)
+      return { by_day: [] } if daily_logs.empty?
+
+      log_ids = daily_logs.pluck(:id)
+      suggestions = DailyLogSuggestion.where(daily_log_id: log_ids)
+                                     .order(:daily_log_id, :position, :id)
+
+      return { by_day: [] } if suggestions.empty?
+
+      feedbacks = SuggestionFeedback
+        .where(daily_log_id: log_ids)
+        .index_by { |fb| [ fb.daily_log_id, fb.suggestion_key ] }
+
+      suggestions_by_log = suggestions.group_by(&:daily_log_id)
+      logs_by_id = daily_logs.index_by(&:id)
+
+      by_day = suggestions_by_log.map do |daily_log_id, day_suggestions|
+        log = logs_by_id[daily_log_id]
+        next nil unless log
+
+        items = day_suggestions.sort_by { |s| [ s.position || 0, s.id ] }.map do |s|
+          fb = feedbacks[[ daily_log_id, s.suggestion_key ]]
+          {
+            suggestion_key: s.suggestion_key,
+            title: s.title,
+            message: s.message,
+            helpfulness: fb&.helpfulness,
+            category: s.category
+          }
+        end
+
+        {
+          date: log.date.to_s,
+          items: items
+        }
+      end.compact.sort_by { |d| d[:date] }
+
+      { by_day: by_day }
     end
 
     def load_daily_logs
