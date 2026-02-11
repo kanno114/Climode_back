@@ -55,7 +55,7 @@ class MorningSuggestionJob < ApplicationJob
       records = suggestions.map do |s|
         {
           date: date,
-          prefecture: prefecture.code,
+          prefecture_id: prefecture.id,
           rule_key: s.key,
           title: s.title,
           message: s.message,

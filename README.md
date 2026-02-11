@@ -81,13 +81,6 @@ rails server
 - `GET /api/v1/prefectures` - 都道府県一覧
 - `GET /api/v1/prefectures/:id` - 都道府県詳細
 
-### トリガー
-
-- `GET /api/v1/triggers` - トリガー一覧（プリセット）
-- `GET /api/v1/user_triggers` - ユーザー登録トリガー一覧
-- `POST /api/v1/user_triggers` - トリガー登録
-- `DELETE /api/v1/user_triggers/:id` - トリガー削除
-
 ### 提案
 
 - `GET /api/v1/suggestions` - 行動提案一覧

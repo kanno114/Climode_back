@@ -1,6 +1,7 @@
 class Prefecture < ApplicationRecord
   has_many :users
   has_many :daily_logs
+  has_many :suggestion_snapshots
 
   validates :code, presence: true, uniqueness: true
   validates :name_ja, presence: true

@@ -15,9 +15,21 @@ RSpec.describe Suggestion::SuggestionEngine do
       end
 
       let!(:user_concern_topics) do
+        sleep_topic = ConcernTopic.find_or_create_by!(key: "sleep_time") do |c|
+          c.label_ja = "睡眠時間"
+          c.rule_concerns = [ "sleep_time" ]
+          c.position = 1
+          c.active = true
+        end
+        heat_topic = ConcernTopic.find_or_create_by!(key: "heatstroke") do |c|
+          c.label_ja = "熱中症"
+          c.rule_concerns = [ "heatstroke" ]
+          c.position = 1
+          c.active = true
+        end
         [
-          create(:user_concern_topic, user: user, concern_topic_key: "sleep_time"),
-          create(:user_concern_topic, user: user, concern_topic_key: "heatstroke")
+          create(:user_concern_topic, user: user, concern_topic: sleep_topic),
+          create(:user_concern_topic, user: user, concern_topic: heat_topic)
         ]
       end
 
@@ -318,7 +330,13 @@ RSpec.describe Suggestion::SuggestionEngine do
         end
 
         it '関心ワード登録時、該当するルールのみ返す' do
-          create(:user_concern_topic, user: user_without_concerns, concern_topic_key: 'heatstroke')
+          heat_topic = ConcernTopic.find_or_create_by!(key: 'heatstroke') do |c|
+            c.label_ja = "熱中症"
+            c.rule_concerns = [ "heatstroke" ]
+            c.position = 1
+            c.active = true
+          end
+          create(:user_concern_topic, user: user_without_concerns, concern_topic: heat_topic)
           weather_snapshot_without_concerns.update!(metrics: {
             "temperature_c" => 32.0,
             "min_temperature_c" => 22.0,
@@ -339,7 +357,13 @@ RSpec.describe Suggestion::SuggestionEngine do
         end
 
         it '登録した関心ワードに含まないルールは返さない' do
-          create(:user_concern_topic, user: user_without_concerns, concern_topic_key: 'heatstroke')
+          heat_topic = ConcernTopic.find_or_create_by!(key: 'heatstroke') do |c|
+            c.label_ja = "熱中症"
+            c.rule_concerns = [ "heatstroke" ]
+            c.position = 1
+            c.active = true
+          end
+          create(:user_concern_topic, user: user_without_concerns, concern_topic: heat_topic)
           weather_snapshot_without_concerns.update!(metrics: {
             "temperature_c" => 20.0,
             "min_temperature_c" => 15.0,
@@ -359,7 +383,13 @@ RSpec.describe Suggestion::SuggestionEngine do
         end
 
         it 'concerns: ["general"] の一般ルールは常に返す' do
-          create(:user_concern_topic, user: user_without_concerns, concern_topic_key: 'heatstroke')
+          heat_topic = ConcernTopic.find_or_create_by!(key: 'heatstroke') do |c|
+            c.label_ja = "熱中症"
+            c.rule_concerns = [ "heatstroke" ]
+            c.position = 1
+            c.active = true
+          end
+          create(:user_concern_topic, user: user_without_concerns, concern_topic: heat_topic)
           weather_snapshot_without_concerns.update!(metrics: {
             "temperature_c" => 22.0,
             "min_temperature_c" => 18.0,

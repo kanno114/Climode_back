@@ -1,6 +1,6 @@
 class UserConcernTopic < ApplicationRecord
   belongs_to :user
-  belongs_to :concern_topic, foreign_key: :concern_topic_key, primary_key: :key, optional: true
+  belongs_to :concern_topic
 
-  validates :concern_topic_key, presence: true, uniqueness: { scope: :user_id }
+  validates :concern_topic_id, uniqueness: { scope: :user_id }
 end

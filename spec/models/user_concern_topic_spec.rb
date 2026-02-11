@@ -6,16 +6,22 @@ RSpec.describe UserConcernTopic, type: :model do
     expect(topic).to be_valid
   end
 
-  it "requires concern_topic_key" do
-    topic = build(:user_concern_topic, concern_topic_key: nil)
+  it "requires concern_topic_id" do
+    topic = build(:user_concern_topic, concern_topic: nil)
     expect(topic).not_to be_valid
-    expect(topic.errors[:concern_topic_key]).to be_present
+    expect(topic.errors[:concern_topic]).to be_present
   end
 
-  it "enforces uniqueness per user and key" do
+  it "enforces uniqueness per user and concern_topic" do
     user = create(:user)
-    create(:user_concern_topic, user: user, concern_topic_key: "heatstroke")
-    duplicate = build(:user_concern_topic, user: user, concern_topic_key: "heatstroke")
+    concern_topic = ConcernTopic.find_or_create_by!(key: "heatstroke") do |c|
+      c.label_ja = "熱中症"
+      c.rule_concerns = [ "heatstroke" ]
+      c.position = 1
+      c.active = true
+    end
+    create(:user_concern_topic, user: user, concern_topic: concern_topic)
+    duplicate = build(:user_concern_topic, user: user, concern_topic: concern_topic)
     expect(duplicate).not_to be_valid
   end
 end

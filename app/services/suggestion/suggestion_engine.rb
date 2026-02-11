@@ -52,7 +52,7 @@ module Suggestion
 
     def filter_rules_by_user_concerns
       all_rules = ::Suggestion::RuleRegistry.all
-      user_concern_keys = UserConcernTopic.where(user: @user).pluck(:concern_topic_key).to_set
+      user_concern_keys = @user.concern_topics.pluck(:key).to_set
 
       if user_concern_keys.empty?
         all_rules.select { |r| r.concerns.include?(GENERAL_CONCERN_KEY) }
