@@ -24,11 +24,70 @@ module Suggestion
     def call
       return [] if @daily_log.nil?
 
-      ctx = build_context
-      ::Suggestion::RuleEngine.call(rules: @rules, context: ctx, limit: 3, tag_diversity: true)
+      env_suggestions = fetch_env_suggestions_from_snapshots
+
+      if env_suggestions.nil?
+        # フォールバック: suggestion_snapshots が空（7:30 前など）
+        fallback_to_rule_engine
+      else
+        body_suggestions = fetch_body_suggestions
+        candidates = env_suggestions + body_suggestions
+        RuleEngine.pick_top(candidates, limit: 3, tag_diversity: true)
+      end
     end
 
     private
+
+    # suggestion_snapshots から env 分を取得。空の場合は nil を返す（フォールバック用）
+    def fetch_env_suggestions_from_snapshots
+      snapshots = SuggestionSnapshot.where(
+        date: @date,
+        prefecture_id: @daily_log.prefecture_id
+      )
+
+      return nil if snapshots.empty?
+
+      allowed_rule_keys = @rules.select { |r| r.category == "env" }.map(&:key).to_set
+      registry_by_key = ::Suggestion::RuleRegistry.all.to_h { |r| [ r.key, r ] }
+
+      snapshots
+        .select { |s| allowed_rule_keys.include?(s.rule_key) }
+        .map do |s|
+          rule = registry_by_key[s.rule_key]
+          metadata = (s.metadata || {}).stringify_keys
+          triggers = rule ? RuleEngine.extract_triggers(rule.raw_condition, metadata) : metadata
+
+          Suggestion.new(
+            key: s.rule_key,
+            title: s.title,
+            message: s.message.to_s,
+            tags: Array(s.tags),
+            severity: s.severity,
+            triggers: triggers,
+            category: s.category,
+            concerns: rule&.concerns || []
+          )
+        end
+    end
+
+    # body ルールのみ RuleEngine で生成
+    def fetch_body_suggestions
+      body_rules = @rules.select { |r| r.category == "body" }
+      return [] if body_rules.empty?
+
+      ctx = build_context
+      ::Suggestion::RuleEngine.call(
+        rules: body_rules,
+        context: ctx,
+        limit: 10,
+        tag_diversity: false
+      )
+    end
+
+    def fallback_to_rule_engine
+      ctx = build_context
+      ::Suggestion::RuleEngine.call(rules: @rules, context: ctx, limit: 3, tag_diversity: true)
+    end
 
     # --- 入力文脈を構築 ---
     def build_context
