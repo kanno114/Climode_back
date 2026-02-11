@@ -20,14 +20,34 @@
        @tag_diversity = tag_diversity
      end
 
-     def call
-       candidates = @rules.filter_map { |rule| evaluate(rule, @context) }
-       pick_top(candidates, limit: @limit, tag_diversity: @tag_diversity)
-     end
+    def call
+      candidates = @rules.filter_map { |rule| evaluate(rule, @context) }
+      self.class.pick_top(candidates, limit: @limit, tag_diversity: @tag_diversity)
+    end
 
-     private
+    # 同タグの連発抑制＋severity優先。SuggestionEngine からも利用可能
+    def self.pick_top(list, limit: 3, tag_diversity: true)
+      return list.sort_by { |s| -s.severity }.first(limit) unless tag_diversity
 
-     def evaluate(rule, ctx)
+      picked = []
+      used_tags = Set.new
+
+      list.sort_by { |s| -s.severity }.each do |s|
+        if (s.tags & used_tags.to_a).any? && picked.size >= 1
+          next
+        end
+
+        picked << s
+        used_tags.merge(s.tags)
+        break if picked.size >= limit
+      end
+
+      picked
+    end
+
+    private
+
+    def evaluate(rule, ctx)
        calc = Dentaku::Calculator.new
 
        ok = !!calc.evaluate!(rule.ast, ctx)
@@ -47,32 +67,18 @@
        nil
      end
 
-     # 条件式に含まれる識別子を拾って、実際の値を付ける
-     def extract_triggers(condition_str, ctx)
-       keys = condition_str.scan(/[a-zA-Z_]\w*/).uniq
-       keys.grep_v(/\A(?:AND|OR|NOT|TRUE|FALSE)\z/i)
-           .select { |k| ctx.key?(k) }
-           .to_h { |k| [ k, ctx[k] ] }
-     end
+    # 条件式に含まれる識別子を拾って、実際の値を付ける。suggestion_snapshots の triggers 構築にも利用
+    def self.extract_triggers(condition_str, ctx)
+      ctx = ctx.stringify_keys if ctx.keys.first.is_a?(Symbol)
+      keys = condition_str.scan(/[a-zA-Z_]\w*/).uniq
+      keys.grep_v(/\A(?:AND|OR|NOT|TRUE|FALSE)\z/i)
+          .select { |k| ctx.key?(k) }
+          .to_h { |k| [ k, ctx[k] ] }
+    end
 
-     # 同タグの連発抑制＋severity優先
-     def pick_top(list, limit:, tag_diversity:)
-       return list.sort_by { |s| -s.severity }.first(limit) unless tag_diversity
+    def extract_triggers(condition_str, ctx)
+      self.class.extract_triggers(condition_str, ctx)
+    end
 
-       picked = []
-       used_tags = Set.new
-
-       list.sort_by { |s| -s.severity }.each do |s|
-         if (s.tags & used_tags.to_a).any? && picked.size >= 1
-           next
-         end
-
-         picked << s
-         used_tags.merge(s.tags)
-         break if picked.size >= limit
-       end
-
-       picked
-     end
-   end
- end
+  end
+end

@@ -9,6 +9,7 @@ RSpec.describe Suggestion::SuggestionEngine do
       let!(:daily_log) do
         create(:daily_log,
                user: user,
+               prefecture: user.prefecture,
                date: date,
                sleep_hours: 5.0,
                mood: 3)
@@ -410,6 +411,167 @@ RSpec.describe Suggestion::SuggestionEngine do
 
           expect(general_suggestion).to be_present
           expect(%w[comfort_Temperature comfort_Humidity stable_Pressure]).to include(general_suggestion.key)
+        end
+      end
+
+      context 'suggestion_snapshots を参照する場合' do
+        before do
+          create(:suggestion_snapshot,
+                 date: date,
+                 prefecture: daily_log.prefecture,
+                 rule_key: 'heatstroke_Warning',
+                 title: '暑い日。炎天下を避け、激しい運動は中止',
+                 message: '外出時は炎天下を避け、室内では室温の上昇に注意する。激しい運動は中止。',
+                 tags: ['temperature', 'heatstroke'],
+                 severity: 75,
+                 category: 'env',
+                 metadata: {
+                   'temperature_c' => 32.0,
+                   'min_temperature_c' => 22.0,
+                   'humidity_pct' => 50.0,
+                   'pressure_hpa' => 1013.0,
+                   'max_pressure_drop_1h_awake' => 0.0,
+                   'low_pressure_duration_1003h' => 0.0,
+                   'low_pressure_duration_1007h' => 0.0,
+                   'pressure_range_3h_awake' => 0.0,
+                   'pressure_jitter_3h_awake' => 0.0
+                 })
+          create(:suggestion_snapshot,
+                 date: date,
+                 prefecture: daily_log.prefecture,
+                 rule_key: 'comfort_Temperature',
+                 title: '過ごしやすい気温です。今日は整いやすい日',
+                 message: '気温が快適な範囲です。',
+                 tags: ['temperature', 'positive'],
+                 severity: 35,
+                 category: 'env',
+                 metadata: {
+                   'temperature_c' => 22.0,
+                   'min_temperature_c' => 18.0,
+                   'humidity_pct' => 50.0,
+                   'pressure_hpa' => 1013.0,
+                   'max_pressure_drop_1h_awake' => 0.0,
+                   'low_pressure_duration_1003h' => 0.0,
+                   'low_pressure_duration_1007h' => 0.0,
+                   'pressure_range_3h_awake' => 0.0,
+                   'pressure_jitter_3h_awake' => 0.0
+                 })
+        end
+
+        it 'suggestion_snapshots から env を取得し、body とマージして返す' do
+          daily_log.update!(sleep_hours: 5.5)
+
+          suggestions = described_class.call(user: user, date: date)
+
+          expect(suggestions).to be_an(Array)
+          expect(suggestions.length).to be > 0
+          expect(suggestions.length).to be <= 3
+
+          # env は snapshots から（heatstroke_Warning または comfort_Temperature）
+          env_keys = suggestions.map(&:key) & %w[heatstroke_Warning comfort_Temperature]
+          expect(env_keys).not_to be_empty
+
+          # body は RuleEngine から（sleep_Caution）
+          sleep_suggestion = suggestions.find { |s| s.key == 'sleep_Caution' }
+          expect(sleep_suggestion).to be_present
+          expect(sleep_suggestion.title).to eq('睡眠不足気味。生活時間を見直して')
+          expect(sleep_suggestion.triggers).to be_a(Hash)
+        end
+
+        it 'triggers が metadata から構築される' do
+          daily_log.update!(sleep_hours: 7.0)
+
+          suggestions = described_class.call(user: user, date: date)
+          heat_suggestion = suggestions.find { |s| s.key == 'heatstroke_Warning' }
+
+          expect(heat_suggestion).to be_present
+          expect(heat_suggestion.triggers).to include('temperature_c' => 32.0)
+        end
+      end
+
+      context 'suggestion_snapshots が空の場合（フォールバック）' do
+        before do
+          SuggestionSnapshot.where(date: date, prefecture_id: daily_log.prefecture_id).delete_all
+        end
+
+        it '従来どおり RuleEngine で env + body を生成する' do
+          daily_log.update!(sleep_hours: 5.5)
+          weather_snapshot.update!(metrics: {
+            "temperature_c" => 32.0,
+            "min_temperature_c" => 22.0,
+            "humidity_pct" => 50.0,
+            "pressure_hpa" => 1013.0,
+            "max_pressure_drop_1h_awake" => 0.0,
+            "low_pressure_duration_1003h" => 0.0,
+            "low_pressure_duration_1007h" => 0.0,
+            "pressure_range_3h_awake" => 0.0,
+            "pressure_jitter_3h_awake" => 0.0
+          })
+
+          suggestions = described_class.call(user: user, date: date)
+
+          expect(suggestions).to be_an(Array)
+          heat_suggestion = suggestions.find { |s| s.key == 'heatstroke_Warning' }
+          sleep_suggestion = suggestions.find { |s| s.key == 'sleep_Caution' }
+
+          expect(heat_suggestion).to be_present
+          expect(sleep_suggestion).to be_present
+          expect(heat_suggestion.title).to eq('暑い日。炎天下を避け、激しい運動は中止')
+        end
+      end
+
+      context 'suggestion_snapshots 経由での関心トピックフィルタ' do
+        let(:user_heatstroke_only) { create(:user, prefecture: create(:prefecture)) }
+        let!(:daily_log_heatstroke_only) do
+          create(:daily_log,
+                 user: user_heatstroke_only,
+                 prefecture: user_heatstroke_only.prefecture,
+                 date: date,
+                 sleep_hours: 7.0,
+                 mood: 3)
+        end
+        let!(:heatstroke_topic) do
+          ConcernTopic.find_or_create_by!(key: 'heatstroke') do |c|
+            c.label_ja = "熱中症"
+            c.rule_concerns = ["heatstroke"]
+            c.position = 1
+            c.active = true
+          end
+        end
+        before do
+          create(:user_concern_topic, user: user_heatstroke_only, concern_topic: heatstroke_topic)
+
+          # heatstroke と weather_pain の両方の snapshot を作成
+          create(:suggestion_snapshot,
+                 date: date,
+                 prefecture: user_heatstroke_only.prefecture,
+                 rule_key: 'heatstroke_Warning',
+                 title: '暑い日。炎天下を避け、激しい運動は中止',
+                 message: '外出時は炎天下を避け、室内では室温の上昇に注意する。激しい運動は中止。',
+                 tags: ['temperature', 'heatstroke'],
+                 severity: 75,
+                 category: 'env',
+                 metadata: { 'temperature_c' => 32.0, 'humidity_pct' => 50.0, 'pressure_hpa' => 1013.0 })
+          create(:suggestion_snapshot,
+                 date: date,
+                 prefecture: user_heatstroke_only.prefecture,
+                 rule_key: 'weather_pain_drop_Warning',
+                 title: '急激な気圧低下です。酔い止めや休憩の準備を',
+                 message: '急激な気圧低下です。酔い止めや休憩の準備を。',
+                 tags: ['pressure', 'weather_pain'],
+                 severity: 85,
+                 category: 'env',
+                 metadata: { 'max_pressure_drop_1h_awake' => -3.5, 'humidity_pct' => 50.0, 'pressure_hpa' => 1013.0 })
+        end
+
+        it 'ユーザーの関心トピックに合致する rule_key のみ採用する' do
+          suggestions = described_class.call(user: user_heatstroke_only, date: date)
+
+          heat_suggestion = suggestions.find { |s| s.key == 'heatstroke_Warning' }
+          weather_pain_suggestion = suggestions.find { |s| s.key == 'weather_pain_drop_Warning' }
+
+          expect(heat_suggestion).to be_present
+          expect(weather_pain_suggestion).to be_nil
         end
       end
     end
