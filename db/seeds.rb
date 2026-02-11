@@ -5,7 +5,7 @@
 # このファイルはマスタデータとテストデータを作成します。
 #
 # 【本番環境での動作】
-#   - マスタデータ（都道府県、トリガー）は投入されます（既存データは上書きされません）
+#   - マスタデータ（都道府県）は投入されます（既存データは上書きされません）
 #   - テストデータ（ユーザー、DailyLogなど）は作成されません
 #
 # 【開発・テスト環境での動作】
@@ -22,7 +22,6 @@
 #
 # 【環境変数】
 #   - SEED_DAYS: 作成する過去日数（デフォルト: 90日 ≒ 過去3ヶ月）
-#   - SEED_SKIP_TRIGGERS: トリガーマスタデータの同期をスキップ（1でスキップ）
 #   - SEED_VERBOSE: 詳細ログを出力（1で有効）
 #
 # ============================================================================
@@ -31,7 +30,7 @@
 is_production = Rails.env.production?
 
 if is_production
-  puts "Running in production mode. Only master data (prefectures, triggers) will be seeded."
+  puts "Running in production mode. Only master data (prefectures) will be seeded."
 end
 
 # テストユーザーの作成（開発・テスト環境のみ）
@@ -287,14 +286,14 @@ unless is_production
         tag_diversity: false
       )
 
-      SuggestionSnapshot.where(date: today, prefecture: default_prefecture.code).delete_all
+      SuggestionSnapshot.where(date: today, prefecture_id: default_prefecture.id).delete_all
 
       if env_suggestions.any?
         SuggestionSnapshot.insert_all!(
           env_suggestions.map do |s|
             {
               date: today,
-              prefecture: default_prefecture.code,
+              prefecture_id: default_prefecture.id,
               rule_key: s.key,
               title: s.title,
               message: s.message,

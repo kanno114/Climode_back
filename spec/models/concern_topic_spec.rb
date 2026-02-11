@@ -21,6 +21,7 @@ RSpec.describe ConcernTopic, type: :model do
 
   describe '.active' do
     it 'returns only active topics ordered by position and id' do
+      UserConcernTopic.delete_all
       described_class.delete_all
 
       inactive = create(:concern_topic, active: false, position: 1)

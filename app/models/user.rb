@@ -6,6 +6,7 @@ class User < ApplicationRecord
   has_many :daily_logs, dependent: :destroy
   has_many :push_subscriptions, dependent: :destroy
   has_many :user_concern_topics, dependent: :destroy
+  has_many :concern_topics, through: :user_concern_topics
 
   validates :email, presence: true, uniqueness: true
   validates :name, presence: true, unless: :oauth_provider?

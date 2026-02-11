@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_02_10_115157) do
+ActiveRecord::Schema[7.2].define(version: 2026_02_11_120003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -88,7 +88,6 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_10_115157) do
 
   create_table "suggestion_snapshots", force: :cascade do |t|
     t.date "date", null: false
-    t.string "prefecture", null: false
     t.string "rule_key", null: false
     t.string "title", null: false
     t.text "message"
@@ -98,30 +97,20 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_10_115157) do
     t.jsonb "metadata", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["date", "prefecture", "rule_key"], name: "index_suggestion_snapshots_on_date_pref_rule", unique: true
-    t.index ["date", "prefecture"], name: "index_suggestion_snapshots_on_date_and_prefecture"
+    t.bigint "prefecture_id", null: false
+    t.index ["date", "prefecture_id", "rule_key"], name: "index_suggestion_snapshots_on_date_pref_rule", unique: true
+    t.index ["date", "prefecture_id"], name: "index_suggestion_snapshots_on_date_and_prefecture"
+    t.index ["prefecture_id"], name: "index_suggestion_snapshots_on_prefecture_id"
     t.index ["tags"], name: "index_suggestion_snapshots_on_tags", using: :gin
-  end
-
-  create_table "triggers", force: :cascade do |t|
-    t.string "key", null: false
-    t.string "label", null: false
-    t.string "category", null: false
-    t.boolean "is_active", default: true, null: false
-    t.integer "version", null: false
-    t.jsonb "rule", default: {}
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["key"], name: "index_triggers_on_key", unique: true
-    t.check_constraint "category::text = ANY (ARRAY['env'::character varying, 'body'::character varying]::text[])", name: "triggers_category_check"
   end
 
   create_table "user_concern_topics", force: :cascade do |t|
     t.bigint "user_id", null: false
-    t.string "concern_topic_key", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["user_id", "concern_topic_key"], name: "index_user_concern_topics_on_user_and_key", unique: true
+    t.bigint "concern_topic_id", null: false
+    t.index ["concern_topic_id"], name: "index_user_concern_topics_on_concern_topic_id"
+    t.index ["user_id", "concern_topic_id"], name: "index_user_concern_topics_on_user_and_concern_topic", unique: true
     t.index ["user_id"], name: "index_user_concern_topics_on_user_id"
   end
 
@@ -135,16 +124,6 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_10_115157) do
     t.datetime "updated_at", null: false
     t.index ["provider", "uid"], name: "index_user_identities_on_provider_and_uid", unique: true
     t.index ["user_id"], name: "index_user_identities_on_user_id"
-  end
-
-  create_table "user_triggers", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.bigint "trigger_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["trigger_id"], name: "index_user_triggers_on_trigger_id"
-    t.index ["user_id", "trigger_id"], name: "index_user_triggers_on_user_id_and_trigger_id", unique: true
-    t.index ["user_id"], name: "index_user_triggers_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -173,10 +152,10 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_10_115157) do
   add_foreign_key "daily_logs", "users"
   add_foreign_key "push_subscriptions", "users"
   add_foreign_key "suggestion_feedbacks", "daily_logs", on_delete: :cascade
+  add_foreign_key "suggestion_snapshots", "prefectures"
+  add_foreign_key "user_concern_topics", "concern_topics"
   add_foreign_key "user_concern_topics", "users"
   add_foreign_key "user_identities", "users"
-  add_foreign_key "user_triggers", "triggers", on_delete: :restrict
-  add_foreign_key "user_triggers", "users", on_delete: :restrict
   add_foreign_key "users", "prefectures"
   add_foreign_key "weather_snapshots", "prefectures"
 end
