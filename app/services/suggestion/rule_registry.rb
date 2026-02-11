@@ -2,7 +2,7 @@
 
 module Suggestion
   class RuleRegistry
-    Rule = Struct.new(:key, :ast, :raw_condition, :title, :message, :tags, :severity, :category, :concerns, keyword_init: true)
+    Rule = Struct.new(:key, :ast, :raw_condition, :title, :message, :tags, :severity, :category, :concerns, :reason_text, :evidence_text, keyword_init: true)
 
     class << self
       def all
@@ -22,15 +22,17 @@ module Suggestion
           expr = normalize_expr(r["condition"].to_s)
           ast  = calc.ast(expr) # パースしてAST化（ここで文法エラー検出）
           Rule.new(
-            key:        r.fetch("key"),
-            ast:        ast,
+            key:           r.fetch("key"),
+            ast:           ast,
             raw_condition: r["condition"].to_s,
-            title:      r.fetch("title"),
-            message:    r.fetch("message"),
-            tags:       Array(r["tags"]),
-            severity:   r.fetch("severity").to_i,
-            category:   r.fetch("category", "env"),
-            concerns:   Array(r["concerns"])
+            title:         r.fetch("title"),
+            message:       r.fetch("message"),
+            tags:         Array(r["tags"]),
+            severity:      r.fetch("severity").to_i,
+            category:      r.fetch("category", "env"),
+            concerns:      Array(r["concerns"]),
+            reason_text:   r["reason_text"].to_s.presence,
+            evidence_text: r["evidence_text"].to_s.presence
           )
         end
       end

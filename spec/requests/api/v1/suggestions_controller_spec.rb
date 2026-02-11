@@ -78,6 +78,8 @@ RSpec.describe 'Api::V1::Suggestions', type: :request do
             expect(suggestion).to have_key('tags')
             expect(suggestion).to have_key('severity')
             expect(suggestion).to have_key('triggers')
+            expect(suggestion).to have_key('reason_text')
+            expect(suggestion).to have_key('evidence_text')
           end
         end
 

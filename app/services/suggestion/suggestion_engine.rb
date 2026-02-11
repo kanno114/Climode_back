@@ -4,7 +4,7 @@ module Suggestion
   class SuggestionEngine
     GENERAL_CONCERN_KEY = "general".freeze
 
-    Suggestion = Struct.new(:key, :title, :message, :tags, :severity, :triggers, :category, :concerns, keyword_init: true)
+    Suggestion = Struct.new(:key, :title, :message, :tags, :severity, :triggers, :category, :concerns, :reason_text, :evidence_text, keyword_init: true)
 
     def self.call(user:, date: Date.current, daily_log: nil)
       new(user: user, date: date, daily_log: daily_log).call
@@ -58,14 +58,16 @@ module Suggestion
           triggers = rule ? RuleEngine.extract_triggers(rule.raw_condition, metadata) : metadata
 
           Suggestion.new(
-            key: s.rule_key,
-            title: s.title,
-            message: s.message.to_s,
-            tags: Array(s.tags),
-            severity: s.severity,
-            triggers: triggers,
-            category: s.category,
-            concerns: rule&.concerns || []
+            key:          s.rule_key,
+            title:        s.title,
+            message:      s.message.to_s,
+            tags:         Array(s.tags),
+            severity:     s.severity,
+            triggers:     triggers,
+            category:     s.category,
+            concerns:     rule&.concerns || [],
+            reason_text:  rule&.reason_text,
+            evidence_text: rule&.evidence_text
           )
         end
     end
