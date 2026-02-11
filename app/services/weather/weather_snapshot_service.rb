@@ -48,7 +48,7 @@ module Weather
       metrics = {}
 
       # 48時間分を1回だけ取得（前日〜当日）
-      series = WeatherDataService.new(@prefecture, @date).fetch_forecast_series(
+      series = Weather::WeatherDataService.new(@prefecture, @date).fetch_forecast_series(
         hours: 48,
         start_date: @date - 1.day,
         end_date: @date

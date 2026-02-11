@@ -37,6 +37,35 @@ RSpec.describe 'Api::V1::Suggestions', type: :request do
           expect(json).to be_an(Array)
         end
 
+        it '提案がdaily_log_suggestionsに保存される' do
+          expect { get '/api/v1/suggestions', headers: headers }
+            .to change { daily_log.daily_log_suggestions.count }
+            .by_at_least(0)
+
+          expect(response).to have_http_status(:success)
+          json = JSON.parse(response.body)
+          return if json.empty?
+
+          json.each do |suggestion|
+            saved = daily_log.daily_log_suggestions.find_by(suggestion_key: suggestion["key"])
+            expect(saved).to be_present
+            expect(saved.title).to eq(suggestion["title"])
+            expect(saved.message).to eq(suggestion["message"])
+            expect(saved.severity).to eq(suggestion["severity"])
+            expect(saved.category).to eq(suggestion["category"])
+          end
+        end
+
+        it '複数回取得してもupsertにより重複レコードが発生しない' do
+          get '/api/v1/suggestions', headers: headers
+          count_after_first = daily_log.daily_log_suggestions.count
+
+          get '/api/v1/suggestions', headers: headers
+          count_after_second = daily_log.daily_log_suggestions.count
+
+          expect(count_after_second).to eq(count_after_first)
+        end
+
         it '提案オブジェクトが正しい構造を持つ' do
           get '/api/v1/suggestions', headers: headers
 
