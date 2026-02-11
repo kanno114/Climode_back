@@ -9,8 +9,8 @@ module Reports
     def call
       daily_logs = load_daily_logs
       weather_snapshots = load_weather_snapshots(daily_logs)
-      analysis_service = WeeklyAnalysisService.new(@user, @week_start, @week_end)
-      correlation_analyzer = CorrelationAnalyzer.new(daily_logs, weather_snapshots)
+      analysis_service = Reports::WeeklyAnalysisService.new(@user, @week_start, @week_end)
+      correlation_analyzer = Reports::CorrelationAnalyzer.new(daily_logs, weather_snapshots)
 
       {
         range: {
