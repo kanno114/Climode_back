@@ -38,16 +38,20 @@ class Api::V1::DailyLogsController < ApplicationController
       ]
     )
 
-    # フロントで扱いやすい形式（key, title, message, tags, severity, category, triggers）に変換
+    # フロントで扱いやすい形式（key, title, message, tags, severity, category, triggers, reason_text, evidence_text）に変換
+    registry = Suggestion::RuleRegistry.all.to_h { |r| [ r.key, r ] }
     daily_log_json["daily_log_suggestions"] = @daily_log.daily_log_suggestions.order(:position, :id).map do |s|
+      rule = registry[s.suggestion_key]
       {
         key: s.suggestion_key,
         title: s.title,
         message: s.message.to_s,
         tags: Array(s.tags),
         severity: s.severity,
-        triggers: [],
-        category: s.category
+        triggers: {},
+        category: s.category,
+        reason_text: rule&.reason_text,
+        evidence_text: rule&.evidence_text
       }
     end
 

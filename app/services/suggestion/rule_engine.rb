@@ -54,14 +54,16 @@
        return nil unless ok
 
        Suggestion.new(
-         key: rule.key,
-         title: rule.title,
-         message: rule.message % ctx.symbolize_keys,
-         tags: rule.tags,
-         severity: rule.severity,
-         triggers: extract_triggers(rule.raw_condition, ctx),
-        category: rule.category,
-        concerns: rule.concerns
+         key:          rule.key,
+         title:        rule.title,
+         message:      rule.message % ctx.symbolize_keys,
+         tags:         rule.tags,
+         severity:     rule.severity,
+         triggers:     extract_triggers(rule.raw_condition, ctx),
+         category:     rule.category,
+         concerns:     rule.concerns,
+         reason_text:  rule.reason_text,
+         evidence_text: rule.evidence_text
        )
      rescue Dentaku::ParseError, Dentaku::ArgumentError
        nil

@@ -9,6 +9,8 @@ rules:
     concerns: ["heatstroke"]
     severity: "90"
     category: "env"
+    reason_text: "気温が35℃以上で、環境省の熱中症警戒基準において猛暑日と判定されました。"
+    evidence_text: "環境省 熱中症予防情報サイト（https://www.wbgt.env.go.jp/）の数値を参照し、当サービス基準で判定"
 
   - key: heatstroke_Warning
     title: "暑い日。炎天下を避け、激しい運動は中止"
@@ -18,6 +20,8 @@ rules:
     concerns: ["heatstroke"]
     severity: "75"
     category: "env"
+    reason_text: "気温が31℃以上35℃未満で、環境省の熱中症警戒基準において暑い日と判定されました。"
+    evidence_text: "環境省 熱中症予防情報サイト（https://www.wbgt.env.go.jp/）の数値を参照し、当サービス基準で判定"
 
   - key: heatstroke_Caution
     title: "やや暑い日。休息を充分に"
@@ -27,6 +31,8 @@ rules:
     concerns: ["heatstroke"]
     severity: "60"
     category: "env"
+    reason_text: "気温が28℃以上31℃未満で、環境省の熱中症警戒基準においてやや暑い日と判定されました。"
+    evidence_text: "環境省 熱中症予防情報サイト（https://www.wbgt.env.go.jp/）の数値を参照し、当サービス基準で判定"
 
   # ヒートショック（3）
   - key: heat_shock_Danger
@@ -37,6 +43,8 @@ rules:
     concerns: ["heat_shock"]
     severity: "90"
     category: "env"
+    reason_text: "最低気温が3℃未満で、浴室内突然死の危険性が最も高い環境と判定されました。"
+    evidence_text: "鹿児島大学「入浴時警戒情報」の数値を参照し、当サービス基準で判定"
 
   - key: heat_shock_Warning
     title: "入浴死が発生しやすい環境温度です"
@@ -46,6 +54,8 @@ rules:
     concerns: ["heat_shock"]
     severity: "75"
     category: "env"
+    reason_text: "最低気温が3℃以上13℃未満で、入浴死が発生しやすい環境温度と判定されました。"
+    evidence_text: "鹿児島大学「入浴時警戒情報」の数値を参照し、当サービス基準で判定"
 
   - key: heat_shock_Caution
     title: "油断は禁物。入浴前後の対策を"
@@ -55,6 +65,8 @@ rules:
     concerns: ["heat_shock"]
     severity: "55"
     category: "env"
+    reason_text: "最低気温が13℃以上で、油断は禁物の範囲と判定されました。"
+    evidence_text: "鹿児島大学「入浴時警戒情報」の数値を参照し、当サービス基準で判定"
 
   # 気象病・天気痛（5）
   - key: weather_pain_drop_Warning
@@ -65,6 +77,8 @@ rules:
     concerns: ["weather_pain"]
     severity: "85"
     category: "env"
+    reason_text: "1時間あたりの気圧低下が3hPa以上で、急激な気圧低下と判定されました。"
+    evidence_text: "大熊博久医師の論文『気圧変動と片頭痛の関係(2015)』、佐藤純医師監修の情報の数値を参照し、当サービス基準で判定"
 
   - key: weather_pain_drop_Caution
     title: "気圧が下がり始めています。無理は禁物です"
@@ -74,6 +88,8 @@ rules:
     concerns: ["weather_pain"]
     severity: "70"
     category: "env"
+    reason_text: "1時間あたりの気圧低下が1hPa以上で、気圧が下がり始めていると判定されました。"
+    evidence_text: "大熊博久医師の論文『気圧変動と片頭痛の関係(2015)』、佐藤純医師監修の情報の数値を参照し、当サービス基準で判定"
 
   - key: weather_pain_low_1003_Warning
     title: "警戒レベルの低気圧です。頭痛薬等の準備を"
@@ -83,6 +99,8 @@ rules:
     concerns: ["weather_pain"]
     severity: "85"
     category: "env"
+    reason_text: "1003hPa以下の気圧が3時間以上続き、警戒レベルの低気圧と判定されました。"
+    evidence_text: "大熊博久医師の論文『気圧変動と片頭痛の関係(2015)』、佐藤純医師監修の情報の数値を参照し、当サービス基準で判定"
 
   - key: weather_pain_low_1007_Caution
     title: "低い気圧が続いています。疲れが溜まっているかも"
@@ -92,6 +110,8 @@ rules:
     concerns: ["weather_pain"]
     severity: "70"
     category: "env"
+    reason_text: "1007hPa以下の気圧が3時間以上続き、低気圧の影響が懸念されると判定されました。"
+    evidence_text: "大熊博久医師の論文『気圧変動と片頭痛の関係(2015)』、佐藤純医師監修の情報の数値を参照し、当サービス基準で判定"
 
   - key: weather_pain_jitter_Caution
     title: "気圧が細かく波打っています。不調の予兆かもしれません"
@@ -101,6 +121,8 @@ rules:
     concerns: ["weather_pain"]
     severity: "70"
     category: "env"
+    reason_text: "気圧の細かい変動が検出され、不調の予兆の可能性があると判定されました。"
+    evidence_text: "大熊博久医師の論文『気圧変動と片頭痛の関係(2015)』、佐藤純医師監修の情報の数値を参照し、当サービス基準で判定"
 
   # 乾燥・ウイルス感染リスク（3）
   - key: dryness_Warning
@@ -111,6 +133,8 @@ rules:
     concerns: ["dryness_infection"]
     severity: "85"
     category: "env"
+    reason_text: "湿度が30%未満で、非常に乾燥した環境と判定されました。"
+    evidence_text: "東京都健康安全研究センターの居住環境ガイドライン、厚生労働省のインフルエンザ対策基準の数値を参照し、当サービス基準で判定"
 
   - key: dryness_Caution
     title: "乾燥しています。湿度40%以上を目指して"
@@ -120,6 +144,8 @@ rules:
     concerns: ["dryness_infection"]
     severity: "75"
     category: "env"
+    reason_text: "湿度が30%以上40%未満で、乾燥した環境と判定されました。"
+    evidence_text: "東京都健康安全研究センターの居住環境ガイドライン、厚生労働省のインフルエンザ対策基準の数値を参照し、当サービス基準で判定"
 
   - key: dryness_Notice
     title: "やや乾燥気味。50〜60%を目安に調整を"
@@ -129,6 +155,8 @@ rules:
     concerns: ["dryness_infection"]
     severity: "60"
     category: "env"
+    reason_text: "湿度が40%以上50%未満で、やや乾燥気味と判定されました。"
+    evidence_text: "東京都健康安全研究センターの居住環境ガイドライン、厚生労働省のインフルエンザ対策基準の数値を参照し、当サービス基準で判定"
 
   # 睡眠時間（4）
   - key: sleep_Warning
@@ -139,6 +167,8 @@ rules:
     concerns: ["sleep_time"]
     severity: "90"
     category: "body"
+    reason_text: "睡眠時間が5時間未満で、極端な睡眠不足と判定されました。"
+    evidence_text: "厚生労働省「健康づくりのための睡眠ガイド2023」の数値を参照し、当サービス基準で判定"
 
   - key: sleep_Caution
     title: "睡眠不足気味。生活時間を見直して"
@@ -148,6 +178,8 @@ rules:
     concerns: ["sleep_time"]
     severity: "75"
     category: "body"
+    reason_text: "睡眠時間が5時間以上6時間未満で、睡眠不足気味と判定されました。"
+    evidence_text: "厚生労働省「健康づくりのための睡眠ガイド2023」の数値を参照し、当サービス基準で判定"
 
   - key: sleep_Optimal
     title: "理想的な睡眠時間です。この習慣を維持して"
@@ -157,6 +189,8 @@ rules:
     concerns: ["sleep_time"]
     severity: "40"
     category: "body"
+    reason_text: "睡眠時間が6時間以上8時間未満で、理想的な睡眠時間と判定されました。"
+    evidence_text: "厚生労働省「健康づくりのための睡眠ガイド2023」の数値を参照し、当サービス基準で判定"
 
   - key: sleep_Good
     title: "十分な睡眠が確保できています"
@@ -166,6 +200,8 @@ rules:
     concerns: ["sleep_time"]
     severity: "35"
     category: "body"
+    reason_text: "睡眠時間が8時間以上で、十分な睡眠が確保されてると判定されました。"
+    evidence_text: "厚生労働省「健康づくりのための睡眠ガイド2023」の数値を参照し、当サービス基準で判定"
 
   # ポジティブ系（環境・整いやすい日）
   - key: comfort_Temperature
