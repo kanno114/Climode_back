@@ -40,7 +40,7 @@ RSpec.describe Suggestion::SuggestionPersistence do
 
     it "同一suggestion_keyでupsertし、重複しない" do
       described_class.call(daily_log: daily_log, suggestions: [ suggestion_struct ])
-      expect(DailyLogSuggestion.count).to eq(1)
+      expect(daily_log.daily_log_suggestions.count).to eq(1)
 
       updated_struct = Suggestion::SuggestionEngine::Suggestion.new(
         key: "pressure_drop_signal_warning",
@@ -54,7 +54,7 @@ RSpec.describe Suggestion::SuggestionPersistence do
       )
       described_class.call(daily_log: daily_log, suggestions: [ updated_struct ])
 
-      expect(DailyLogSuggestion.count).to eq(1)
+      expect(daily_log.daily_log_suggestions.count).to eq(1)
       saved = daily_log.daily_log_suggestions.find_by(suggestion_key: "pressure_drop_signal_warning")
       expect(saved.title).to eq("更新されたタイトル")
       expect(saved.message).to eq("更新されたメッセージ")

@@ -24,6 +24,7 @@ RSpec.describe Reports::WeeklyReportService do
         expect(result[:feedback][:helpfulness_rate]).to be_nil
         expect(result[:feedback][:helpfulness_count][:helpful]).to eq(0)
         expect(result[:feedback][:helpfulness_count][:not_helpful]).to eq(0)
+        expect(result[:suggestions][:by_day]).to eq([])
         expect(result[:insight]).to be_present
       end
     end
@@ -79,6 +80,57 @@ RSpec.describe Reports::WeeklyReportService do
 
         # インサイト
         expect(result[:insight]).to be_present
+
+        # 提案（daily_log_suggestions がない場合は空）
+        expect(result[:suggestions][:by_day]).to eq([])
+      end
+
+      it "daily_log_suggestions がある場合、提案を日付ごとに返す" do
+        create(:daily_log_suggestion,
+               daily_log: daily_log1,
+               suggestion_key: "test_suggestion",
+               title: "テスト提案1",
+               message: "メッセージ1",
+               category: "env",
+               position: 0)
+        create(:daily_log_suggestion,
+               daily_log: daily_log1,
+               suggestion_key: "test_suggestion2",
+               title: "テスト提案2",
+               message: "メッセージ2",
+               category: "weather",
+               position: 1)
+        create(:suggestion_feedback,
+               daily_log: daily_log1,
+               suggestion_key: "test_suggestion2",
+               helpfulness: false)
+
+        service = described_class.new(user)
+        result = service.call
+
+        expect(result[:suggestions][:by_day].size).to eq(1) # daily_log1 のみ提案あり
+
+        day1_data = result[:suggestions][:by_day].find { |d| d[:date] == (week_start + 1.day).to_s }
+        expect(day1_data).to be_present
+        expect(day1_data[:items].size).to eq(2)
+        expect(day1_data[:items][0]).to include(
+          suggestion_key: "test_suggestion",
+          title: "テスト提案1",
+          message: "メッセージ1",
+          helpfulness: true,
+          category: "env"
+        )
+        expect(day1_data[:items][1]).to include(
+          suggestion_key: "test_suggestion2",
+          title: "テスト提案2",
+          message: "メッセージ2",
+          helpfulness: false,
+          category: "weather"
+        )
+
+        # daily_log2 は提案がないため by_day に含まれない
+        day2_data = result[:suggestions][:by_day].find { |d| d[:date] == (week_start + 2.days).to_s }
+        expect(day2_data).to be_nil
       end
 
       it "指定した週の開始日でレポートを返す" do

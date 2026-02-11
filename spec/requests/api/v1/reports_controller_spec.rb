@@ -43,6 +43,7 @@ RSpec.describe "Api::V1::Reports", type: :request do
           expect(json["feedback"]["helpfulness_rate"]).to be_nil
           expect(json["feedback"]["helpfulness_count"]["helpful"]).to eq(0)
           expect(json["feedback"]["helpfulness_count"]["not_helpful"]).to eq(0)
+          expect(json["suggestions"]["by_day"]).to eq([])
           expect(json["insight"]).to be_present
         end
       end
@@ -100,6 +101,9 @@ RSpec.describe "Api::V1::Reports", type: :request do
 
           # インサイト
           expect(json["insight"]).to be_present
+
+          # 提案
+          expect(json["suggestions"]["by_day"]).to be_an(Array)
         end
 
         it "指定した週の開始日でレポートを返す" do

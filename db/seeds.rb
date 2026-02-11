@@ -213,8 +213,9 @@ unless is_production
           prefecture: default_prefecture,
           date: date,
           sleep_hours: sleep_hours,
-          mood: mood_score,           # 1〜5 をそのまま保存
-          fatigue: fatigue_score,     # 1〜5 をそのまま保存
+          mood: mood_score,
+          fatigue: fatigue_score,
+          fatigue_level: fatigue_score,
           note: notes,
           self_score: rand(1..3)
         )
@@ -240,6 +241,7 @@ unless is_production
         log.sleep_hours = 5.5
         log.mood = 2
         log.fatigue = 4
+        log.fatigue_level = 4
         log.note = "シード用テストデータ: 睡眠不足＋環境リスク高めの一日"
         log.self_score = 2
       end
@@ -310,6 +312,46 @@ unless is_production
       else
         puts "  No env suggestions generated for Alice on #{today}"
       end
+
+      # 週間レポート「提案」タブ用: daily_log_suggestions と suggestion_feedbacks を追加
+      puts "Creating daily_log_suggestions for weekly report..."
+      week_start = Date.current.beginning_of_week(:monday)
+      target_dates = ((week_start - 7.days)..(week_start + 6.days)).to_a
+      suggestion_templates = [
+        { suggestion_key: "heatstroke_Warning", title: "暑い日。炎天下を避け、激しい運動は中止", message: "外出時は炎天下を避け、室内では室温の上昇に注意する。激しい運動は中止。", category: "env", severity: 75 },
+        { suggestion_key: "heat_shock_Caution", title: "油断は禁物。入浴前後の対策を", message: "入浴前後に水分補給を行う。居室と脱衣所の温度差に気をつける。", category: "env", severity: 55 },
+        { suggestion_key: "weather_pain_drop_Caution", title: "気圧が下がり始めています。無理は禁物です", message: "気圧が下がり始めています。無理は禁物です。", category: "env", severity: 70 },
+        { suggestion_key: "dryness_infection_Warning", title: "乾燥注意。保湿と感染対策を", message: "乾燥が進んでいます。加湿や手洗いで感染対策を。", category: "env", severity: 70 }
+      ]
+
+      target_dates.each do |date|
+        log = DailyLog.find_by(user: alice, date: date)
+        next unless log
+
+        templates_to_use = suggestion_templates.sample(rand(1..3))
+        templates_to_use.each_with_index do |tmpl, pos|
+          next if DailyLogSuggestion.exists?(daily_log_id: log.id, suggestion_key: tmpl[:suggestion_key])
+
+          DailyLogSuggestion.create!(
+            daily_log_id: log.id,
+            suggestion_key: tmpl[:suggestion_key],
+            title: tmpl[:title],
+            message: tmpl[:message],
+            tags: %w[env seed],
+            severity: tmpl[:severity],
+            category: tmpl[:category],
+            position: pos
+          )
+
+          # 約半分にフィードバックを付与
+          next unless rand < 0.5
+
+          SuggestionFeedback.find_or_create_by!(daily_log_id: log.id, suggestion_key: tmpl[:suggestion_key]) do |fb|
+            fb.helpfulness = rand < 0.7
+          end
+        end
+      end
+      puts "  Created daily_log_suggestions for Alice (#{target_dates.size} days)"
     end
   end
 
@@ -352,14 +394,51 @@ unless is_production
           prefecture: default_prefecture,
           date: date,
           sleep_hours: sleep_hours,
-          mood: mood_score,           # 1〜5 をそのまま保存
-          fatigue: fatigue_score,     # 1〜5 をそのまま保存
+          mood: mood_score,
+          fatigue: fatigue_score,
+          fatigue_level: fatigue_score,
           note: notes,
           self_score: rand(1..3)
         )
 
         puts "  Created daily log for Bob on #{date}: sleep=#{sleep_hours}h, mood=#{mood_score}, fatigue=#{fatigue_score}" if verbose_logs
       end
+    end
+
+    # Bob にも週間レポート用の daily_log_suggestions を追加
+    week_start = Date.current.beginning_of_week(:monday)
+    bob_target_dates = ((week_start - 7.days)..(week_start + 6.days)).to_a
+    if bob_target_dates.any? { |d| DailyLog.exists?(user: bob, date: d) }
+      suggestion_templates = [
+        { suggestion_key: "heatstroke_Caution", title: "やや暑い日。休息を充分に", message: "運動や激しい作業をする際は、定期的に充分に休息を取り入れる。", category: "env", severity: 60 },
+        { suggestion_key: "weather_pain_drop_Warning", title: "急激な気圧低下です。酔い止めや休憩の準備を", message: "急激な気圧低下です。酔い止めや休憩の準備を。", category: "env", severity: 85 }
+      ]
+
+      bob_target_dates.each do |date|
+        log = DailyLog.find_by(user: bob, date: date)
+        next unless log
+
+        templates_to_use = suggestion_templates.sample(rand(1..2))
+        templates_to_use.each_with_index do |tmpl, pos|
+          next if DailyLogSuggestion.exists?(daily_log_id: log.id, suggestion_key: tmpl[:suggestion_key])
+
+          DailyLogSuggestion.create!(
+            daily_log_id: log.id,
+            suggestion_key: tmpl[:suggestion_key],
+            title: tmpl[:title],
+            message: tmpl[:message],
+            tags: %w[env seed],
+            severity: tmpl[:severity],
+            category: tmpl[:category],
+            position: pos
+          )
+
+          SuggestionFeedback.find_or_create_by!(daily_log_id: log.id, suggestion_key: tmpl[:suggestion_key]) do |fb|
+            fb.helpfulness = rand < 0.6
+          end
+        end
+      end
+      puts "  Created daily_log_suggestions for Bob"
     end
   end
 
