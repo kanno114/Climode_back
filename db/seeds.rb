@@ -24,6 +24,8 @@
 #   - SEED_DAYS: 作成する過去日数（デフォルト: 90日 ≒ 過去3ヶ月）
 #   - SEED_VERBOSE: 詳細ログを出力（1で有効）
 #
+# 【投入コマンド】
+# docker-compose run --rm back rails db:drop db:create db:migrate db:seed
 # ============================================================================
 
 # 環境判定
@@ -257,12 +259,12 @@ unless is_production
 
       # 今日の固定的な天気パターン（猛暑＋乾燥＋低気圧気味）
       fixed_metrics = {
-        "temperature_c" => 36.0,   # heatstroke_1
-        "min_temperature_c" => 10.0, # heat_shock_2
-        "humidity_pct"  => 25.0,   # dryness_1
-        "pressure_hpa"  => 975.0,
+        "temperature_c" => 36.0,   # heatstroke_Danger
+        "min_temperature_c" => 10.0, # heat_shock_Warning
+        "humidity_pct"  => 25.0,   # dryness_Warning
+        "pressure_hpa"  => 975.0,  # 低気圧
         "max_pressure_drop_1h_awake"   => 0.0,
-        "low_pressure_duration_1003h"  => 0.0,
+        "low_pressure_duration_1003h"  => 3.0,   # weather_pain_low_1003_Warning (>= 3.0)
         "low_pressure_duration_1007h"  => 0.0,
         "pressure_range_3h_awake"      => 0.0,
         "pressure_jitter_3h_awake"     => 0.0
@@ -311,6 +313,7 @@ unless is_production
               tags: s.tags,
               severity: s.severity,
               category: s.category,
+              level: s.level,
               metadata: ctx.dup,
               created_at: Time.current,
               updated_at: Time.current
@@ -327,10 +330,10 @@ unless is_production
       week_start = Date.current.beginning_of_week(:monday)
       target_dates = ((week_start - 7.days)..(week_start + 6.days)).to_a
       suggestion_templates = [
-        { suggestion_key: "heatstroke_Warning", title: "暑い日。炎天下を避け、激しい運動は中止", message: "外出時は炎天下を避け、室内では室温の上昇に注意する。激しい運動は中止。", category: "env", severity: 75 },
-        { suggestion_key: "heat_shock_Caution", title: "油断は禁物。入浴前後の対策を", message: "入浴前後に水分補給を行う。居室と脱衣所の温度差に気をつける。", category: "env", severity: 55 },
-        { suggestion_key: "weather_pain_drop_Caution", title: "気圧が下がり始めています。無理は禁物です", message: "気圧が下がり始めています。無理は禁物です。", category: "env", severity: 70 },
-        { suggestion_key: "dryness_infection_Warning", title: "乾燥注意。保湿と感染対策を", message: "乾燥が進んでいます。加湿や手洗いで感染対策を。", category: "env", severity: 70 }
+        { suggestion_key: "heatstroke_Warning", title: "暑い日", message: "外出時は炎天下を避け、室内では室温の上昇に注意する。激しい運動は中止。", category: "env", severity: 75, level: "Warning" },
+        { suggestion_key: "heat_shock_Caution", title: "入浴注意", message: "入浴前後に水分補給を行う。居室と脱衣所の温度差に気をつける。", category: "env", severity: 55, level: "Caution" },
+        { suggestion_key: "weather_pain_drop_Caution", title: "気圧低下", message: "気圧が下がり始めています。無理は禁物です。", category: "env", severity: 70, level: "Caution" },
+        { suggestion_key: "dryness_Warning", title: "非常に乾燥", message: "加湿器をフル稼働させる。濡れタオルを干す。室内にいても不織布マスクを着用し、のどの保湿を心がける。", category: "env", severity: 85, level: "Warning" }
       ]
 
       target_dates.each do |date|
@@ -349,6 +352,7 @@ unless is_production
             tags: %w[env seed],
             severity: tmpl[:severity],
             category: tmpl[:category],
+            level: tmpl[:level],
             position: pos
           )
 
@@ -419,8 +423,8 @@ unless is_production
     bob_target_dates = ((week_start - 7.days)..(week_start + 6.days)).to_a
     if bob_target_dates.any? { |d| DailyLog.exists?(user: bob, date: d) }
       suggestion_templates = [
-        { suggestion_key: "heatstroke_Caution", title: "やや暑い日。休息を充分に", message: "運動や激しい作業をする際は、定期的に充分に休息を取り入れる。", category: "env", severity: 60 },
-        { suggestion_key: "weather_pain_drop_Warning", title: "急激な気圧低下です。酔い止めや休憩の準備を", message: "急激な気圧低下です。酔い止めや休憩の準備を。", category: "env", severity: 85 }
+        { suggestion_key: "heatstroke_Caution", title: "やや暑い日", message: "運動や激しい作業をする際は、定期的に充分に休息を取り入れる。", category: "env", severity: 60, level: "Caution" },
+        { suggestion_key: "weather_pain_drop_Warning", title: "急激な気圧低下", message: "急激な気圧低下です。酔い止めや休憩の準備を。", category: "env", severity: 85, level: "Warning" }
       ]
 
       bob_target_dates.each do |date|
@@ -439,6 +443,7 @@ unless is_production
             tags: %w[env seed],
             severity: tmpl[:severity],
             category: tmpl[:category],
+            level: tmpl[:level],
             position: pos
           )
 
