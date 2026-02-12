@@ -4,7 +4,7 @@ module Suggestion
   class SuggestionEngine
     GENERAL_CONCERN_KEY = "general".freeze
 
-    Suggestion = Struct.new(:key, :title, :message, :tags, :severity, :triggers, :category, :concerns, :reason_text, :evidence_text, keyword_init: true)
+    Suggestion = Struct.new(:key, :title, :message, :tags, :severity, :triggers, :category, :concerns, :reason_text, :evidence_text, :group, :level, keyword_init: true)
 
     def self.call(user:, date: Date.current, daily_log: nil)
       new(user: user, date: date, daily_log: daily_log).call
@@ -32,7 +32,7 @@ module Suggestion
       else
         body_suggestions = fetch_body_suggestions
         candidates = env_suggestions + body_suggestions
-        RuleEngine.pick_top(candidates, limit: 3, tag_diversity: true)
+        RuleEngine.pick_top(candidates, limit: nil, tag_diversity: true)
       end
     end
 
@@ -67,7 +67,9 @@ module Suggestion
             category:     s.category,
             concerns:     rule&.concerns || [],
             reason_text:  rule&.reason_text,
-            evidence_text: rule&.evidence_text
+            evidence_text: rule&.evidence_text,
+            group:        rule&.group,
+            level:        (s.respond_to?(:level) ? s.level : nil).presence || rule&.level
           )
         end
     end
@@ -88,7 +90,7 @@ module Suggestion
 
     def fallback_to_rule_engine
       ctx = build_context
-      ::Suggestion::RuleEngine.call(rules: @rules, context: ctx, limit: 3, tag_diversity: true)
+      ::Suggestion::RuleEngine.call(rules: @rules, context: ctx, limit: nil, tag_diversity: true)
     end
 
     # --- 入力文脈を構築 ---

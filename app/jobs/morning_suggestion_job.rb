@@ -62,6 +62,7 @@ class MorningSuggestionJob < ApplicationJob
           tags: s.tags,
           severity: s.severity,
           category: s.category,
+          level: s.level,
           metadata: ctx.dup,
           created_at: Time.current,
           updated_at: Time.current

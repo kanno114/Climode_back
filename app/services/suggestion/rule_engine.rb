@@ -9,9 +9,9 @@
    class RuleEngine
      Suggestion = Suggestion::SuggestionEngine::Suggestion
 
-     def self.call(rules:, context:, limit: 3, tag_diversity: true)
-       new(rules: rules, context: context, limit: limit, tag_diversity: tag_diversity).call
-     end
+    def self.call(rules:, context:, limit: nil, tag_diversity: true)
+      new(rules: rules, context: context, limit: limit, tag_diversity: tag_diversity).call
+    end
 
      def initialize(rules:, context:, limit:, tag_diversity:)
        @rules = rules
@@ -25,21 +25,23 @@
       self.class.pick_top(candidates, limit: @limit, tag_diversity: @tag_diversity)
     end
 
-    # 同タグの連発抑制＋severity優先。SuggestionEngine からも利用可能
-    def self.pick_top(list, limit: 3, tag_diversity: true)
-      return list.sort_by { |s| -s.severity }.first(limit) unless tag_diversity
+    # 同groupの連発抑制＋severity優先。SuggestionEngine からも利用可能
+    def self.pick_top(list, limit: nil, tag_diversity: true)
+      sorted = list.sort_by { |s| -s.severity }
+      return sorted.first(limit) if limit && !tag_diversity
 
       picked = []
-      used_tags = Set.new
+      used_groups = Set.new
 
-      list.sort_by { |s| -s.severity }.each do |s|
-        if (s.tags & used_tags.to_a).any? && picked.size >= 1
+      sorted.each do |s|
+        group = s.group.to_s
+        if group.present? && used_groups.include?(group) && picked.size >= 1
           next
         end
 
         picked << s
-        used_tags.merge(s.tags)
-        break if picked.size >= limit
+        used_groups.add(group) if group.present?
+        break if limit && picked.size >= limit
       end
 
       picked
@@ -63,7 +65,9 @@
          category:     rule.category,
          concerns:     rule.concerns,
          reason_text:  rule.reason_text,
-         evidence_text: rule.evidence_text
+         evidence_text: rule.evidence_text,
+         group:        rule.group,
+         level:        rule.level
        )
      rescue Dentaku::ParseError, Dentaku::ArgumentError
        nil

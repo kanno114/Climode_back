@@ -134,6 +134,20 @@ RSpec.describe Suggestion::RuleRegistry do
     end
   end
 
+  describe 'groupとlevelの読み込み' do
+    it 'groupが読み込まれる' do
+      rules = described_class.all
+      heatstroke = rules.find { |r| r.key == 'heatstroke_Danger' }
+      expect(heatstroke.group).to eq('temperature')
+    end
+
+    it 'levelが読み込まれる' do
+      rules = described_class.all
+      heatstroke = rules.find { |r| r.key == 'heatstroke_Danger' }
+      expect(heatstroke.level).to eq('Danger')
+    end
+  end
+
   describe 'categoryの設定' do
     it 'categoryがenvまたはbodyである' do
       rules = described_class.all

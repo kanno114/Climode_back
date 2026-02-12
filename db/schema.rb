@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_02_11_130000) do
+ActiveRecord::Schema[7.2].define(version: 2026_02_11_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -37,6 +37,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_11_130000) do
     t.integer "position"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "level"
     t.index ["daily_log_id", "suggestion_key"], name: "index_daily_log_suggestions_on_daily_log_and_suggestion_key", unique: true
     t.index ["daily_log_id"], name: "index_daily_log_suggestions_on_daily_log_id"
   end
@@ -113,6 +114,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_11_130000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "prefecture_id", null: false
+    t.string "level"
     t.index ["date", "prefecture_id", "rule_key"], name: "index_suggestion_snapshots_on_date_pref_rule", unique: true
     t.index ["date", "prefecture_id"], name: "index_suggestion_snapshots_on_date_and_prefecture"
     t.index ["prefecture_id"], name: "index_suggestion_snapshots_on_prefecture_id"

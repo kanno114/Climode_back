@@ -75,7 +75,7 @@ RSpec.describe Suggestion::SuggestionEngine do
           sleep_suggestion = suggestions.find { |s| s.key == 'sleep_Caution' }
 
           expect(sleep_suggestion).to be_present
-          expect(sleep_suggestion.title).to eq('睡眠不足気味。生活時間を見直して')
+          expect(sleep_suggestion.title).to eq('睡眠不足気味')
           expect(sleep_suggestion.severity).to eq(75)
           expect(sleep_suggestion.tags).to include('sleep')
         end
@@ -119,7 +119,7 @@ RSpec.describe Suggestion::SuggestionEngine do
           heat_suggestion = suggestions.find { |s| s.key == 'heatstroke_Warning' }
 
           if heat_suggestion
-            expect(heat_suggestion.title).to eq('暑い日。炎天下を避け、激しい運動は中止')
+            expect(heat_suggestion.title).to eq('暑い日')
             expect(heat_suggestion.severity).to eq(75)
             expect(heat_suggestion.tags).to include('temperature', 'heatstroke')
           else
@@ -198,7 +198,7 @@ RSpec.describe Suggestion::SuggestionEngine do
         end
       end
 
-      context 'severity順と最大件数制限' do
+      context 'severity順と件数制限撤廃' do
         it 'severityの高い順に返す' do
           daily_log.update!(sleep_hours: 5.0)
           weather_snapshot.update!(metrics: {
@@ -215,14 +215,14 @@ RSpec.describe Suggestion::SuggestionEngine do
 
           suggestions = described_class.call(user: user, date: date)
 
-          expect(suggestions.length).to be <= 3
+          expect(suggestions.length).to be >= 1
           if suggestions.length > 1
             severities = suggestions.map(&:severity)
             expect(severities).to eq(severities.sort.reverse)
           end
         end
 
-        it '最大3件まで返す' do
+        it '条件に一致した提案をすべて返す（件数制限なし）' do
           daily_log.update!(sleep_hours: 5.0)
           weather_snapshot.update!(metrics: {
             "temperature_c" => 36.0,
@@ -238,12 +238,12 @@ RSpec.describe Suggestion::SuggestionEngine do
 
           suggestions = described_class.call(user: user, date: date)
 
-          expect(suggestions.length).to be <= 3
+          expect(suggestions.length).to be >= 1
         end
       end
 
-      context '同タグの連発抑制' do
-        it '同じタグを持つ提案が複数ある場合、上位のもののみ返す' do
+      context '同groupの連発抑制' do
+        it '同じgroupを持つ提案が複数ある場合、上位のもののみ返す' do
           daily_log.update!(sleep_hours: 5.0)
           weather_snapshot.update!(metrics: {
             "temperature_c" => 36.0,
@@ -258,9 +258,9 @@ RSpec.describe Suggestion::SuggestionEngine do
           })
 
           suggestions = described_class.call(user: user, date: date)
-          sleep_suggestions = suggestions.select { |s| s.tags.include?('sleep') }
+          sleep_suggestions = suggestions.select { |s| s.group == 'sleep' }
 
-          # 同タグ連発抑制により、sleepタグの提案は1件以下になる可能性がある
+          # 同group連発抑制により、sleepグループの提案は1件以下になる
           expect(sleep_suggestions.length).to be <= 1
         end
       end
@@ -354,7 +354,7 @@ RSpec.describe Suggestion::SuggestionEngine do
           heat_suggestion = suggestions.find { |s| s.key == 'heatstroke_Warning' }
 
           expect(heat_suggestion).to be_present
-          expect(heat_suggestion.title).to eq('暑い日。炎天下を避け、激しい運動は中止')
+          expect(heat_suggestion.title).to eq('暑い日')
         end
 
         it '登録した関心ワードに含まないルールは返さない' do
@@ -420,7 +420,7 @@ RSpec.describe Suggestion::SuggestionEngine do
                  date: date,
                  prefecture: daily_log.prefecture,
                  rule_key: 'heatstroke_Warning',
-                 title: '暑い日。炎天下を避け、激しい運動は中止',
+                 title: '暑い日',
                  message: '外出時は炎天下を避け、室内では室温の上昇に注意する。激しい運動は中止。',
                  tags: [ 'temperature', 'heatstroke' ],
                  severity: 75,
@@ -440,7 +440,7 @@ RSpec.describe Suggestion::SuggestionEngine do
                  date: date,
                  prefecture: daily_log.prefecture,
                  rule_key: 'comfort_Temperature',
-                 title: '過ごしやすい気温です。今日は整いやすい日',
+                 title: '過ごしやすい気温',
                  message: '気温が快適な範囲です。',
                  tags: [ 'temperature', 'positive' ],
                  severity: 35,
@@ -465,7 +465,6 @@ RSpec.describe Suggestion::SuggestionEngine do
 
           expect(suggestions).to be_an(Array)
           expect(suggestions.length).to be > 0
-          expect(suggestions.length).to be <= 3
 
           # env は snapshots から（heatstroke_Warning または comfort_Temperature）
           env_keys = suggestions.map(&:key) & %w[heatstroke_Warning comfort_Temperature]
@@ -474,7 +473,7 @@ RSpec.describe Suggestion::SuggestionEngine do
           # body は RuleEngine から（sleep_Caution）
           sleep_suggestion = suggestions.find { |s| s.key == 'sleep_Caution' }
           expect(sleep_suggestion).to be_present
-          expect(sleep_suggestion.title).to eq('睡眠不足気味。生活時間を見直して')
+          expect(sleep_suggestion.title).to eq('睡眠不足気味')
           expect(sleep_suggestion.triggers).to be_a(Hash)
         end
 
@@ -516,7 +515,7 @@ RSpec.describe Suggestion::SuggestionEngine do
 
           expect(heat_suggestion).to be_present
           expect(sleep_suggestion).to be_present
-          expect(heat_suggestion.title).to eq('暑い日。炎天下を避け、激しい運動は中止')
+          expect(heat_suggestion.title).to eq('暑い日')
         end
       end
 
@@ -546,7 +545,7 @@ RSpec.describe Suggestion::SuggestionEngine do
                  date: date,
                  prefecture: user_heatstroke_only.prefecture,
                  rule_key: 'heatstroke_Warning',
-                 title: '暑い日。炎天下を避け、激しい運動は中止',
+                 title: '暑い日',
                  message: '外出時は炎天下を避け、室内では室温の上昇に注意する。激しい運動は中止。',
                  tags: [ 'temperature', 'heatstroke' ],
                  severity: 75,
@@ -556,8 +555,8 @@ RSpec.describe Suggestion::SuggestionEngine do
                  date: date,
                  prefecture: user_heatstroke_only.prefecture,
                  rule_key: 'weather_pain_drop_Warning',
-                 title: '急激な気圧低下です。酔い止めや休憩の準備を',
-                 message: '急激な気圧低下です。酔い止めや休憩の準備を。',
+                 title: '急激な気圧低下',
+                 message: '急激な気圧低下。',
                  tags: [ 'pressure', 'weather_pain' ],
                  severity: 85,
                  category: 'env',

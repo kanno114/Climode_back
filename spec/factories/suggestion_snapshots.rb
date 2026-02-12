@@ -5,7 +5,7 @@ FactoryBot.define do
     date { Date.current }
     association :prefecture
     rule_key { "heatstroke_Warning" }
-    title { "暑い日。炎天下を避け、激しい運動は中止" }
+    title { "暑い日" }
     message { "外出時は炎天下を避け、室内では室温の上昇に注意する。激しい運動は中止。" }
     tags { [ "temperature", "heatstroke" ] }
     severity { 75 }

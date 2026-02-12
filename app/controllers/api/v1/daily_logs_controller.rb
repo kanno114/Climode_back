@@ -34,11 +34,11 @@ class Api::V1::DailyLogsController < ApplicationController
       include: [
         :prefecture,
         :suggestion_feedbacks,
-        daily_log_suggestions: { only: [ :suggestion_key, :title, :message, :tags, :severity, :category ] }
+        daily_log_suggestions: { only: [ :suggestion_key, :title, :message, :tags, :severity, :category, :level ] }
       ]
     )
 
-    # フロントで扱いやすい形式（key, title, message, tags, severity, category, triggers, reason_text, evidence_text）に変換
+    # フロントで扱いやすい形式（key, title, message, tags, severity, category, level, triggers, reason_text, evidence_text）に変換
     registry = Suggestion::RuleRegistry.all.to_h { |r| [ r.key, r ] }
     daily_log_json["daily_log_suggestions"] = @daily_log.daily_log_suggestions.order(:position, :id).map do |s|
       rule = registry[s.suggestion_key]
@@ -50,6 +50,7 @@ class Api::V1::DailyLogsController < ApplicationController
         severity: s.severity,
         triggers: {},
         category: s.category,
+        level: (s.respond_to?(:level) ? s.level : nil).presence || rule&.level,
         reason_text: rule&.reason_text,
         evidence_text: rule&.evidence_text
       }

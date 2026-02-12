@@ -2,66 +2,78 @@
 rules:
   # 熱中症（3）
   - key: heatstroke_Danger
-    title: "猛暑日。外出はなるべく避け、涼しい室内へ"
+    title: "猛暑日"
     condition: "temperature_c >= 35"
     message: "外出はなるべく避け、涼しい室内に移動する。運動は原則中止。"
     tags: ["temperature", "heatstroke"]
+    group: temperature
+    level: Danger
     concerns: ["heatstroke"]
     severity: "90"
     category: "env"
-    reason_text: "気温が35℃以上で、環境省の熱中症警戒基準において猛暑日と判定されました。"
-    evidence_text: "環境省 熱中症予防情報サイト（https://www.wbgt.env.go.jp/）の数値を参照し、当サービス基準で判定"
+    reason_text: "気温が35℃以上で、猛暑日と判定されました。"
+    evidence_text: "環境省 熱中症予防情報サイトの数値を参照し、当サービス基準で判定"
 
   - key: heatstroke_Warning
-    title: "暑い日。炎天下を避け、激しい運動は中止"
+    title: "暑い日"
     condition: "temperature_c >= 31 AND temperature_c < 35"
     message: "外出時は炎天下を避け、室内では室温の上昇に注意する。激しい運動は中止。"
     tags: ["temperature", "heatstroke"]
+    group: temperature
+    level: Warning
     concerns: ["heatstroke"]
     severity: "75"
     category: "env"
-    reason_text: "気温が31℃以上35℃未満で、環境省の熱中症警戒基準において暑い日と判定されました。"
-    evidence_text: "環境省 熱中症予防情報サイト（https://www.wbgt.env.go.jp/）の数値を参照し、当サービス基準で判定"
+    reason_text: "気温が31℃以上35℃未満で、暑い日と判定されました。"
+    evidence_text: "環境省 熱中症予防情報サイトの数値を参照し、当サービス基準で判定"
 
   - key: heatstroke_Caution
-    title: "やや暑い日。休息を充分に"
+    title: "やや暑い日"
     condition: "temperature_c >= 28 AND temperature_c < 31"
     message: "運動や激しい作業をする際は、定期的に充分に休息を取り入れる。"
     tags: ["temperature", "heatstroke"]
+    group: temperature
+    level: Caution
     concerns: ["heatstroke"]
     severity: "60"
     category: "env"
-    reason_text: "気温が28℃以上31℃未満で、環境省の熱中症警戒基準においてやや暑い日と判定されました。"
-    evidence_text: "環境省 熱中症予防情報サイト（https://www.wbgt.env.go.jp/）の数値を参照し、当サービス基準で判定"
+    reason_text: "気温が28℃以上31℃未満で、やや暑い日と判定されました。"
+    evidence_text: "環境省 熱中症予防情報サイトの数値を参照し、当サービス基準で判定"
 
   # ヒートショック（3）
   - key: heat_shock_Danger
-    title: "入浴死の危険性が最も高い状態です"
+    title: "入浴リスク最高"
     condition: "min_temperature_c < 3"
     message: "原則として入浴を控える。入浴する場合は脱衣所・浴室を完全に温め、家族がこまめに声をかける。"
     tags: ["temperature", "heat_shock"]
+    group: temperature
+    level: Danger
     concerns: ["heat_shock"]
     severity: "90"
     category: "env"
-    reason_text: "最低気温が3℃未満で、浴室内突然死の危険性が最も高い環境と判定されました。"
+    reason_text: "最低気温が3℃未満で、入浴時のリスクが最も高い環境と判定されました。"
     evidence_text: "鹿児島大学「入浴時警戒情報」の数値を参照し、当サービス基準で判定"
 
   - key: heat_shock_Warning
-    title: "入浴死が発生しやすい環境温度です"
+    title: "入浴リスク高"
     condition: "min_temperature_c >= 3 AND min_temperature_c < 13"
     message: "脱衣所と浴室を事前に温める。お湯の温度は41℃以下にし、長風呂や一番風呂を避ける。"
     tags: ["temperature", "heat_shock"]
+    group: temperature
+    level: Warning
     concerns: ["heat_shock"]
     severity: "75"
     category: "env"
-    reason_text: "最低気温が3℃以上13℃未満で、入浴死が発生しやすい環境温度と判定されました。"
+    reason_text: "最低気温が3℃以上13℃未満で、入浴時のリスクが高い環境温度と判定されました。"
     evidence_text: "鹿児島大学「入浴時警戒情報」の数値を参照し、当サービス基準で判定"
 
   - key: heat_shock_Caution
-    title: "油断は禁物。入浴前後の対策を"
+    title: "入浴注意"
     condition: "min_temperature_c >= 13"
     message: "入浴前後に水分補給を行う。居室と脱衣所の温度差に気をつけ、食事直後や飲酒後の入浴は避ける。"
     tags: ["temperature", "heat_shock"]
+    group: temperature
+    level: Caution
     concerns: ["heat_shock"]
     severity: "55"
     category: "env"
@@ -70,10 +82,12 @@ rules:
 
   # 気象病・天気痛（5）
   - key: weather_pain_drop_Warning
-    title: "急激な気圧低下です。酔い止めや休憩の準備を"
+    title: "急激な気圧低下"
     condition: "max_pressure_drop_1h_awake <= -3.0"
     message: "急激な気圧低下です。酔い止めや休憩の準備を。"
     tags: ["pressure", "weather_pain"]
+    group: pressure
+    level: Warning
     concerns: ["weather_pain"]
     severity: "85"
     category: "env"
@@ -81,10 +95,12 @@ rules:
     evidence_text: "大熊博久医師の論文『気圧変動と片頭痛の関係(2015)』、佐藤純医師監修の情報の数値を参照し、当サービス基準で判定"
 
   - key: weather_pain_drop_Caution
-    title: "気圧が下がり始めています。無理は禁物です"
+    title: "気圧低下"
     condition: "max_pressure_drop_1h_awake <= -1.0"
     message: "気圧が下がり始めています。無理は禁物です。"
     tags: ["pressure", "weather_pain"]
+    group: pressure
+    level: Caution
     concerns: ["weather_pain"]
     severity: "70"
     category: "env"
@@ -92,10 +108,12 @@ rules:
     evidence_text: "大熊博久医師の論文『気圧変動と片頭痛の関係(2015)』、佐藤純医師監修の情報の数値を参照し、当サービス基準で判定"
 
   - key: weather_pain_low_1003_Warning
-    title: "警戒レベルの低気圧です。頭痛薬等の準備を"
+    title: "警戒レベルの低気圧"
     condition: "low_pressure_duration_1003h >= 3.0"
     message: "警戒レベルの低気圧です。頭痛薬等の準備を。"
     tags: ["pressure", "weather_pain"]
+    group: pressure
+    level: Warning
     concerns: ["weather_pain"]
     severity: "85"
     category: "env"
@@ -103,10 +121,12 @@ rules:
     evidence_text: "大熊博久医師の論文『気圧変動と片頭痛の関係(2015)』、佐藤純医師監修の情報の数値を参照し、当サービス基準で判定"
 
   - key: weather_pain_low_1007_Caution
-    title: "低い気圧が続いています。疲れが溜まっているかも"
+    title: "低気圧継続"
     condition: "low_pressure_duration_1007h >= 3.0 AND low_pressure_duration_1003h < 3.0"
     message: "低い気圧が続いています。疲れが溜まっているかも。"
     tags: ["pressure", "weather_pain"]
+    group: pressure
+    level: Caution
     concerns: ["weather_pain"]
     severity: "70"
     category: "env"
@@ -114,10 +134,12 @@ rules:
     evidence_text: "大熊博久医師の論文『気圧変動と片頭痛の関係(2015)』、佐藤純医師監修の情報の数値を参照し、当サービス基準で判定"
 
   - key: weather_pain_jitter_Caution
-    title: "気圧が細かく波打っています。不調の予兆かもしれません"
+    title: "気圧の細かい変動"
     condition: "pressure_range_3h_awake < 1.0 AND pressure_jitter_3h_awake > 0.3"
     message: "気圧が細かく波打っています。不調の予兆かもしれません。大きな変化の前の「小さなゆらぎ」が症状を悪化させることがあります。"
     tags: ["pressure", "weather_pain"]
+    group: pressure
+    level: Caution
     concerns: ["weather_pain"]
     severity: "70"
     category: "env"
@@ -126,10 +148,12 @@ rules:
 
   # 乾燥・ウイルス感染リスク（3）
   - key: dryness_Warning
-    title: "非常に乾燥しています。加湿と保湿を"
+    title: "非常に乾燥"
     condition: "humidity_pct < 30"
     message: "加湿器をフル稼働させる。濡れタオルを干す。室内にいても不織布マスクを着用し、のどの保湿を心がける。"
     tags: ["humidity", "dryness_infection"]
+    group: humidity
+    level: Warning
     concerns: ["dryness_infection"]
     severity: "85"
     category: "env"
@@ -137,10 +161,12 @@ rules:
     evidence_text: "東京都健康安全研究センターの居住環境ガイドライン、厚生労働省のインフルエンザ対策基準の数値を参照し、当サービス基準で判定"
 
   - key: dryness_Caution
-    title: "乾燥しています。湿度40%以上を目指して"
+    title: "乾燥"
     condition: "humidity_pct >= 30 AND humidity_pct < 40"
     message: "加湿器を使用し、湿度40%以上を目指す。こまめなうがいと水分補給を行う。"
     tags: ["humidity", "dryness_infection"]
+    group: humidity
+    level: Caution
     concerns: ["dryness_infection"]
     severity: "75"
     category: "env"
@@ -148,10 +174,12 @@ rules:
     evidence_text: "東京都健康安全研究センターの居住環境ガイドライン、厚生労働省のインフルエンザ対策基準の数値を参照し、当サービス基準で判定"
 
   - key: dryness_Notice
-    title: "やや乾燥気味。50〜60%を目安に調整を"
+    title: "やや乾燥"
     condition: "humidity_pct >= 40 AND humidity_pct < 50"
     message: "湿度が50%〜60%になるよう調整する。過度な加湿（結露）には注意しつつ、換気も定期的に行う。"
     tags: ["humidity", "dryness_infection"]
+    group: humidity
+    level: Notice
     concerns: ["dryness_infection"]
     severity: "60"
     category: "env"
@@ -160,10 +188,12 @@ rules:
 
   # 睡眠時間（4）
   - key: sleep_Warning
-    title: "睡眠が極端に不足しています。最優先で休息を"
+    title: "睡眠不足（5時間未満）"
     condition: "sleep_hours > 0 AND sleep_hours < 5"
     message: "直ちに睡眠時間を確保する。日中のパフォーマンスも低下しているため、他の活動よりも睡眠を最優先にする。「プラス10分」からでも延長を試みる。"
     tags: ["sleep", "rest"]
+    group: sleep
+    level: Warning
     concerns: ["sleep_time"]
     severity: "90"
     category: "body"
@@ -171,10 +201,12 @@ rules:
     evidence_text: "厚生労働省「健康づくりのための睡眠ガイド2023」の数値を参照し、当サービス基準で判定"
 
   - key: sleep_Caution
-    title: "睡眠不足気味。生活時間を見直して"
+    title: "睡眠不足気味"
     condition: "sleep_hours >= 5 AND sleep_hours < 6"
     message: "生活時間を見直し、睡眠時間を増やす。就寝前1〜2時間のスマホ使用や飲酒を控え、リラックスする時間を設けて質の向上と時間の確保（あと30分）を目指す。"
     tags: ["sleep", "rest"]
+    group: sleep
+    level: Caution
     concerns: ["sleep_time"]
     severity: "75"
     category: "body"
@@ -182,10 +214,12 @@ rules:
     evidence_text: "厚生労働省「健康づくりのための睡眠ガイド2023」の数値を参照し、当サービス基準で判定"
 
   - key: sleep_Optimal
-    title: "理想的な睡眠時間です。この習慣を維持して"
+    title: "理想的な睡眠時間"
     condition: "sleep_hours >= 6 AND sleep_hours < 8"
     message: "現在の睡眠習慣を維持し、質を高める。起床時に日光を浴びる、朝食をとる、寝室を暗く静かに保つなどの環境整備を行う。"
     tags: ["sleep", "positive"]
+    group: sleep
+    level: Optimal
     concerns: ["sleep_time"]
     severity: "40"
     category: "body"
@@ -193,10 +227,12 @@ rules:
     evidence_text: "厚生労働省「健康づくりのための睡眠ガイド2023」の数値を参照し、当サービス基準で判定"
 
   - key: sleep_Good
-    title: "十分な睡眠が確保できています"
+    title: "十分な睡眠"
     condition: "sleep_hours >= 8"
     message: "十分な睡眠が確保されており、睡眠による休養感が非常に高い、エネルギー満タンの状態です。"
     tags: ["sleep", "positive"]
+    group: sleep
+    level: Good
     concerns: ["sleep_time"]
     severity: "35"
     category: "body"
@@ -205,47 +241,57 @@ rules:
 
   # ポジティブ系（環境・整いやすい日）
   - key: comfort_Temperature
-    title: "過ごしやすい気温です。今日は整いやすい日"
+    title: "過ごしやすい気温"
     condition: "temperature_c >= 18 AND temperature_c <= 25"
     message: "気温が快適な範囲です。活動や休息のバランスを取りやすく、体調を整えやすい一日です。"
     tags: ["temperature", "positive"]
+    group: temperature
+    level: Temperature
     concerns: ["general"]
     severity: "35"
     category: "env"
 
   - key: comfort_Humidity
-    title: "過ごしやすい湿度です。乾燥・蒸れの心配が少ない日"
+    title: "過ごしやすい湿度"
     condition: "humidity_pct >= 50 AND humidity_pct <= 70"
     message: "湿度が快適な範囲です。乾燥や蒸れによる不調が出にくく、過ごしやすい一日です。"
     tags: ["humidity", "positive"]
+    group: humidity
+    level: Humidity
     concerns: ["general"]
     severity: "35"
     category: "env"
 
   - key: stable_Pressure
-    title: "気圧が安定しています。体調を整えやすい日"
+    title: "気圧安定"
     condition: "pressure_hpa >= 1000 AND pressure_hpa <= 1015"
     message: "気圧が安定した範囲です。気圧変動による不調が出にくく、体調を整えやすい一日です。"
     tags: ["pressure", "positive"]
+    group: pressure
+    level: Pressure
     concerns: ["general"]
     severity: "40"
     category: "env"
 
   # 寒さ・冷え（外出・日常生活）
   - key: cold_Warning
-    title: "とても寒い日です。防寒と体調管理を"
+    title: "とても寒い日"
     condition: "temperature_c < 5"
     message: "最高気温が5℃未満です。外出時は防寒をしっかりとし、体を冷やさないよう心がけて。"
     tags: ["temperature", "cold"]
+    group: temperature
+    level: Warning
     concerns: ["general"]
     severity: "75"
     category: "env"
 
   - key: cold_Caution
-    title: "寒い日です。上着や暖かさの準備を"
+    title: "寒い日"
     condition: "temperature_c >= 5 AND temperature_c < 10"
     message: "最高気温が10℃未満です。上着やカイロなどで冷え対策をし、無理のない過ごし方を。"
     tags: ["temperature", "cold"]
+    group: temperature
+    level: Caution
     concerns: ["general"]
     severity: "60"
     category: "env"

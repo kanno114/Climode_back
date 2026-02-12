@@ -32,6 +32,7 @@ class Api::V1::SuggestionsController < ApplicationController
       severity: s.severity,
       triggers: s.triggers,
       category: s.category,
+      level: s.level,
       reason_text: s.reason_text,
       evidence_text: s.evidence_text
     }
