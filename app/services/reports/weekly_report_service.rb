@@ -131,7 +131,9 @@ module Reports
             title: s.title,
             message: s.message,
             helpfulness: fb&.helpfulness,
-            category: s.category
+            category: s.category,
+            level: s.level,
+            tags: s.tags || []
           }
         end
 
