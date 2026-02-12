@@ -123,6 +123,7 @@ prefectures_data.each do |prefecture_data|
 end
 
 # 関心テーママスタ（関心ワード）
+# label_ja, description_ja はフロントの関心ワード登録UIで表示されます。
 unless is_production
   puts "Seeding concern topics..."
 
