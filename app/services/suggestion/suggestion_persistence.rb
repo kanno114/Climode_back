@@ -26,6 +26,7 @@ module Suggestion
           tags: (s.tags || []),
           severity: s.severity,
           category: s.category,
+          level: s.level,
           position: idx,
           created_at: Time.current,
           updated_at: Time.current
@@ -35,7 +36,7 @@ module Suggestion
       DailyLogSuggestion.upsert_all(
         records,
         unique_by: [ :daily_log_id, :suggestion_key ],
-        update_only: %i[ title message tags severity category position ]
+        update_only: %i[ title message tags severity category level position ]
       )
     end
   end

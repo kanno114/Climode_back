@@ -83,7 +83,7 @@ RSpec.describe 'Api::V1::Suggestions', type: :request do
           end
         end
 
-        it '最大3件まで返す' do
+        it '条件に一致した提案をすべて返す（件数制限なし）' do
           daily_log.update!(sleep_hours: 5.0)
           weather_snapshot.update!(metrics: {
             "temperature_c" => 36.0,
@@ -94,7 +94,8 @@ RSpec.describe 'Api::V1::Suggestions', type: :request do
           get '/api/v1/suggestions', headers: headers
 
           json = JSON.parse(response.body)
-          expect(json.length).to be <= 3
+          expect(json).to be_an(Array)
+          expect(json.length).to be >= 1
         end
 
         it 'severityの高い順に返す' do
@@ -111,6 +112,9 @@ RSpec.describe 'Api::V1::Suggestions', type: :request do
           if json.length > 1
             severities = json.map { |s| s['severity'] }
             expect(severities).to eq(severities.sort.reverse)
+          end
+          if json.length > 0
+            expect(json.first).to have_key('level')
           end
         end
 

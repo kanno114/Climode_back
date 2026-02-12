@@ -2,7 +2,7 @@
 
 module Suggestion
   class RuleRegistry
-    Rule = Struct.new(:key, :ast, :raw_condition, :title, :message, :tags, :severity, :category, :concerns, :reason_text, :evidence_text, keyword_init: true)
+    Rule = Struct.new(:key, :ast, :raw_condition, :title, :message, :tags, :severity, :category, :concerns, :reason_text, :evidence_text, :group, :level, keyword_init: true)
 
     class << self
       def all
@@ -32,7 +32,9 @@ module Suggestion
             category:      r.fetch("category", "env"),
             concerns:      Array(r["concerns"]),
             reason_text:   r["reason_text"].to_s.presence,
-            evidence_text: r["evidence_text"].to_s.presence
+            evidence_text: r["evidence_text"].to_s.presence,
+            group:         r["group"].presence || Array(r["tags"]).first.to_s,
+            level:         r["level"].to_s.presence
           )
         end
       end
