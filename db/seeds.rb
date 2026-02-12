@@ -123,39 +123,45 @@ prefectures_data.each do |prefecture_data|
 end
 
 # 関心テーママスタ（関心ワード）
+# label_ja, description_ja はフロントの関心ワード登録UIで表示されます。
 unless is_production
   puts "Seeding concern topics..."
 
   concern_topics = [
     {
-      key: "heatstroke",
-      label_ja: "熱中症",
-      description_ja: "猛暑や高湿度による熱中症リスクに関する提案を優先します。",
-      rule_concerns: [ "heatstroke" ]
-    },
-    {
-      key: "heat_shock",
-      label_ja: "ヒートショック",
-      description_ja: "気温差や入浴時の急激な温度変化によるヒートショックリスクに関する提案を優先します。",
-      rule_concerns: [ "heat_shock" ]
+      key: "sleep_time",
+      label_ja: "睡眠時間",
+      description_ja: "睡眠時間の過不足に関する提案をします。",
+      rule_concerns: [ "sleep_time" ],
+      position: 0
     },
     {
       key: "weather_pain",
       label_ja: "気象病・天気痛",
-      description_ja: "気圧変動や低気圧による頭痛・倦怠感など、天気痛に関する提案を優先します。",
-      rule_concerns: [ "weather_pain" ]
+      description_ja: "気圧変動や低気圧による頭痛・倦怠感など、天気痛に関する提案をします。",
+      rule_concerns: [ "weather_pain" ],
+      position: 1
     },
     {
       key: "dryness_infection",
       label_ja: "乾燥・ウイルス感染リスク",
-      description_ja: "乾燥や低湿度によるウイルス感染リスク・喉や肌の不調に関する提案を優先します。",
-      rule_concerns: [ "dryness_infection" ]
+      description_ja: "乾燥や低湿度によるウイルス感染リスク・喉や肌の不調に関する提案をします。",
+      rule_concerns: [ "dryness_infection" ],
+      position: 2
     },
     {
-      key: "sleep_time",
-      label_ja: "睡眠時間",
-      description_ja: "睡眠時間の過不足に関する提案を優先します。",
-      rule_concerns: [ "sleep_time" ]
+      key: "heatstroke",
+      label_ja: "熱中症",
+      description_ja: "猛暑や高湿度による熱中症リスクに関する提案をします。",
+      rule_concerns: [ "heatstroke" ],
+      position: 3
+    },
+    {
+      key: "heat_shock",
+      label_ja: "ヒートショック",
+      description_ja: "気温差や入浴時の急激な温度変化によるヒートショックリスクに関する提案をします。",
+      rule_concerns: [ "heat_shock" ],
+      position: 4
     }
   ]
 
