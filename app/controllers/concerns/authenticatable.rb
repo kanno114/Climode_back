@@ -16,7 +16,7 @@ module Authenticatable
     end
 
     # まずトークンの形式をチェック（期限切れでもOK）
-    payload = Auth::JwtService.decode_token_ignore_expiry(token)
+    payload = Auth::JwtService.decode_token(token)
     if payload.nil?
       render_unauthorized("無効な認証トークンです")
       return

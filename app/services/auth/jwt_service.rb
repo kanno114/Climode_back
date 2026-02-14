@@ -1,6 +1,6 @@
 class Auth::JwtService
-  # JWT秘密鍵（環境変数から取得、デフォルトは開発用）
-  JWT_SECRET = ENV["JWT_SECRET"] || "development_secret_key_change_in_production"
+  # JWT秘密鍵（本番環境ではENV必須、開発・テストはデフォルト値を使用）
+  JWT_SECRET = ENV["JWT_SECRET"] || (Rails.env.production? ? raise("JWT_SECRET環境変数が設定されていません") : "development_secret_key_change_in_production")
 
   # アクセストークンの有効期限（15分）
   ACCESS_TOKEN_EXPIRY = 15.minutes
@@ -38,25 +38,12 @@ class Auth::JwtService
       JWT.encode(payload, JWT_SECRET, ALGORITHM)
     end
 
-    # トークンを検証してペイロードを返す
+    # トークンを検証してペイロードを返す（期限切れでも署名検証は維持してペイロードを返す）
     def decode_token(token)
       JWT.decode(token, JWT_SECRET, true, { algorithm: ALGORITHM })
-    rescue JWT::DecodeError => e
-      Rails.logger.error "JWT decode error: #{e.message}"
-      nil
-    rescue JWT::ExpiredSignature => e
-      Rails.logger.error "JWT expired: #{e.message}"
-      # 注意：期限切れの場合もペイロードを返す（検証用）
-      begin
-        JWT.decode(token, JWT_SECRET, false, { algorithm: ALGORITHM })
-      rescue
-        nil
-      end
-    end
-
-    # 署名検証はしない（false）、期限チェックもしないで中身だけ見る関数。検証用。
-    def decode_token_ignore_expiry(token)
-      JWT.decode(token, JWT_SECRET, false, { algorithm: ALGORITHM })
+    rescue JWT::ExpiredSignature
+      # 期限切れの場合も署名検証を維持しつつペイロードを返す
+      JWT.decode(token, JWT_SECRET, true, { algorithm: ALGORITHM, verify_expiration: false })
     rescue JWT::DecodeError => e
       Rails.logger.error "JWT decode error: #{e.message}"
       nil
