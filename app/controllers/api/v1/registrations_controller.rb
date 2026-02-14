@@ -4,7 +4,6 @@ class Api::V1::RegistrationsController < ApplicationController
 
     if user.save
       access_token = Auth::JwtService.generate_access_token(user)
-      refresh_token = Auth::JwtService.generate_refresh_token(user)
 
       render json: {
         user: {
@@ -14,7 +13,6 @@ class Api::V1::RegistrationsController < ApplicationController
           image: user.image || nil
         },
         access_token: access_token,
-        refresh_token: refresh_token,
         expires_in: Auth::JwtService::ACCESS_TOKEN_EXPIRY,
         is_new_user: true
       }, status: :created
@@ -52,7 +50,6 @@ class Api::V1::RegistrationsController < ApplicationController
       end
 
       access_token = Auth::JwtService.generate_access_token(user)
-      refresh_token = Auth::JwtService.generate_refresh_token(user)
       is_new_user = was_new_user || created_identity
 
       render json: {
@@ -63,7 +60,6 @@ class Api::V1::RegistrationsController < ApplicationController
           image: user.image || nil
         },
         access_token: access_token,
-        refresh_token: refresh_token,
         expires_in: Auth::JwtService::ACCESS_TOKEN_EXPIRY,
         is_new_user: is_new_user
       }, status: :created

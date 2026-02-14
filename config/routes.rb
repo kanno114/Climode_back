@@ -16,7 +16,6 @@ Rails.application.routes.draw do
     namespace :v1 do
       # Authentication routes
       post :signin, to: "sessions#create"
-      post :refresh, to: "sessions#refresh"
       post :signup, to: "registrations#create"
       post :oauth_register, to: "registrations#oauth_register"
       get :validate_token, to: "sessions#validate_token"
