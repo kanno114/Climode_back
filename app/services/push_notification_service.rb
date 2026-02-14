@@ -43,7 +43,7 @@ class PushNotificationService
       p256dh: subscription.p256dh_key,
       auth: subscription.auth_key,
       vapid: {
-        subject: ENV["VAPID_SUBJECT"] || "mailto:admin@climode.example.com",
+        subject: ENV["VAPID_SUBJECT"] || (Rails.env.production? ? raise("VAPID_SUBJECT環境変数が設定されていません") : "mailto:admin@climode.example.com"),
         public_key: ENV["VAPID_PUBLIC_KEY"],
         private_key: ENV["VAPID_PRIVATE_KEY"]
       }

@@ -72,7 +72,7 @@ class Api::V1::DailyLogsController < ApplicationController
         include: [ :prefecture, { suggestion_feedbacks: { methods: [ :suggestion_key ] } } ]
       )
     else
-      render json: { error: "Daily log not found for date: #{params[:date]}" },
+      render json: { error: "指定された日付のデイリーログが見つかりません" },
              status: :not_found
     end
   end
@@ -313,8 +313,8 @@ class Api::V1::DailyLogsController < ApplicationController
     end
   rescue => e
     Rails.logger.error "Evening reflection save error: #{e.class} #{e.message}"
-    Rails.logger.error e.backtrace.join("\n")
-    render json: { errors: [ "保存に失敗しました: #{e.message}" ] },
+    Rails.logger.error e.backtrace.join("\n") unless Rails.env.production?
+    render json: { errors: [ "保存に失敗しました" ] },
            status: :internal_server_error
   end
 

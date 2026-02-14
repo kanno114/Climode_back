@@ -17,8 +17,8 @@ class Api::V1::SessionsController < ApplicationController
       return
     end
 
-    # 中身が有効かどうかチェック
-    payload = Auth::JwtService.decode_token_ignore_expiry(refresh_token)
+    # 中身が有効かどうかチェック（署名検証あり）
+    payload = Auth::JwtService.decode_token(refresh_token)
     if payload.nil?
       render json: {
         error: "無効なリフレッシュトークンです"
@@ -76,8 +76,8 @@ class Api::V1::SessionsController < ApplicationController
       return
     end
 
-    # トークンの形式をチェック
-    payload = Auth::JwtService.decode_token_ignore_expiry(token)
+    # トークンの形式をチェック（署名検証あり）
+    payload = Auth::JwtService.decode_token(token)
     if payload.nil?
       render json: {
         valid: false,
