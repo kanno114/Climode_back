@@ -8,8 +8,10 @@ class User < ApplicationRecord
   has_many :user_concern_topics, dependent: :destroy
   has_many :concern_topics, through: :user_concern_topics
 
-  validates :email, presence: true, uniqueness: true
+  validates :email, presence: true, uniqueness: true,
+    format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :name, presence: true, unless: :oauth_provider?
+  validates :password, length: { minimum: 8 }, if: -> { password.present? }
 
   def oauth_provider?
     user_identities.exists?
