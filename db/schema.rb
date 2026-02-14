@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_02_12_120000) do
+ActiveRecord::Schema[7.2].define(version: 2026_02_12_130100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -29,17 +29,11 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_12_120000) do
 
   create_table "daily_log_suggestions", force: :cascade do |t|
     t.bigint "daily_log_id", null: false
-    t.string "suggestion_key", null: false
-    t.string "title", null: false
-    t.text "message"
-    t.jsonb "tags", default: [], null: false
-    t.integer "severity", null: false
-    t.string "category", null: false
     t.integer "position"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "level"
-    t.index ["daily_log_id", "suggestion_key"], name: "index_daily_log_suggestions_on_daily_log_and_suggestion_key", unique: true
+    t.bigint "rule_id", null: false
+    t.index ["daily_log_id", "rule_id"], name: "index_daily_log_suggestions_on_daily_log_and_rule", unique: true
     t.index ["daily_log_id"], name: "index_daily_log_suggestions_on_daily_log_id"
   end
 
@@ -54,16 +48,12 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_12_120000) do
     t.text "note"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "helpfulness"
-    t.integer "match_score"
     t.integer "fatigue_level"
     t.index ["prefecture_id"], name: "index_daily_logs_on_prefecture_id"
     t.index ["user_id", "date"], name: "index_daily_logs_on_user_id_and_date", unique: true
     t.index ["user_id"], name: "index_daily_logs_on_user_id"
     t.check_constraint "fatigue >= 1 AND fatigue <= 5", name: "check_fatigue_range"
     t.check_constraint "fatigue_level >= 1 AND fatigue_level <= 5", name: "check_fatigue_level_range"
-    t.check_constraint "helpfulness >= 1 AND helpfulness <= 5", name: "check_helpfulness_range"
-    t.check_constraint "match_score >= 1 AND match_score <= 5", name: "check_match_score_range"
     t.check_constraint "mood >= 1 AND mood <= 5", name: "check_mood_range"
     t.check_constraint "self_score >= 1 AND self_score <= 3", name: "check_self_score_range"
     t.check_constraint "sleep_hours >= 0::numeric AND sleep_hours <= 24::numeric", name: "check_sleep_hours_range"
@@ -95,31 +85,42 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_12_120000) do
 
   create_table "suggestion_feedbacks", force: :cascade do |t|
     t.bigint "daily_log_id", null: false
-    t.string "suggestion_key", null: false
     t.boolean "helpfulness", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["daily_log_id", "suggestion_key"], name: "index_suggestion_feedbacks_on_daily_log_id_and_suggestion_key", unique: true
+    t.bigint "rule_id", null: false
+    t.index ["daily_log_id", "rule_id"], name: "index_suggestion_feedbacks_on_daily_log_and_rule", unique: true
     t.index ["daily_log_id"], name: "index_suggestion_feedbacks_on_daily_log_id"
+  end
+
+  create_table "suggestion_rules", force: :cascade do |t|
+    t.string "key", null: false
+    t.string "title", null: false
+    t.text "message"
+    t.jsonb "tags", default: [], null: false
+    t.integer "severity", null: false
+    t.string "category", default: "env", null: false
+    t.string "level"
+    t.jsonb "concerns", default: [], null: false
+    t.text "reason_text"
+    t.text "evidence_text"
+    t.string "condition", null: false
+    t.string "group"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_suggestion_rules_on_key", unique: true
   end
 
   create_table "suggestion_snapshots", force: :cascade do |t|
     t.date "date", null: false
-    t.string "rule_key", null: false
-    t.string "title", null: false
-    t.text "message"
-    t.jsonb "tags", default: []
-    t.integer "severity", null: false
-    t.string "category", null: false
     t.jsonb "metadata", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "prefecture_id", null: false
-    t.string "level"
-    t.index ["date", "prefecture_id", "rule_key"], name: "index_suggestion_snapshots_on_date_pref_rule", unique: true
+    t.bigint "rule_id", null: false
+    t.index ["date", "prefecture_id", "rule_id"], name: "index_suggestion_snapshots_on_date_pref_rule", unique: true
     t.index ["date", "prefecture_id"], name: "index_suggestion_snapshots_on_date_and_prefecture"
     t.index ["prefecture_id"], name: "index_suggestion_snapshots_on_prefecture_id"
-    t.index ["tags"], name: "index_suggestion_snapshots_on_tags", using: :gin
   end
 
   create_table "user_concern_topics", force: :cascade do |t|
@@ -167,11 +168,14 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_12_120000) do
   end
 
   add_foreign_key "daily_log_suggestions", "daily_logs"
+  add_foreign_key "daily_log_suggestions", "suggestion_rules", column: "rule_id"
   add_foreign_key "daily_logs", "prefectures"
   add_foreign_key "daily_logs", "users"
   add_foreign_key "push_subscriptions", "users"
   add_foreign_key "suggestion_feedbacks", "daily_logs", on_delete: :cascade
+  add_foreign_key "suggestion_feedbacks", "suggestion_rules", column: "rule_id"
   add_foreign_key "suggestion_snapshots", "prefectures"
+  add_foreign_key "suggestion_snapshots", "suggestion_rules", column: "rule_id"
   add_foreign_key "user_concern_topics", "concern_topics"
   add_foreign_key "user_concern_topics", "users"
   add_foreign_key "user_identities", "users"
