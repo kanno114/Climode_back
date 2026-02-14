@@ -253,7 +253,12 @@ class Api::V1::DailyLogsController < ApplicationController
     note = params[:note]
     self_score = params[:self_score]&.to_i
     suggestion_feedbacks_params = if params[:suggestion_feedbacks].is_a?(String)
-      JSON.parse(params[:suggestion_feedbacks]) rescue []
+      begin
+        JSON.parse(params[:suggestion_feedbacks])
+      rescue JSON::ParserError => e
+        Rails.logger.warn "[DailyLogs#evening] JSON parse error: #{e.message}"
+        []
+      end
     else
       params[:suggestion_feedbacks] || []
     end
@@ -276,11 +281,11 @@ class Api::V1::DailyLogsController < ApplicationController
     end
 
     # トランザクション内で保存とフィードバック処理
+    save_success = false
+
     ActiveRecord::Base.transaction do
       unless @daily_log.save
-        render json: { errors: @daily_log.errors.full_messages },
-               status: :unprocessable_entity
-        return
+        raise ActiveRecord::Rollback
       end
 
       # 提案フィードバックの保存
@@ -308,14 +313,16 @@ class Api::V1::DailyLogsController < ApplicationController
         end
       end
 
+      save_success = true
+    end
+
+    if save_success
       Rails.logger.info "Evening reflection saved successfully for daily_log #{@daily_log.id}"
       render json: { status: "ok", next: "/dashboard" }, status: :ok
+    else
+      render json: { errors: @daily_log.errors.full_messages },
+             status: :unprocessable_entity
     end
-  rescue => e
-    Rails.logger.error "Evening reflection save error: #{e.class} #{e.message}"
-    Rails.logger.error e.backtrace.join("\n") unless Rails.env.production?
-    render json: { errors: [ "保存に失敗しました" ] },
-           status: :internal_server_error
   end
 
   private
