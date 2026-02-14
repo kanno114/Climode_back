@@ -37,7 +37,8 @@ RSpec.describe "Api::V1::PushSubscriptions", type: :request do
 
         expect(response).to have_http_status(:unprocessable_entity)
         json = JSON.parse(response.body)
-        expect(json["errors"]).to be_present
+        expect(json["error"]).to eq("validation_error")
+        expect(json["details"]).to be_present
       end
     end
 
@@ -51,7 +52,8 @@ RSpec.describe "Api::V1::PushSubscriptions", type: :request do
 
         expect(response).to have_http_status(:unprocessable_entity)
         json = JSON.parse(response.body)
-        expect(json["errors"]).to include(match(/Endpoint has already been taken/))
+        expect(json["error"]).to eq("validation_error")
+        expect(json["details"]["endpoint"]).to be_present
       end
     end
 

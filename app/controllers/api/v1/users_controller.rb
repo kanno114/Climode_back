@@ -24,19 +24,22 @@ class Api::V1::UsersController < ApplicationController
       }, status: :ok
     else
       render json: {
-        errors: current_user.errors.full_messages,
-        field_errors: current_user.errors.messages
+        error: "validation_error",
+        message: "入力内容に誤りがあります",
+        details: current_user.errors.messages
       }, status: :unprocessable_entity
     end
   rescue ActiveRecord::RecordInvalid => e
     render json: {
-      errors: [ e.message ],
-      field_errors: e.record.errors.messages
+      error: "validation_error",
+      message: e.message,
+      details: e.record.errors.messages
     }, status: :unprocessable_entity
   rescue => e
     Rails.logger.error "User update error: #{e.message}"
     render json: {
-      errors: [ "ユーザー情報の更新中にエラーが発生しました" ]
+      error: "internal_error",
+      message: "ユーザー情報の更新中にエラーが発生しました"
     }, status: :internal_server_error
   end
 

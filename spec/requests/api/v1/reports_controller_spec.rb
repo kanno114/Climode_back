@@ -124,7 +124,8 @@ RSpec.describe "Api::V1::Reports", type: :request do
 
           expect(response).to have_http_status(:bad_request)
           json = JSON.parse(response.body)
-          expect(json["error"]).to include("無効な日付形式")
+          expect(json["error"]).to eq("invalid_date")
+          expect(json["message"]).to include("無効な日付形式")
         end
       end
     end

@@ -9,14 +9,12 @@ class Api::V1::SuggestionsController < ApplicationController
       Suggestion::SuggestionPersistence.call(daily_log: daily_log, suggestions: suggestions)
       render json: suggestions.map { |s| serialize(s) }
     rescue ArgumentError => e
-      # 日付のパースエラー
-      render json: { error: "無効な日付形式です" }, status: :bad_request
+      render json: { error: "invalid_date", message: "無効な日付形式です" }, status: :bad_request
     rescue ActiveRecord::RecordNotFound => e
-      # DailyLogが見つからない場合
-      render json: { error: "指定された日付のログが見つかりません" }, status: :not_found
+      render json: { error: "not_found", message: "指定された日付のログが見つかりません" }, status: :not_found
     rescue => e
       Rails.logger.error("[Suggestions] Error: #{e.class} #{e.message}")
-      render json: { error: "提案の取得に失敗しました" }, status: :internal_server_error
+      render json: { error: "internal_error", message: "提案の取得に失敗しました" }, status: :internal_server_error
     end
   end
 

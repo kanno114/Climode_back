@@ -27,7 +27,8 @@ RSpec.describe "Api::V1::SessionsController", type: :request do
         expect(response).to have_http_status(:unauthorized)
         json = JSON.parse(response.body)
         expect(json["valid"]).to be false
-        expect(json["error"]).to eq("認証トークンが提供されていません")
+        expect(json["error"]).to eq("unauthorized")
+        expect(json["message"]).to eq("認証トークンが提供されていません")
       end
     end
 
@@ -39,7 +40,8 @@ RSpec.describe "Api::V1::SessionsController", type: :request do
         expect(response).to have_http_status(:unauthorized)
         json = JSON.parse(response.body)
         expect(json["valid"]).to be false
-        expect(json["error"]).to eq("無効な認証トークンです")
+        expect(json["error"]).to eq("unauthorized")
+        expect(json["message"]).to eq("無効な認証トークンです")
       end
     end
 
@@ -61,7 +63,8 @@ RSpec.describe "Api::V1::SessionsController", type: :request do
         expect(response).to have_http_status(:unauthorized)
         json = JSON.parse(response.body)
         expect(json["valid"]).to be false
-        expect(json["error"]).to eq("認証トークンの有効期限が切れています")
+        expect(json["error"]).to eq("unauthorized")
+        expect(json["message"]).to eq("認証トークンの有効期限が切れています")
       end
     end
 
@@ -83,7 +86,8 @@ RSpec.describe "Api::V1::SessionsController", type: :request do
         expect(response).to have_http_status(:unauthorized)
         json = JSON.parse(response.body)
         expect(json["valid"]).to be false
-        expect(json["error"]).to eq("アクセストークンが必要です")
+        expect(json["error"]).to eq("unauthorized")
+        expect(json["message"]).to eq("アクセストークンが必要です")
       end
     end
 
@@ -105,7 +109,8 @@ RSpec.describe "Api::V1::SessionsController", type: :request do
         expect(response).to have_http_status(:unauthorized)
         json = JSON.parse(response.body)
         expect(json["valid"]).to be false
-        expect(json["error"]).to eq("無効な認証トークンです")
+        expect(json["error"]).to eq("unauthorized")
+        expect(json["message"]).to eq("無効な認証トークンです")
       end
     end
 
@@ -117,7 +122,8 @@ RSpec.describe "Api::V1::SessionsController", type: :request do
         expect(response).to have_http_status(:unauthorized)
         json = JSON.parse(response.body)
         expect(json["valid"]).to be false
-        expect(json["error"]).to eq("認証トークンが提供されていません")
+        expect(json["error"]).to eq("unauthorized")
+        expect(json["message"]).to eq("認証トークンが提供されていません")
       end
     end
   end

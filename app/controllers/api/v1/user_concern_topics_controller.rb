@@ -40,7 +40,7 @@ class Api::V1::UserConcernTopicsController < ApplicationController
 
     head :no_content
   rescue ActiveRecord::RecordInvalid => e
-    render json: { error: e.message }, status: :unprocessable_entity
+    render json: { error: "validation_error", message: e.message }, status: :unprocessable_entity
   end
 
   private

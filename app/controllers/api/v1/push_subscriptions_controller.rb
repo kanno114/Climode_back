@@ -10,7 +10,8 @@ module Api
         if subscription.save
           render json: { message: "Successfully subscribed to push notifications", subscription: subscription }, status: :created
         else
-          render json: { errors: subscription.errors.full_messages }, status: :unprocessable_entity
+          render json: { error: "validation_error", message: "通知の登録に失敗しました",
+                         details: subscription.errors.messages }, status: :unprocessable_entity
         end
       end
 
@@ -22,7 +23,7 @@ module Api
           subscription.destroy
           render json: { message: "Successfully unsubscribed from push notifications" }, status: :ok
         else
-          render json: { error: "Subscription not found" }, status: :not_found
+          render json: { error: "not_found", message: "通知の登録が見つかりません" }, status: :not_found
         end
       end
 
