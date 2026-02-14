@@ -10,8 +10,6 @@ class DailyLog < ApplicationRecord
   validates :mood, numericality: { greater_than_or_equal_to: 1, less_than_or_equal_to: 5 }, allow_nil: true
   validates :fatigue, numericality: { greater_than_or_equal_to: 1, less_than_or_equal_to: 5 }, allow_nil: true
   validates :self_score, numericality: { greater_than_or_equal_to: 1, less_than_or_equal_to: 3 }, allow_nil: true
-  validates :helpfulness, numericality: { greater_than_or_equal_to: 1, less_than_or_equal_to: 5 }, allow_nil: true
-  validates :match_score, numericality: { greater_than_or_equal_to: 1, less_than_or_equal_to: 5 }, allow_nil: true
   validates :fatigue_level, numericality: { greater_than_or_equal_to: 1, less_than_or_equal_to: 5 }, allow_nil: true
 
   # 身体指標をハッシュ形式で返す（シグナル判定用）
