@@ -2,6 +2,8 @@
 class DailyReminderJob < ApplicationJob
   queue_as :default
 
+  retry_on Net::OpenTimeout, Net::ReadTimeout, wait: :polynomially_longer, attempts: 3
+
   def perform
     Rails.logger.info "Starting daily reminder job..."
 
@@ -19,5 +21,9 @@ class DailyReminderJob < ApplicationJob
     PushNotificationService.send_to_all(title, body, options)
 
     Rails.logger.info "Daily reminder job completed."
+  rescue => e
+    Rails.logger.error "[DailyReminderJob] #{e.class}: #{e.message}"
+    Rails.logger.error e.backtrace&.first(10)&.join("\n")
+    raise
   end
 end

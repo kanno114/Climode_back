@@ -2,6 +2,8 @@
 class MorningNotificationJob < ApplicationJob
   queue_as :default
 
+  retry_on Net::OpenTimeout, Net::ReadTimeout, wait: :polynomially_longer, attempts: 3
+
   def perform
     Rails.logger.info "Starting morning notification job..."
 
@@ -16,5 +18,9 @@ class MorningNotificationJob < ApplicationJob
     PushNotificationService.send_to_all(title, body, options)
 
     Rails.logger.info "Morning notification job completed."
+  rescue => e
+    Rails.logger.error "[MorningNotificationJob] #{e.class}: #{e.message}"
+    Rails.logger.error e.backtrace&.first(10)&.join("\n")
+    raise
   end
 end
