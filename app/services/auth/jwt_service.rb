@@ -2,11 +2,8 @@ class Auth::JwtService
   # JWT秘密鍵（本番環境ではENV必須、開発・テストはデフォルト値を使用）
   JWT_SECRET = ENV["JWT_SECRET"] || (Rails.env.production? ? raise("JWT_SECRET環境変数が設定されていません") : "development_secret_key_change_in_production")
 
-  # アクセストークンの有効期限（15分）
-  ACCESS_TOKEN_EXPIRY = 15.minutes
-
-  # リフレッシュトークンの有効期限（7日）
-  REFRESH_TOKEN_EXPIRY = 7.days
+  # アクセストークンの有効期限（30日）
+  ACCESS_TOKEN_EXPIRY = 30.days
 
   # アルゴリズム
   ALGORITHM = "HS256"
@@ -20,19 +17,6 @@ class Auth::JwtService
         exp: (Time.current + ACCESS_TOKEN_EXPIRY).to_i,
         iat: Time.current.to_i,
         type: "access"
-      }
-
-      JWT.encode(payload, JWT_SECRET, ALGORITHM)
-    end
-
-    # リフレッシュトークンを生成
-    def generate_refresh_token(user)
-      payload = {
-        user_id: user.id,
-        email: user.email,
-        exp: (Time.current + REFRESH_TOKEN_EXPIRY).to_i,
-        iat: Time.current.to_i,
-        type: "refresh"
       }
 
       JWT.encode(payload, JWT_SECRET, ALGORITHM)
@@ -64,14 +48,6 @@ class Auth::JwtService
       return false unless payload
 
       payload.first["type"] == "access"
-    end
-
-    # リフレッシュトークンかどうかを確認
-    def refresh_token?(token)
-      payload = decode_token(token)
-      return false unless payload
-
-      payload.first["type"] == "refresh"
     end
 
     # トークンの有効期限を取得
