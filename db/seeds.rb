@@ -122,6 +122,32 @@ prefectures_data.each do |prefecture_data|
   end
 end
 
+# suggestion_rules（health_rules.yml から投入、本番環境でも投入）
+puts "Seeding suggestion rules from health_rules.yml..."
+yaml_path = Rails.root.join("config/health_rules.yml")
+if File.exist?(yaml_path)
+  raw = YAML.load_file(yaml_path)["rules"] || []
+  raw.each do |r|
+    SuggestionRule.find_or_initialize_by(key: r["key"]).tap do |rule|
+      rule.title = r.fetch("title")
+      rule.message = r.fetch("message", "")
+      rule.tags = Array(r["tags"])
+      rule.severity = r.fetch("severity").to_i
+      rule.category = r.fetch("category", "env")
+      rule.level = r["level"].to_s.presence
+      rule.concerns = Array(r["concerns"])
+      rule.reason_text = r["reason_text"].to_s.presence
+      rule.evidence_text = r["evidence_text"].to_s.presence
+      rule.condition = r.fetch("condition", "")
+      rule.group = r["group"].to_s.presence
+      rule.save!
+    end
+  end
+  puts "  Loaded #{SuggestionRule.count} suggestion rules"
+else
+  puts "  WARNING: health_rules.yml not found, skipping suggestion_rules"
+end
+
 # 関心テーママスタ（関心ワード）
 # label_ja, description_ja はフロントの関心ワード登録UIで表示されます。
 unless is_production
@@ -308,24 +334,21 @@ unless is_production
       SuggestionSnapshot.where(date: today, prefecture_id: default_prefecture.id).delete_all
 
       if env_suggestions.any?
-        SuggestionSnapshot.insert_all!(
-          env_suggestions.map do |s|
-            {
-              date: today,
-              prefecture_id: default_prefecture.id,
-              rule_key: s.key,
-              title: s.title,
-              message: s.message,
-              tags: s.tags,
-              severity: s.severity,
-              category: s.category,
-              level: s.level,
-              metadata: ctx.dup,
-              created_at: Time.current,
-              updated_at: Time.current
-            }
-          end
-        )
+        rule_by_key = SuggestionRule.all.to_h { |r| [ r.key, r.id ] }
+        records = env_suggestions.filter_map do |s|
+          rule_id = rule_by_key[s.key]
+          next unless rule_id
+
+          {
+            date: today,
+            prefecture_id: default_prefecture.id,
+            rule_id: rule_id,
+            metadata: ctx.dup,
+            created_at: Time.current,
+            updated_at: Time.current
+          }
+        end
+        SuggestionSnapshot.insert_all!(records) if records.any?
         puts "  Created #{env_suggestions.size} env suggestions for Alice (#{default_prefecture.name_ja}) on #{today}"
       else
         puts "  No env suggestions generated for Alice on #{today}"
@@ -335,37 +358,29 @@ unless is_production
       puts "Creating daily_log_suggestions for weekly report..."
       week_start = Date.current.beginning_of_week(:monday)
       target_dates = ((week_start - 7.days)..(week_start + 6.days)).to_a
-      suggestion_templates = [
-        { suggestion_key: "heatstroke_Warning", title: "暑い日", message: "外出時は炎天下を避け、室内では室温の上昇に注意する。激しい運動は中止。", category: "env", severity: 75, level: "Warning" },
-        { suggestion_key: "heat_shock_Caution", title: "入浴注意", message: "入浴前後に水分補給を行う。居室と脱衣所の温度差に気をつける。", category: "env", severity: 55, level: "Caution" },
-        { suggestion_key: "weather_pain_drop_Caution", title: "気圧低下", message: "気圧が下がり始めています。無理は禁物です。", category: "env", severity: 70, level: "Caution" },
-        { suggestion_key: "dryness_Warning", title: "非常に乾燥", message: "加湿器をフル稼働させる。濡れタオルを干す。室内にいても不織布マスクを着用し、のどの保湿を心がける。", category: "env", severity: 85, level: "Warning" }
-      ]
+      suggestion_keys = %w[heatstroke_Warning heat_shock_Caution weather_pain_drop_Caution dryness_Warning]
+      rules_by_key = SuggestionRule.where(key: suggestion_keys).index_by(&:key)
 
       target_dates.each do |date|
         log = DailyLog.find_by(user: alice, date: date)
         next unless log
 
-        templates_to_use = suggestion_templates.sample(rand(1..3))
-        templates_to_use.each_with_index do |tmpl, pos|
-          next if DailyLogSuggestion.exists?(daily_log_id: log.id, suggestion_key: tmpl[:suggestion_key])
+        keys_to_use = suggestion_keys.sample(rand(1..3))
+        keys_to_use.each_with_index do |rule_key, pos|
+          rule = rules_by_key[rule_key]
+          next unless rule
+          next if DailyLogSuggestion.exists?(daily_log_id: log.id, rule_id: rule.id)
 
           DailyLogSuggestion.create!(
             daily_log_id: log.id,
-            suggestion_key: tmpl[:suggestion_key],
-            title: tmpl[:title],
-            message: tmpl[:message],
-            tags: %w[env seed],
-            severity: tmpl[:severity],
-            category: tmpl[:category],
-            level: tmpl[:level],
+            suggestion_rule: rule,
             position: pos
           )
 
           # 約半分にフィードバックを付与
           next unless rand < 0.5
 
-          SuggestionFeedback.find_or_create_by!(daily_log_id: log.id, suggestion_key: tmpl[:suggestion_key]) do |fb|
+          SuggestionFeedback.find_or_create_by!(daily_log_id: log.id, suggestion_rule: rule) do |fb|
             fb.helpfulness = rand < 0.7
           end
         end
@@ -428,32 +443,26 @@ unless is_production
     week_start = Date.current.beginning_of_week(:monday)
     bob_target_dates = ((week_start - 7.days)..(week_start + 6.days)).to_a
     if bob_target_dates.any? { |d| DailyLog.exists?(user: bob, date: d) }
-      suggestion_templates = [
-        { suggestion_key: "heatstroke_Caution", title: "やや暑い日", message: "運動や激しい作業をする際は、定期的に充分に休息を取り入れる。", category: "env", severity: 60, level: "Caution" },
-        { suggestion_key: "weather_pain_drop_Warning", title: "急激な気圧低下", message: "急激な気圧低下です。酔い止めや休憩の準備を。", category: "env", severity: 85, level: "Warning" }
-      ]
+      bob_suggestion_keys = %w[heatstroke_Caution weather_pain_drop_Warning]
+      bob_rules_by_key = SuggestionRule.where(key: bob_suggestion_keys).index_by(&:key)
 
       bob_target_dates.each do |date|
         log = DailyLog.find_by(user: bob, date: date)
         next unless log
 
-        templates_to_use = suggestion_templates.sample(rand(1..2))
-        templates_to_use.each_with_index do |tmpl, pos|
-          next if DailyLogSuggestion.exists?(daily_log_id: log.id, suggestion_key: tmpl[:suggestion_key])
+        keys_to_use = bob_suggestion_keys.sample(rand(1..2))
+        keys_to_use.each_with_index do |rule_key, pos|
+          rule = bob_rules_by_key[rule_key]
+          next unless rule
+          next if DailyLogSuggestion.exists?(daily_log_id: log.id, rule_id: rule.id)
 
           DailyLogSuggestion.create!(
             daily_log_id: log.id,
-            suggestion_key: tmpl[:suggestion_key],
-            title: tmpl[:title],
-            message: tmpl[:message],
-            tags: %w[env seed],
-            severity: tmpl[:severity],
-            category: tmpl[:category],
-            level: tmpl[:level],
+            suggestion_rule: rule,
             position: pos
           )
 
-          SuggestionFeedback.find_or_create_by!(daily_log_id: log.id, suggestion_key: tmpl[:suggestion_key]) do |fb|
+          SuggestionFeedback.find_or_create_by!(daily_log_id: log.id, suggestion_rule: rule) do |fb|
             fb.helpfulness = rand < 0.6
           end
         end
