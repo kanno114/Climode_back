@@ -12,8 +12,8 @@ RSpec.describe SuggestionFeedback, type: :model do
       expect(suggestion_feedback).not_to be_valid
     end
 
-    it 'suggestion_keyがない場合は無効である' do
-      suggestion_feedback = build(:suggestion_feedback, suggestion_key: nil)
+    it 'suggestion_ruleがない場合は無効である' do
+      suggestion_feedback = build(:suggestion_feedback, suggestion_rule: nil)
       expect(suggestion_feedback).not_to be_valid
     end
 
@@ -22,14 +22,11 @@ RSpec.describe SuggestionFeedback, type: :model do
       expect(suggestion_feedback).not_to be_valid
     end
 
-    it '同じdaily_logとsuggestion_keyの組み合わせで重複は無効である' do
+    it '同じdaily_logとrule_idの組み合わせで重複は無効である' do
       daily_log = create(:daily_log)
-      create(:suggestion_feedback,
-             daily_log: daily_log,
-             suggestion_key: "pressure_drop_signal_warning")
-      suggestion_feedback = build(:suggestion_feedback,
-                                  daily_log: daily_log,
-                                  suggestion_key: "pressure_drop_signal_warning")
+      rule = SuggestionRule.find_by!(key: "pressure_drop_signal_warning")
+      create(:suggestion_feedback, daily_log: daily_log, suggestion_rule: rule)
+      suggestion_feedback = build(:suggestion_feedback, daily_log: daily_log, suggestion_rule: rule)
       expect(suggestion_feedback).not_to be_valid
     end
 
@@ -65,7 +62,7 @@ RSpec.describe SuggestionFeedback, type: :model do
       suggestion_feedback = create(:suggestion_feedback)
       expect(suggestion_feedback).to be_persisted
       expect(suggestion_feedback.daily_log).to be_present
-      expect(suggestion_feedback.suggestion_key).to be_present
+      expect(suggestion_feedback.suggestion_rule).to be_present
       expect(suggestion_feedback.helpfulness).to be_in([ true, false ])
     end
 

@@ -416,15 +416,12 @@ RSpec.describe Suggestion::SuggestionEngine do
 
       context 'suggestion_snapshots を参照する場合' do
         before do
+          rule1 = SuggestionRule.find_by!(key: 'heatstroke_Warning')
+          rule2 = SuggestionRule.find_by!(key: 'comfort_Temperature')
           create(:suggestion_snapshot,
                  date: date,
                  prefecture: daily_log.prefecture,
-                 rule_key: 'heatstroke_Warning',
-                 title: '暑い日',
-                 message: '外出時は炎天下を避け、室内では室温の上昇に注意する。激しい運動は中止。',
-                 tags: [ 'temperature', 'heatstroke' ],
-                 severity: 75,
-                 category: 'env',
+                 suggestion_rule: rule1,
                  metadata: {
                    'temperature_c' => 32.0,
                    'min_temperature_c' => 22.0,
@@ -439,12 +436,7 @@ RSpec.describe Suggestion::SuggestionEngine do
           create(:suggestion_snapshot,
                  date: date,
                  prefecture: daily_log.prefecture,
-                 rule_key: 'comfort_Temperature',
-                 title: '過ごしやすい気温',
-                 message: '気温が快適な範囲です。',
-                 tags: [ 'temperature', 'positive' ],
-                 severity: 35,
-                 category: 'env',
+                 suggestion_rule: rule2,
                  metadata: {
                    'temperature_c' => 22.0,
                    'min_temperature_c' => 18.0,
@@ -540,26 +532,17 @@ RSpec.describe Suggestion::SuggestionEngine do
         before do
           create(:user_concern_topic, user: user_heatstroke_only, concern_topic: heatstroke_topic)
 
-          # heatstroke と weather_pain の両方の snapshot を作成
+          rule1 = SuggestionRule.find_by!(key: 'heatstroke_Warning')
+          rule2 = SuggestionRule.find_by!(key: 'weather_pain_drop_Warning')
           create(:suggestion_snapshot,
                  date: date,
                  prefecture: user_heatstroke_only.prefecture,
-                 rule_key: 'heatstroke_Warning',
-                 title: '暑い日',
-                 message: '外出時は炎天下を避け、室内では室温の上昇に注意する。激しい運動は中止。',
-                 tags: [ 'temperature', 'heatstroke' ],
-                 severity: 75,
-                 category: 'env',
+                 suggestion_rule: rule1,
                  metadata: { 'temperature_c' => 32.0, 'humidity_pct' => 50.0, 'pressure_hpa' => 1013.0 })
           create(:suggestion_snapshot,
                  date: date,
                  prefecture: user_heatstroke_only.prefecture,
-                 rule_key: 'weather_pain_drop_Warning',
-                 title: '急激な気圧低下',
-                 message: '急激な気圧低下。',
-                 tags: [ 'pressure', 'weather_pain' ],
-                 severity: 85,
-                 category: 'env',
+                 suggestion_rule: rule2,
                  metadata: { 'max_pressure_drop_1h_awake' => -3.5, 'humidity_pct' => 50.0, 'pressure_hpa' => 1013.0 })
         end
 

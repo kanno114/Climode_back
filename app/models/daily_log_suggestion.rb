@@ -2,10 +2,7 @@
 
 class DailyLogSuggestion < ApplicationRecord
   belongs_to :daily_log
+  belongs_to :suggestion_rule, foreign_key: :rule_id
 
-  validates :suggestion_key, presence: true
-  validates :title, presence: true
-  validates :severity, presence: true
-  validates :category, presence: true
-  validates :suggestion_key, uniqueness: { scope: :daily_log_id }
+  validates :rule_id, uniqueness: { scope: :daily_log_id }
 end

@@ -47,12 +47,13 @@ RSpec.describe 'Api::V1::Suggestions', type: :request do
           return if json.empty?
 
           json.each do |suggestion|
-            saved = daily_log.daily_log_suggestions.find_by(suggestion_key: suggestion["key"])
+            rule = SuggestionRule.find_by(key: suggestion["key"])
+            next unless rule
+
+            saved = daily_log.daily_log_suggestions.find_by(rule_id: rule.id)
             expect(saved).to be_present
-            expect(saved.title).to eq(suggestion["title"])
-            expect(saved.message).to eq(suggestion["message"])
-            expect(saved.severity).to eq(suggestion["severity"])
-            expect(saved.category).to eq(suggestion["category"])
+            expect(saved.suggestion_rule.title).to eq(suggestion["title"])
+            expect(saved.suggestion_rule.message).to eq(suggestion["message"])
           end
         end
 

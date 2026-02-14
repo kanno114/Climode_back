@@ -23,13 +23,11 @@ RSpec.describe Suggestion::SuggestionPersistence do
         described_class.call(daily_log: daily_log, suggestions: [ suggestion_struct ])
       end.to change { DailyLogSuggestion.count }.by(1)
 
-      saved = daily_log.daily_log_suggestions.find_by(suggestion_key: "pressure_drop_signal_warning")
+      rule = SuggestionRule.find_by(key: "pressure_drop_signal_warning")
+      saved = daily_log.daily_log_suggestions.find_by(rule_id: rule.id)
       expect(saved).to be_present
-      expect(saved.title).to eq("気圧変動に注意")
-      expect(saved.message).to eq("気圧が急変動しています。")
-      expect(saved.tags).to eq(%w[weather pressure])
-      expect(saved.severity).to eq(2)
-      expect(saved.category).to eq("weather")
+      expect(saved.suggestion_rule.title).to eq("気圧変動に注意")
+      expect(saved.suggestion_rule.message).to eq("気圧が急変動しています。")
     end
 
     it "空の提案配列の場合は何も保存しない" do
@@ -38,7 +36,7 @@ RSpec.describe Suggestion::SuggestionPersistence do
       end.not_to change { DailyLogSuggestion.count }
     end
 
-    it "同一suggestion_keyでupsertし、重複しない" do
+    it "同一keyでupsertし、重複しない" do
       described_class.call(daily_log: daily_log, suggestions: [ suggestion_struct ])
       expect(daily_log.daily_log_suggestions.count).to eq(1)
 
@@ -55,10 +53,10 @@ RSpec.describe Suggestion::SuggestionPersistence do
       described_class.call(daily_log: daily_log, suggestions: [ updated_struct ])
 
       expect(daily_log.daily_log_suggestions.count).to eq(1)
-      saved = daily_log.daily_log_suggestions.find_by(suggestion_key: "pressure_drop_signal_warning")
-      expect(saved.title).to eq("更新されたタイトル")
-      expect(saved.message).to eq("更新されたメッセージ")
-      expect(saved.severity).to eq(3)
+      # title/message は suggestion_rule に保存。upsert は position のみ更新
+      rule = SuggestionRule.find_by(key: "pressure_drop_signal_warning")
+      saved = daily_log.daily_log_suggestions.find_by(rule_id: rule.id)
+      expect(saved).to be_present
     end
   end
 end

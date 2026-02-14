@@ -138,20 +138,23 @@ RSpec.describe "Api::V1::DailyLogs", type: :request do
         expect(daily_log.note).to eq("今日は良い一日だった")
         expect(daily_log.suggestion_feedbacks.count).to eq(2)
 
-        feedback1 = daily_log.suggestion_feedbacks.find_by(suggestion_key: "pressure_drop_signal_warning")
+        rule1 = SuggestionRule.find_by(key: "pressure_drop_signal_warning")
+        rule2 = SuggestionRule.find_by(key: "low_mood")
+        feedback1 = daily_log.suggestion_feedbacks.find_by(rule_id: rule1.id)
         expect(feedback1).not_to be_nil
         expect(feedback1.helpfulness).to be true
 
-        feedback2 = daily_log.suggestion_feedbacks.find_by(suggestion_key: "low_mood")
+        feedback2 = daily_log.suggestion_feedbacks.find_by(rule_id: rule2.id)
         expect(feedback2).not_to be_nil
         expect(feedback2.helpfulness).to be false
       end
 
       it "既存のsuggestion_feedbacksを削除してから新規作成する" do
         # 既存のフィードバックを作成
+        rule = SuggestionRule.find_by(key: "pressure_drop_signal_warning")
         create(:suggestion_feedback,
                daily_log: daily_log,
-               suggestion_key: "pressure_drop_signal_warning",
+               suggestion_rule: rule,
                helpfulness: false)
 
         expect do
@@ -163,7 +166,8 @@ RSpec.describe "Api::V1::DailyLogs", type: :request do
         daily_log.reload
         expect(daily_log.suggestion_feedbacks.count).to eq(2)
 
-        feedback = daily_log.suggestion_feedbacks.find_by(suggestion_key: "pressure_drop_signal_warning")
+        rule = SuggestionRule.find_by(key: "pressure_drop_signal_warning")
+        feedback = daily_log.suggestion_feedbacks.find_by(rule_id: rule.id)
         expect(feedback.helpfulness).to be true # 新しい値に更新されている
       end
 

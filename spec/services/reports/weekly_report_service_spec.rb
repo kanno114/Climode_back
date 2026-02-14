@@ -49,15 +49,17 @@ RSpec.describe Reports::WeeklyReportService do
                fatigue_level: 4)
       end
       let!(:suggestion_feedback1) do
+        rule = SuggestionRule.find_by!(key: "test_suggestion")
         create(:suggestion_feedback,
                daily_log: daily_log1,
-               suggestion_key: "test_suggestion",
+               suggestion_rule: rule,
                helpfulness: true)
       end
       let!(:suggestion_feedback2) do
+        rule = SuggestionRule.find_by!(key: "test_suggestion2")
         create(:suggestion_feedback,
                daily_log: daily_log2,
-               suggestion_key: "test_suggestion2",
+               suggestion_rule: rule,
                helpfulness: false)
       end
 
@@ -86,23 +88,19 @@ RSpec.describe Reports::WeeklyReportService do
       end
 
       it "daily_log_suggestions がある場合、提案を日付ごとに返す" do
+        rule1 = SuggestionRule.find_by!(key: "test_suggestion")
+        rule2 = SuggestionRule.find_by!(key: "test_suggestion2")
         create(:daily_log_suggestion,
                daily_log: daily_log1,
-               suggestion_key: "test_suggestion",
-               title: "テスト提案1",
-               message: "メッセージ1",
-               category: "env",
+               suggestion_rule: rule1,
                position: 0)
         create(:daily_log_suggestion,
                daily_log: daily_log1,
-               suggestion_key: "test_suggestion2",
-               title: "テスト提案2",
-               message: "メッセージ2",
-               category: "weather",
+               suggestion_rule: rule2,
                position: 1)
         create(:suggestion_feedback,
                daily_log: daily_log1,
-               suggestion_key: "test_suggestion2",
+               suggestion_rule: rule2,
                helpfulness: false)
 
         service = described_class.new(user)

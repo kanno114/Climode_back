@@ -1,0 +1,13 @@
+# frozen_string_literal: true
+
+class SuggestionRule < ApplicationRecord
+  has_many :daily_log_suggestions, foreign_key: :rule_id, dependent: :restrict_with_error
+  has_many :suggestion_snapshots, foreign_key: :rule_id, dependent: :restrict_with_error
+  has_many :suggestion_feedbacks, foreign_key: :rule_id, dependent: :restrict_with_error
+
+  validates :key, presence: true, uniqueness: true
+  validates :title, presence: true
+  validates :severity, presence: true
+  validates :category, presence: true
+  validates :condition, presence: true
+end
