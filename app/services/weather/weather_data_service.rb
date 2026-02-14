@@ -18,15 +18,26 @@ module Weather
       target_hour = hour || @hour
       return dummy_weather_data(target_hour) if Rails.env.test?
 
-      begin
-        response = fetch_from_api
-        return dummy_weather_data(target_hour) unless response.success?
+      response = fetch_from_api
 
-        parse_weather_response(response, target_hour)
-      rescue => e
-        Rails.logger.error "Weather API error: #{e.message}"
-        dummy_weather_data(target_hour)
+      unless response.success?
+        Rails.logger.warn "[Weather] HTTP error #{response.code} for prefecture #{@prefecture.code}"
+        return dummy_weather_data(target_hour)
       end
+
+      parse_weather_response(response, target_hour)
+    rescue Net::OpenTimeout => e
+      Rails.logger.error "[Weather] Connection timeout for prefecture #{@prefecture.code}: #{e.message}"
+      dummy_weather_data(target_hour)
+    rescue Net::ReadTimeout => e
+      Rails.logger.error "[Weather] Read timeout for prefecture #{@prefecture.code}: #{e.message}"
+      dummy_weather_data(target_hour)
+    rescue JSON::ParserError => e
+      Rails.logger.error "[Weather] JSON parse error for prefecture #{@prefecture.code}: #{e.message}"
+      dummy_weather_data(target_hour)
+    rescue => e
+      Rails.logger.error "[Weather] Unexpected error for prefecture #{@prefecture.code}: #{e.class} - #{e.message}"
+      dummy_weather_data(target_hour)
     end
 
     # 指定日の 24時間分などの時系列データを取得する
@@ -38,15 +49,26 @@ module Weather
       start_date ||= @date
       end_date ||= @date
 
-      begin
-        response = fetch_forecast_api(start_date: start_date, end_date: end_date)
-        return dummy_forecast_series(hours: hours) unless response.success?
+      response = fetch_forecast_api(start_date: start_date, end_date: end_date)
 
-        parse_forecast_series_response(response, hours: hours)
-      rescue => e
-        Rails.logger.error "Weather API (series) error: #{e.message}"
-        dummy_forecast_series(hours: hours)
+      unless response.success?
+        Rails.logger.warn "[Weather] HTTP error #{response.code} (series) for prefecture #{@prefecture.code}"
+        return dummy_forecast_series(hours: hours)
       end
+
+      parse_forecast_series_response(response, hours: hours)
+    rescue Net::OpenTimeout => e
+      Rails.logger.error "[Weather] Connection timeout (series) for prefecture #{@prefecture.code}: #{e.message}"
+      dummy_forecast_series(hours: hours)
+    rescue Net::ReadTimeout => e
+      Rails.logger.error "[Weather] Read timeout (series) for prefecture #{@prefecture.code}: #{e.message}"
+      dummy_forecast_series(hours: hours)
+    rescue JSON::ParserError => e
+      Rails.logger.error "[Weather] JSON parse error (series) for prefecture #{@prefecture.code}: #{e.message}"
+      dummy_forecast_series(hours: hours)
+    rescue => e
+      Rails.logger.error "[Weather] Unexpected error (series) for prefecture #{@prefecture.code}: #{e.class} - #{e.message}"
+      dummy_forecast_series(hours: hours)
     end
 
     private

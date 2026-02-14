@@ -85,21 +85,23 @@ RSpec.describe Weather::WeatherDataService do
         it 'エラーログを出力してダミーデータを返す' do
           result = service.fetch_weather_data
 
-          expect(Rails.logger).to have_received(:error).with(/Weather API error/)
+          expect(Rails.logger).to have_received(:error).with(/\[Weather\] Unexpected error/)
           expect(result[:snapshot][:source]).to eq('dummy_data')
         end
       end
 
       context 'APIレスポンスが失敗の場合' do
-        let(:mock_response) { double(success?: false) }
+        let(:mock_response) { double(success?: false, code: 500) }
 
         before do
           allow(described_class).to receive(:get).and_return(mock_response)
+          allow(Rails.logger).to receive(:warn)
         end
 
         it 'ダミーデータを返す' do
           result = service.fetch_weather_data
 
+          expect(Rails.logger).to have_received(:warn).with(/\[Weather\] HTTP error 500/)
           expect(result[:snapshot][:source]).to eq('dummy_data')
         end
       end
@@ -269,17 +271,18 @@ RSpec.describe Weather::WeatherDataService do
         it 'エラーログを出力してダミー時系列を返す' do
           result = service.fetch_forecast_series(hours: 3)
 
-          expect(Rails.logger).to have_received(:error).with(/Weather API \(series\) error/)
+          expect(Rails.logger).to have_received(:error).with(/\[Weather\] Unexpected error \(series\)/)
           expect(result.size).to eq(3)
           expect(result.first[:time]).to be_a(DateTime)
         end
       end
 
       context 'APIレスポンスが失敗の場合' do
-        let(:mock_response) { double(success?: false) }
+        let(:mock_response) { double(success?: false, code: 503) }
 
         before do
           allow(described_class).to receive(:get).and_return(mock_response)
+          allow(Rails.logger).to receive(:warn)
         end
 
         it 'ダミー時系列データを返す' do
