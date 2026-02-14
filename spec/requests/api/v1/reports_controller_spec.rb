@@ -68,15 +68,17 @@ RSpec.describe "Api::V1::Reports", type: :request do
                  fatigue_level: 4)
         end
         let!(:suggestion_feedback1) do
+          rule = SuggestionRule.find_by!(key: "test_suggestion")
           create(:suggestion_feedback,
                  daily_log: daily_log1,
-                 suggestion_key: "test_suggestion",
+                 suggestion_rule: rule,
                  helpfulness: true)
         end
         let!(:suggestion_feedback2) do
+          rule = SuggestionRule.find_by!(key: "test_suggestion2")
           create(:suggestion_feedback,
                  daily_log: daily_log2,
-                 suggestion_key: "test_suggestion2",
+                 suggestion_rule: rule,
                  helpfulness: false)
         end
 

@@ -14,34 +14,16 @@ RSpec.describe DailyLogSuggestion, type: :model do
       expect(daily_log_suggestion).not_to be_valid
     end
 
-    it "suggestion_keyがない場合は無効である" do
-      daily_log_suggestion = build(:daily_log_suggestion, suggestion_key: nil)
+    it "suggestion_ruleがない場合は無効である" do
+      daily_log_suggestion = build(:daily_log_suggestion, suggestion_rule: nil)
       expect(daily_log_suggestion).not_to be_valid
     end
 
-    it "titleがない場合は無効である" do
-      daily_log_suggestion = build(:daily_log_suggestion, title: nil)
-      expect(daily_log_suggestion).not_to be_valid
-    end
-
-    it "severityがない場合は無効である" do
-      daily_log_suggestion = build(:daily_log_suggestion, severity: nil)
-      expect(daily_log_suggestion).not_to be_valid
-    end
-
-    it "categoryがない場合は無効である" do
-      daily_log_suggestion = build(:daily_log_suggestion, category: nil)
-      expect(daily_log_suggestion).not_to be_valid
-    end
-
-    it "同じdaily_logとsuggestion_keyの組み合わせで重複は無効である" do
+    it "同じdaily_logとrule_idの組み合わせで重複は無効である" do
       daily_log = create(:daily_log)
-      create(:daily_log_suggestion,
-             daily_log: daily_log,
-             suggestion_key: "pressure_drop_signal_warning")
-      duplicate = build(:daily_log_suggestion,
-                        daily_log: daily_log,
-                        suggestion_key: "pressure_drop_signal_warning")
+      rule = SuggestionRule.find_by!(key: "pressure_drop_signal_warning")
+      create(:daily_log_suggestion, daily_log: daily_log, suggestion_rule: rule)
+      duplicate = build(:daily_log_suggestion, daily_log: daily_log, suggestion_rule: rule)
       expect(duplicate).not_to be_valid
     end
   end
@@ -50,6 +32,11 @@ RSpec.describe DailyLogSuggestion, type: :model do
     it "daily_logに属する" do
       daily_log_suggestion = create(:daily_log_suggestion)
       expect(daily_log_suggestion.daily_log).to be_present
+    end
+
+    it "suggestion_ruleに属する" do
+      daily_log_suggestion = create(:daily_log_suggestion)
+      expect(daily_log_suggestion.suggestion_rule).to be_present
     end
 
     it "daily_logが削除されると削除される" do
@@ -67,10 +54,7 @@ RSpec.describe DailyLogSuggestion, type: :model do
       daily_log_suggestion = create(:daily_log_suggestion)
       expect(daily_log_suggestion).to be_persisted
       expect(daily_log_suggestion.daily_log).to be_present
-      expect(daily_log_suggestion.suggestion_key).to be_present
-      expect(daily_log_suggestion.title).to be_present
-      expect(daily_log_suggestion.severity).to be_present
-      expect(daily_log_suggestion.category).to be_present
+      expect(daily_log_suggestion.suggestion_rule).to be_present
     end
   end
 end
