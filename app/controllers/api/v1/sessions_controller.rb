@@ -13,7 +13,8 @@ class Api::V1::SessionsController < ApplicationController
     if token.blank?
       render json: {
         valid: false,
-        error: "認証トークンが提供されていません"
+        error: "unauthorized",
+        message: "認証トークンが提供されていません"
       }, status: :unauthorized
       return
     end
@@ -23,7 +24,8 @@ class Api::V1::SessionsController < ApplicationController
     if payload.nil?
       render json: {
         valid: false,
-        error: "無効な認証トークンです"
+        error: "unauthorized",
+        message: "無効な認証トークンです"
       }, status: :unauthorized
       return
     end
@@ -32,7 +34,8 @@ class Api::V1::SessionsController < ApplicationController
     unless Auth::JwtService.token_valid?(token)
       render json: {
         valid: false,
-        error: "認証トークンの有効期限が切れています"
+        error: "unauthorized",
+        message: "認証トークンの有効期限が切れています"
       }, status: :unauthorized
       return
     end
@@ -41,7 +44,8 @@ class Api::V1::SessionsController < ApplicationController
     unless Auth::JwtService.access_token?(token)
       render json: {
         valid: false,
-        error: "アクセストークンが必要です"
+        error: "unauthorized",
+        message: "アクセストークンが必要です"
       }, status: :unauthorized
       return
     end
@@ -51,7 +55,8 @@ class Api::V1::SessionsController < ApplicationController
     if user.nil?
       render json: {
         valid: false,
-        error: "無効な認証トークンです"
+        error: "unauthorized",
+        message: "無効な認証トークンです"
       }, status: :unauthorized
       return
     end
@@ -66,7 +71,8 @@ class Api::V1::SessionsController < ApplicationController
     Rails.logger.error "Token validation error: #{e.message}"
     render json: {
       valid: false,
-      error: "認証処理中にエラーが発生しました"
+      error: "internal_error",
+      message: "認証処理中にエラーが発生しました"
     }, status: :internal_server_error
   end
 
@@ -101,14 +107,15 @@ class Api::V1::SessionsController < ApplicationController
       }, status: :ok
     else
       render json: {
-        error: "認証に失敗しました",
-        details: "OAuthユーザーが見つかりません"
+        error: "unauthorized",
+        message: "OAuthユーザーが見つかりません"
       }, status: :unauthorized
     end
   rescue => e
     Rails.logger.error "OAuth authentication error: #{e.message}"
     render json: {
-      error: "認証処理中にエラーが発生しました"
+      error: "internal_error",
+      message: "認証処理中にエラーが発生しました"
     }, status: :internal_server_error
   end
 
@@ -117,8 +124,8 @@ class Api::V1::SessionsController < ApplicationController
 
     if user.nil?
       render json: {
-        error: "認証に失敗しました",
-        details: "メールアドレスまたはパスワードが正しくありません"
+        error: "unauthorized",
+        message: "メールアドレスまたはパスワードが正しくありません"
       }, status: :unauthorized
       return
     end
@@ -138,14 +145,15 @@ class Api::V1::SessionsController < ApplicationController
       }, status: :ok
     else
       render json: {
-        error: "認証に失敗しました",
-        details: "メールアドレスまたはパスワードが正しくありません"
+        error: "unauthorized",
+        message: "メールアドレスまたはパスワードが正しくありません"
       }, status: :unauthorized
     end
   rescue => e
     Rails.logger.error "Email authentication error: #{e.message}"
     render json: {
-      error: "認証処理中にエラーが発生しました"
+      error: "internal_error",
+      message: "認証処理中にエラーが発生しました"
     }, status: :internal_server_error
   end
 end

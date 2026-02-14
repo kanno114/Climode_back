@@ -72,7 +72,7 @@ class Api::V1::DailyLogsController < ApplicationController
         include: [ :prefecture, { suggestion_feedbacks: { methods: [ :suggestion_key ] } } ]
       )
     else
-      render json: { error: "指定された日付のデイリーログが見つかりません" },
+      render json: { error: "not_found", message: "指定された日付のデイリーログが見つかりません" },
              status: :not_found
     end
   end
@@ -130,7 +130,8 @@ class Api::V1::DailyLogsController < ApplicationController
       render json: @daily_log.as_json(include: [ :prefecture ]),
              status: :created
     else
-      render json: { errors: @daily_log.errors.full_messages },
+      render json: { error: "validation_error", message: "入力内容に誤りがあります",
+                     details: @daily_log.errors.messages },
              status: :unprocessable_entity
     end
   end
@@ -155,7 +156,8 @@ class Api::V1::DailyLogsController < ApplicationController
     if @daily_log.save
       render json: @daily_log.as_json(include: [ :prefecture ])
     else
-      render json: { errors: @daily_log.errors.full_messages },
+      render json: { error: "validation_error", message: "入力内容に誤りがあります",
+                     details: @daily_log.errors.messages },
              status: :unprocessable_entity
     end
   end
@@ -164,14 +166,15 @@ class Api::V1::DailyLogsController < ApplicationController
   def update_self_score
     self_score_value = params[:self_score]&.to_i
     unless self_score_value.nil? || (1..3).cover?(self_score_value)
-      return render json: { errors: [ "self_scoreは1〜3の範囲で指定してください" ] },
+      return render json: { error: "validation_error", message: "self_scoreは1〜3の範囲で指定してください" },
                     status: :unprocessable_entity
     end
 
     if @daily_log.update(self_score: self_score_value)
       render json: @daily_log.as_json(include: [ :prefecture ])
     else
-      render json: { errors: @daily_log.errors.full_messages },
+      render json: { error: "validation_error", message: "入力内容に誤りがあります",
+                     details: @daily_log.errors.messages },
              status: :unprocessable_entity
     end
   end
@@ -225,7 +228,8 @@ class Api::V1::DailyLogsController < ApplicationController
     if @daily_log.save
       render json: { status: "ok", next: "/dashboard" }, status: :ok
     else
-      render json: { errors: @daily_log.errors.full_messages },
+      render json: { error: "validation_error", message: "入力内容に誤りがあります",
+                     details: @daily_log.errors.messages },
              status: :unprocessable_entity
     end
   end
@@ -320,7 +324,8 @@ class Api::V1::DailyLogsController < ApplicationController
       Rails.logger.info "Evening reflection saved successfully for daily_log #{@daily_log.id}"
       render json: { status: "ok", next: "/dashboard" }, status: :ok
     else
-      render json: { errors: @daily_log.errors.full_messages },
+      render json: { error: "validation_error", message: "入力内容に誤りがあります",
+                     details: @daily_log.errors.messages },
              status: :unprocessable_entity
     end
   end

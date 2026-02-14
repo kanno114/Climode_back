@@ -7,7 +7,7 @@ class Api::V1::ReportsController < ApplicationController
       begin
         Date.parse(params[:start])
       rescue ArgumentError
-        render json: { error: "無効な日付形式です。YYYY-MM-DD形式で指定してください。" },
+        render json: { error: "invalid_date", message: "無効な日付形式です。YYYY-MM-DD形式で指定してください。" },
                status: :bad_request
         return
       end

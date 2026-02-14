@@ -61,7 +61,8 @@ RSpec.describe 'Api::V1::Prefectures', type: :request do
         expect(response).to have_http_status(:not_found)
 
         json_response = JSON.parse(response.body)
-        expect(json_response['error']).to eq('Prefecture not found')
+        expect(json_response['error']).to eq('not_found')
+        expect(json_response['message']).to eq('都道府県が見つかりません')
       end
     end
   end

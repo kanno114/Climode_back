@@ -17,7 +17,8 @@ class Api::V1::RegistrationsController < ApplicationController
         is_new_user: true
       }, status: :created
     else
-      render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
+      render json: { error: "validation_error", message: "登録内容に誤りがあります",
+                     details: user.errors.messages }, status: :unprocessable_entity
     end
   end
 
@@ -65,7 +66,8 @@ class Api::V1::RegistrationsController < ApplicationController
       }, status: :created
     end
   rescue ActiveRecord::RecordInvalid => e
-    render json: { errors: [ e.record.errors.full_messages.presence || e.message ].flatten }, status: :unprocessable_entity
+    render json: { error: "validation_error", message: e.message,
+                   details: e.record.errors.messages }, status: :unprocessable_entity
   end
 
   private

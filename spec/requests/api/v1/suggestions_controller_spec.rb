@@ -141,8 +141,8 @@ RSpec.describe 'Api::V1::Suggestions', type: :request do
 
           expect(response).to have_http_status(:not_found)
           json = JSON.parse(response.body)
-          expect(json).to have_key('error')
-          expect(json['error']).to include('見つかりません')
+          expect(json['error']).to eq('not_found')
+          expect(json['message']).to include('見つかりません')
         end
       end
     end

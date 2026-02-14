@@ -7,7 +7,7 @@ class Api::V1::ForecastsController < ApplicationController
   #   hours: 取得したい件数（省略時は24、最大48など）
   def index
     unless current_user&.prefecture
-      render json: { error: "prefecture_not_set" }, status: :unprocessable_entity
+      render json: { error: "prefecture_not_set", message: "都道府県が設定されていません" }, status: :unprocessable_entity
       return
     end
 
