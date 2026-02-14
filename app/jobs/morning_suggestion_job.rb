@@ -52,22 +52,22 @@ class MorningSuggestionJob < ApplicationJob
 
       next if suggestions.empty?
 
-      records = suggestions.map do |s|
+      rule_by_key = SuggestionRule.all.to_h { |r| [ r.key, r.id ] }
+      records = suggestions.filter_map do |s|
+        rule_id = rule_by_key[s.key]
+        next unless rule_id
+
         {
           date: date,
           prefecture_id: prefecture.id,
-          rule_key: s.key,
-          title: s.title,
-          message: s.message,
-          tags: s.tags,
-          severity: s.severity,
-          category: s.category,
-          level: s.level,
+          rule_id: rule_id,
           metadata: ctx.dup,
           created_at: Time.current,
           updated_at: Time.current
         }
       end
+
+      next if records.empty?
 
       SuggestionSnapshot.insert_all!(records)
     rescue => e

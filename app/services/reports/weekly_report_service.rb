@@ -108,14 +108,17 @@ module Reports
       return { by_day: [] } if daily_logs.empty?
 
       log_ids = daily_logs.pluck(:id)
-      suggestions = DailyLogSuggestion.where(daily_log_id: log_ids)
-                                     .order(:daily_log_id, :position, :id)
+      suggestions = DailyLogSuggestion
+        .includes(:suggestion_rule)
+        .where(daily_log_id: log_ids)
+        .order(:daily_log_id, :position, :id)
 
       return { by_day: [] } if suggestions.empty?
 
       feedbacks = SuggestionFeedback
+        .includes(:suggestion_rule)
         .where(daily_log_id: log_ids)
-        .index_by { |fb| [ fb.daily_log_id, fb.suggestion_key ] }
+        .index_by { |fb| [ fb.daily_log_id, fb.suggestion_rule.key ] }
 
       suggestions_by_log = suggestions.group_by(&:daily_log_id)
       logs_by_id = daily_logs.index_by(&:id)
@@ -125,15 +128,16 @@ module Reports
         next nil unless log
 
         items = day_suggestions.sort_by { |s| [ s.position || 0, s.id ] }.map do |s|
-          fb = feedbacks[[ daily_log_id, s.suggestion_key ]]
+          rule = s.suggestion_rule
+          fb = feedbacks[[ daily_log_id, rule.key ]]
           {
-            suggestion_key: s.suggestion_key,
-            title: s.title,
-            message: s.message,
+            suggestion_key: rule.key,
+            title: rule.title,
+            message: rule.message,
             helpfulness: fb&.helpfulness,
-            category: s.category,
-            level: s.level,
-            tags: s.tags || []
+            category: rule.category,
+            level: rule.level,
+            tags: rule.tags || []
           }
         end
 

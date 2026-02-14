@@ -40,10 +40,9 @@ module Suggestion
 
     # suggestion_snapshots から env 分を取得。空の場合は nil を返す（フォールバック用）
     def fetch_env_suggestions_from_snapshots
-      snapshots = SuggestionSnapshot.where(
-        date: @date,
-        prefecture_id: @daily_log.prefecture_id
-      )
+      snapshots = SuggestionSnapshot
+        .includes(:suggestion_rule)
+        .where(date: @date, prefecture_id: @daily_log.prefecture_id)
 
       return nil if snapshots.empty?
 
@@ -51,25 +50,26 @@ module Suggestion
       registry_by_key = ::Suggestion::RuleRegistry.all.to_h { |r| [ r.key, r ] }
 
       snapshots
-        .select { |s| allowed_rule_keys.include?(s.rule_key) }
+        .select { |s| allowed_rule_keys.include?(s.suggestion_rule.key) }
         .map do |s|
-          rule = registry_by_key[s.rule_key]
+          rule = s.suggestion_rule
+          registry_rule = registry_by_key[rule.key]
           metadata = (s.metadata || {}).stringify_keys
-          triggers = rule ? RuleEngine.extract_triggers(rule.raw_condition, metadata) : metadata
+          triggers = registry_rule ? ::Suggestion::RuleEngine.extract_triggers(registry_rule.raw_condition, metadata) : metadata
 
           Suggestion.new(
-            key:          s.rule_key,
-            title:        s.title,
-            message:      s.message.to_s,
-            tags:         Array(s.tags),
-            severity:     s.severity,
+            key:          rule.key,
+            title:        rule.title,
+            message:      rule.message.to_s,
+            tags:         Array(rule.tags),
+            severity:     rule.severity,
             triggers:     triggers,
-            category:     s.category,
-            concerns:     rule&.concerns || [],
-            reason_text:  rule&.reason_text,
-            evidence_text: rule&.evidence_text,
-            group:        rule&.group,
-            level:        (s.respond_to?(:level) ? s.level : nil).presence || rule&.level
+            category:     rule.category,
+            concerns:     rule.concerns || [],
+            reason_text:  rule.reason_text,
+            evidence_text: rule.evidence_text,
+            group:        rule.group,
+            level:        rule.level
           )
         end
     end

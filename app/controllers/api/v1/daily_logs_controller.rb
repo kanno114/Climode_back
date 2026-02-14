@@ -33,28 +33,30 @@ class Api::V1::DailyLogsController < ApplicationController
     daily_log_json = @daily_log.as_json(
       include: [
         :prefecture,
-        :suggestion_feedbacks,
-        daily_log_suggestions: { only: [ :suggestion_key, :title, :message, :tags, :severity, :category, :level ] }
+        { suggestion_feedbacks: { methods: [ :suggestion_key ] } },
+        { daily_log_suggestions: { include: :suggestion_rule } }
       ]
     )
 
     # フロントで扱いやすい形式（key, title, message, tags, severity, category, level, triggers, reason_text, evidence_text）に変換
-    registry = Suggestion::RuleRegistry.all.to_h { |r| [ r.key, r ] }
-    daily_log_json["daily_log_suggestions"] = @daily_log.daily_log_suggestions.order(:position, :id).map do |s|
-      rule = registry[s.suggestion_key]
-      {
-        key: s.suggestion_key,
-        title: s.title,
-        message: s.message.to_s,
-        tags: Array(s.tags),
-        severity: s.severity,
-        triggers: {},
-        category: s.category,
-        level: (s.respond_to?(:level) ? s.level : nil).presence || rule&.level,
-        reason_text: rule&.reason_text,
-        evidence_text: rule&.evidence_text
-      }
-    end
+    daily_log_json["daily_log_suggestions"] = @daily_log.daily_log_suggestions
+      .includes(:suggestion_rule)
+      .order(:position, :id)
+      .map do |s|
+        rule = s.suggestion_rule
+        {
+          key: rule.key,
+          title: rule.title,
+          message: rule.message.to_s,
+          tags: Array(rule.tags),
+          severity: rule.severity,
+          triggers: {},
+          category: rule.category,
+          level: rule.level,
+          reason_text: rule.reason_text,
+          evidence_text: rule.evidence_text
+        }
+      end
 
     render json: daily_log_json
   end
@@ -62,11 +64,13 @@ class Api::V1::DailyLogsController < ApplicationController
   # GET /api/v1/daily_logs/date/:date
   def show_by_date
     @daily_log = current_user.daily_logs
-                             .includes(:prefecture, :suggestion_feedbacks)
+                             .includes(:prefecture, { suggestion_feedbacks: :suggestion_rule })
                              .find_by(date: params[:date])
 
     if @daily_log
-      render json: @daily_log.as_json(include: [ :prefecture, :suggestion_feedbacks ])
+      render json: @daily_log.as_json(
+        include: [ :prefecture, { suggestion_feedbacks: { methods: [ :suggestion_key ] } } ]
+      )
     else
       render json: { error: "Daily log not found for date: #{params[:date]}" },
              status: :not_found
@@ -283,10 +287,10 @@ class Api::V1::DailyLogsController < ApplicationController
       @daily_log.suggestion_feedbacks.destroy_all
       if suggestion_feedbacks_params.present?
         suggestion_feedbacks_params.each do |feedback_params|
-          suggestion_key = feedback_params[:key] || feedback_params["key"] || feedback_params[:suggestion_key] || feedback_params["suggestion_key"]
+          key = feedback_params[:key] || feedback_params["key"] || feedback_params[:suggestion_key] || feedback_params["suggestion_key"]
           helpfulness = feedback_params[:helpfulness] || feedback_params["helpfulness"]
 
-          Rails.logger.info "Processing suggestion feedback: key=#{suggestion_key}, helpfulness=#{helpfulness} (#{helpfulness.class})"
+          Rails.logger.info "Processing suggestion feedback: key=#{key}, helpfulness=#{helpfulness} (#{helpfulness.class})"
 
           # helpfulnessのバリデーション（booleanであることを確認）
           unless [ true, false ].include?(helpfulness)
@@ -294,8 +298,11 @@ class Api::V1::DailyLogsController < ApplicationController
             next
           end
 
+          rule = SuggestionRule.find_by(key: key)
+          next unless rule
+
           @daily_log.suggestion_feedbacks.create!(
-            suggestion_key: suggestion_key,
+            suggestion_rule: rule,
             helpfulness: helpfulness
           )
         end
@@ -315,7 +322,7 @@ class Api::V1::DailyLogsController < ApplicationController
 
   def set_daily_log
     @daily_log = current_user.daily_logs
-                            .includes(:prefecture, :suggestion_feedbacks, :daily_log_suggestions)
+                            .includes(:prefecture, { suggestion_feedbacks: :suggestion_rule }, { daily_log_suggestions: :suggestion_rule })
                             .find(params[:id])
   end
 
