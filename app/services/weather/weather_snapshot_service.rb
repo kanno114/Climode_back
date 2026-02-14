@@ -22,8 +22,12 @@ module Weather
     def self.update_all_prefectures(date = Date.current)
       Prefecture.find_each do |prefecture|
         update_for_prefecture(prefecture, date)
+      rescue Net::OpenTimeout => e
+        Rails.logger.error "[Weather] Connection timeout updating snapshot for prefecture #{prefecture.id}: #{e.message}"
+      rescue Net::ReadTimeout => e
+        Rails.logger.error "[Weather] Read timeout updating snapshot for prefecture #{prefecture.id}: #{e.message}"
       rescue => e
-        Rails.logger.error "Failed to update WeatherSnapshot for prefecture #{prefecture.id}: #{e.message}"
+        Rails.logger.error "[Weather] Failed to update snapshot for prefecture #{prefecture.id}: #{e.class} - #{e.message}"
       end
     end
 
