@@ -58,6 +58,34 @@ class Api::V1::DailyLogsController < ApplicationController
         }
       end
 
+    # 天気データを追加
+    weather_snapshot = WeatherSnapshot.find_by(
+      prefecture_id: @daily_log.prefecture_id,
+      date: @daily_log.date
+    )
+
+    daily_log_json["weather_snapshot"] = if weather_snapshot
+      metrics = weather_snapshot.metrics || {}
+      {
+        temperature_c: metrics["temperature_c"],
+        humidity_pct: metrics["humidity_pct"],
+        pressure_hpa: metrics["pressure_hpa"],
+        pressure_drop_6h: metrics["pressure_drop_6h"],
+        pressure_drop_24h: metrics["pressure_drop_24h"],
+        weather_code: metrics.dig("hourly_forecast", 0, "weather_code")
+      }
+    end
+
+    # 前日/翌日のナビゲーション情報を追加
+    prev_log = current_user.daily_logs.where("date < ?", @daily_log.date).order(date: :desc).first
+    next_log = current_user.daily_logs.where("date > ?", @daily_log.date).order(date: :asc).first
+    daily_log_json["navigation"] = {
+      prev_id: prev_log&.id,
+      prev_date: prev_log&.date,
+      next_id: next_log&.id,
+      next_date: next_log&.date
+    }
+
     render json: daily_log_json
   end
 
