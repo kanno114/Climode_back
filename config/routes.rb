@@ -33,7 +33,7 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :users, only: [ :show, :update ] do
+      resources :users, only: [ :show, :update, :destroy ] do
         collection do
           get :default_prefecture
         end
