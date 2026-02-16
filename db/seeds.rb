@@ -148,8 +148,8 @@ else
   puts "  WARNING: health_rules.yml not found, skipping suggestion_rules"
 end
 
-# 関心テーママスタ（関心ワード）
-# label_ja, description_ja はフロントの関心ワード登録UIで表示されます。
+# 関心テーママスタ（関心トピック）
+# label_ja, description_ja はフロントの関心トピック登録UIで表示されます。
 unless is_production
   puts "Seeding concern topics..."
 
@@ -197,7 +197,7 @@ unless is_production
     topic.save!
   end
 
-  # Alice に全関心ワードを登録
+  # Alice に全関心トピックを登録
   alice = User.find_by(email: 'alice@example.com')
   if alice
     ConcernTopic.find_each do |topic|
