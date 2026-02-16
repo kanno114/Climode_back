@@ -19,6 +19,7 @@ class MorningNotificationJob < ApplicationJob
 
     Rails.logger.info "Morning notification job completed."
   rescue => e
+    Sentry.capture_exception(e)
     Rails.logger.error "[MorningNotificationJob] #{e.class}: #{e.message}"
     Rails.logger.error e.backtrace&.first(10)&.join("\n")
     raise
