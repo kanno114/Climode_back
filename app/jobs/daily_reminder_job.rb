@@ -22,6 +22,7 @@ class DailyReminderJob < ApplicationJob
 
     Rails.logger.info "Daily reminder job completed."
   rescue => e
+    Sentry.capture_exception(e)
     Rails.logger.error "[DailyReminderJob] #{e.class}: #{e.message}"
     Rails.logger.error e.backtrace&.first(10)&.join("\n")
     raise

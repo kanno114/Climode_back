@@ -71,6 +71,7 @@ class MorningSuggestionJob < ApplicationJob
 
       SuggestionSnapshot.insert_all!(records)
     rescue => e
+      Sentry.capture_exception(e, extra: { prefecture_id: prefecture.id, date: date })
       Rails.logger.error "Failed to build SuggestionSnapshot for prefecture #{prefecture.id}: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
     end

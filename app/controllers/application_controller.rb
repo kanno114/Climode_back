@@ -3,6 +3,7 @@ class ApplicationController < ActionController::API
 
   # グローバルエラーハンドリング（宣言順: 汎用→具体的。後に書いたものが先にマッチ）
   rescue_from StandardError do |e|
+    Sentry.capture_exception(e)
     Rails.logger.error "[UnhandledError] #{e.class}: #{e.message}"
     Rails.logger.error e.backtrace&.first(20)&.join("\n")
     render json: { error: "internal_error", message: "サーバーエラーが発生しました" },
