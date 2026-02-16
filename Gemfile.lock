@@ -311,6 +311,13 @@ GEM
       rubocop-rails (>= 2.30)
     ruby-progressbar (1.13.0)
     securerandom (0.4.1)
+    sentry-rails (6.3.1)
+      railties (>= 5.2.0)
+      sentry-ruby (~> 6.3.1)
+    sentry-ruby (6.3.1)
+      bigdecimal
+      concurrent-ruby (~> 1.0, >= 1.0.2)
+      logger
     shoulda-matchers (6.5.0)
       activesupport (>= 5.2.0)
     stringio (3.1.7)
@@ -365,6 +372,8 @@ DEPENDENCIES
   rails (~> 7.2.0)
   rspec-rails
   rubocop-rails-omakase
+  sentry-rails
+  sentry-ruby
   shoulda-matchers
   tzinfo-data
   web-push (~> 3.0)
