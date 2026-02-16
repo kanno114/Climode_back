@@ -287,7 +287,7 @@ RSpec.describe Suggestion::SuggestionEngine do
         end
       end
 
-      context '関心ワードによるフィルタリング' do
+      context '関心トピックによるフィルタリング' do
         before { Suggestion::RuleRegistry.reload! }
 
         let(:user_without_concerns) { create(:user, prefecture: create(:prefecture)) }
@@ -316,7 +316,7 @@ RSpec.describe Suggestion::SuggestionEngine do
                  })
         end
 
-        it '関心ワード未登録の場合、general のルールのみ返す' do
+        it '関心トピック未登録の場合、general のルールのみ返す' do
           suggestions = described_class.call(user: user_without_concerns, date: date)
           heat_suggestion = suggestions.find { |s| s.key == 'heatstroke_Warning' }
           general_suggestions = suggestions.select do |s|
@@ -330,7 +330,7 @@ RSpec.describe Suggestion::SuggestionEngine do
           expect(suggestions).not_to be_empty
         end
 
-        it '関心ワード登録時、該当するルールのみ返す' do
+        it '関心トピック登録時、該当するルールのみ返す' do
           heat_topic = ConcernTopic.find_or_create_by!(key: 'heatstroke') do |c|
             c.label_ja = "熱中症"
             c.rule_concerns = [ "heatstroke" ]
@@ -357,7 +357,7 @@ RSpec.describe Suggestion::SuggestionEngine do
           expect(heat_suggestion.title).to eq('暑い日')
         end
 
-        it '登録した関心ワードに含まないルールは返さない' do
+        it '登録した関心トピックに含まないルールは返さない' do
           heat_topic = ConcernTopic.find_or_create_by!(key: 'heatstroke') do |c|
             c.label_ja = "熱中症"
             c.rule_concerns = [ "heatstroke" ]
