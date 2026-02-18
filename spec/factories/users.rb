@@ -13,5 +13,16 @@ FactoryBot.define do
     trait :without_prefecture do
       prefecture { nil }
     end
+
+    trait :oauth do
+      transient do
+        oauth_password { SecureRandom.urlsafe_base64(16) }
+      end
+      password { oauth_password }
+      password_confirmation { oauth_password }
+      after(:create) do |user|
+        create(:user_identity, user: user, provider: "google")
+      end
+    end
   end
 end
