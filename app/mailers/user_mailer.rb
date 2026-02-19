@@ -9,6 +9,16 @@ class UserMailer < ApplicationMailer
     )
   end
 
+  def confirmation_email(user, raw_token)
+    @user = user
+    @confirmation_url = "#{frontend_url}/confirm-email?token=#{raw_token}"
+
+    mail(
+      to: @user.email,
+      subject: "【Climode】メールアドレスの確認"
+    )
+  end
+
   private
 
   def frontend_url

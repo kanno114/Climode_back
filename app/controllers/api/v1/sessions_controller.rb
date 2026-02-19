@@ -65,7 +65,8 @@ class Api::V1::SessionsController < ApplicationController
     render json: {
       valid: true,
       user_id: user.id,
-      email: user.email
+      email: user.email,
+      email_confirmed: user.email_confirmed?
     }, status: :ok
   rescue => e
     Rails.logger.error "Token validation error: #{e.message}"
@@ -100,7 +101,8 @@ class Api::V1::SessionsController < ApplicationController
           id: user.id,
           email: user.email,
           name: user.name,
-          image: user.image || nil
+          image: user.image || nil,
+          email_confirmed: user.email_confirmed?
         },
         access_token: access_token,
         expires_in: Auth::JwtService::ACCESS_TOKEN_EXPIRY
@@ -138,7 +140,8 @@ class Api::V1::SessionsController < ApplicationController
           id: user.id,
           email: user.email,
           name: user.name,
-          image: user.image || nil
+          image: user.image || nil,
+          email_confirmed: user.email_confirmed?
         },
         access_token: access_token,
         expires_in: Auth::JwtService::ACCESS_TOKEN_EXPIRY

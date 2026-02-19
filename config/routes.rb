@@ -23,6 +23,7 @@ Rails.application.routes.draw do
       post :oauth_register, to: "registrations#oauth_register"
       get :validate_token, to: "sessions#validate_token"
       resources :password_resets, only: [ :create, :update ]
+      resource :email_confirmation, only: [ :create, :update ]
 
       resources :daily_logs do
         collection do
