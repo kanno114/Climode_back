@@ -19,6 +19,7 @@ RSpec.configure do |config|
           rule.evidence_text = r["evidence_text"].to_s.presence
           rule.condition = r.fetch("condition", "")
           rule.group = r["group"].to_s.presence
+          rule.enabled = r.fetch("enabled", true)
           rule.save!
         end
       end

@@ -148,6 +148,41 @@ RSpec.describe Suggestion::RuleRegistry do
     end
   end
 
+  describe 'enabled: false のルール除外' do
+    it 'enabled: false のルールが読み込まれない' do
+      # 一時的にYAMLを差し替えてテスト
+      original_rules = YAML.load_file(Rails.root.join("config/health_rules.yml"))["rules"]
+      test_rules = original_rules.dup
+      test_rules << {
+        "key" => "test_disabled_rule",
+        "title" => "無効ルール",
+        "condition" => "temperature_c > 100",
+        "message" => "テスト",
+        "severity" => "50",
+        "category" => "env",
+        "enabled" => false
+      }
+
+      allow(YAML).to receive(:load_file).and_return("rules" => test_rules)
+      described_class.reload!
+      rules = described_class.all
+
+      rule_keys = rules.map(&:key)
+      expect(rule_keys).not_to include("test_disabled_rule")
+      # 有効なルールは含まれている
+      expect(rule_keys).to include("heatstroke_Danger")
+    ensure
+      allow(YAML).to receive(:load_file).and_call_original
+      described_class.reload!
+    end
+
+    it 'enabled キーがないルールはデフォルトで有効' do
+      rules = described_class.all
+      # 既存のルールは enabled キーがないが、すべて読み込まれている
+      expect(rules.length).to eq(YAML.load_file(Rails.root.join("config/health_rules.yml"))["rules"].length)
+    end
+  end
+
   describe 'categoryの設定' do
     it 'categoryがenvまたはbodyである' do
       rules = described_class.all
