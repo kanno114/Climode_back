@@ -7,7 +7,8 @@ class Api::V1::UsersController < ApplicationController
         id: current_user.id,
         email: current_user.email,
         name: current_user.name,
-        prefecture_id: current_user.prefecture_id
+        prefecture_id: current_user.prefecture_id,
+        email_confirmed: current_user.email_confirmed?
       }
     }, status: :ok
   end

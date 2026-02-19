@@ -21,6 +21,14 @@ class Rack::Attack
     end
   end
 
+  # メール確認再送信エンドポイントへのレート制限
+  # 同一IPから10分間に3回まで
+  throttle("email_confirmations/ip", limit: 3, period: 10.minutes) do |req|
+    if req.path == "/api/v1/email_confirmation" && req.post?
+      req.ip
+    end
+  end
+
   # 全APIエンドポイントへの基本レート制限
   # 同一IPから1分間に100リクエストまで
   throttle("api/ip", limit: 100, period: 60.seconds) do |req|

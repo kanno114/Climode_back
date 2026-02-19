@@ -3,6 +3,10 @@ class Api::V1::RegistrationsController < ApplicationController
     user = User.new(signup_params)
 
     if user.save
+      # メール確認トークンを生成して確認メールを送信
+      raw_token = user.generate_confirmation_token!
+      UserMailer.confirmation_email(user, raw_token).deliver_later
+
       access_token = Auth::JwtService.generate_access_token(user)
 
       render json: {
@@ -10,7 +14,8 @@ class Api::V1::RegistrationsController < ApplicationController
           id: user.id,
           email: user.email,
           name: user.name,
-          image: user.image || nil
+          image: user.image || nil,
+          email_confirmed: user.email_confirmed?
         },
         access_token: access_token,
         expires_in: Auth::JwtService::ACCESS_TOKEN_EXPIRY,
@@ -29,6 +34,7 @@ class Api::V1::RegistrationsController < ApplicationController
     user.name = params[:user][:name]
     user.password ||= SecureRandom.urlsafe_base64(16)
     user.image = params[:user][:image]
+    user.email_confirmed = true
 
     ActiveRecord::Base.transaction do
       user.save!
@@ -58,7 +64,8 @@ class Api::V1::RegistrationsController < ApplicationController
           id: user.id,
           email: user.email,
           name: user.name,
-          image: user.image || nil
+          image: user.image || nil,
+          email_confirmed: user.email_confirmed?
         },
         access_token: access_token,
         expires_in: Auth::JwtService::ACCESS_TOKEN_EXPIRY,
