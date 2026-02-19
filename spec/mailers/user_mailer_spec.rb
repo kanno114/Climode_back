@@ -2,12 +2,12 @@ require "rails_helper"
 
 RSpec.describe UserMailer, type: :mailer do
   describe "#reset_password_email" do
-    let(:user) { create(:user, email: "test@example.com") }
+    let(:user) { create(:user) }
     let(:raw_token) { "test_reset_token_123" }
     let(:mail) { described_class.reset_password_email(user, raw_token) }
 
     it "正しい宛先に送信される" do
-      expect(mail.to).to eq([ "test@example.com" ])
+      expect(mail.to).to eq([ user.email ])
     end
 
     it "正しい件名が設定される" do
@@ -28,12 +28,12 @@ RSpec.describe UserMailer, type: :mailer do
   end
 
   describe "#confirmation_email" do
-    let(:user) { create(:user, email: "newuser@example.com") }
+    let(:user) { create(:user) }
     let(:raw_token) { "test_confirmation_token_456" }
     let(:mail) { described_class.confirmation_email(user, raw_token) }
 
     it "正しい宛先に送信される" do
-      expect(mail.to).to eq([ "newuser@example.com" ])
+      expect(mail.to).to eq([ user.email ])
     end
 
     it "正しい件名が設定される" do
