@@ -18,7 +18,7 @@ module Suggestion
       def load!
         calc = Dentaku::Calculator.new
         raw = YAML.load_file(Rails.root.join("config/health_rules.yml"))["rules"]
-        raw.map do |r|
+        raw.select { |r| r.fetch("enabled", true) }.map do |r|
           expr = normalize_expr(r["condition"].to_s)
           ast  = calc.ast(expr) # パースしてAST化（ここで文法エラー検出）
           Rule.new(

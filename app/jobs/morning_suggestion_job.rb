@@ -52,7 +52,7 @@ class MorningSuggestionJob < ApplicationJob
 
       next if suggestions.empty?
 
-      rule_by_key = SuggestionRule.all.to_h { |r| [ r.key, r.id ] }
+      rule_by_key = SuggestionRule.enabled.to_h { |r| [ r.key, r.id ] }
       records = suggestions.filter_map do |s|
         rule_id = rule_by_key[s.key]
         next unless rule_id
