@@ -43,6 +43,9 @@ Rails.application.configure do
   # ActionMailer::Base.deliveries array.
   config.action_mailer.delivery_method = :test
 
+  # ActiveJobをテスト用アダプターに設定（have_enqueued_mail等のマッチャーに必要）
+  config.active_job.queue_adapter = :test
+
   # Unlike controllers, the mailer instance doesn't have any context about the
   # incoming request so you'll need to provide the :host parameter yourself.
   config.action_mailer.default_url_options = { host: "www.example.com" }

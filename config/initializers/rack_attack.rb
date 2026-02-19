@@ -1,4 +1,7 @@
 class Rack::Attack
+  # テスト環境ではレート制限を無効化
+  Rack::Attack.enabled = !Rails.env.test?
+
   # メモリストアを使用（Redis不要）
   Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
 
@@ -6,6 +9,14 @@ class Rack::Attack
   # 同一IPから1分間に5回まで
   throttle("logins/ip", limit: 5, period: 60.seconds) do |req|
     if req.path == "/api/v1/sessions" && req.post?
+      req.ip
+    end
+  end
+
+  # パスワードリセットエンドポイントへのレート制限
+  # 同一IPから10分間に3回まで
+  throttle("password_resets/ip", limit: 3, period: 10.minutes) do |req|
+    if req.path == "/api/v1/password_resets" && req.post?
       req.ip
     end
   end

@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  # 開発環境でのメール確認用
+  mount LetterOpenerWeb::Engine, at: "/letter_opener" if Rails.env.development?
+
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
@@ -19,6 +22,7 @@ Rails.application.routes.draw do
       post :signup, to: "registrations#create"
       post :oauth_register, to: "registrations#oauth_register"
       get :validate_token, to: "sessions#validate_token"
+      resources :password_resets, only: [ :create, :update ]
 
       resources :daily_logs do
         collection do
