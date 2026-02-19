@@ -73,7 +73,9 @@ puts "Seeding suggestion rules from health_rules.yml..."
 yaml_path = Rails.root.join("config/health_rules.yml")
 if File.exist?(yaml_path)
   raw = YAML.load_file(yaml_path)["rules"] || []
+  yaml_keys = []
   raw.each do |r|
+    yaml_keys << r["key"]
     SuggestionRule.find_or_initialize_by(key: r["key"]).tap do |rule|
       rule.title = r.fetch("title")
       rule.message = r.fetch("message", "")
@@ -86,10 +88,20 @@ if File.exist?(yaml_path)
       rule.evidence_text = r["evidence_text"].to_s.presence
       rule.condition = r.fetch("condition", "")
       rule.group = r["group"].to_s.presence
+      rule.enabled = r.fetch("enabled", true)
       rule.save!
     end
   end
-  puts "  Loaded #{SuggestionRule.count} suggestion rules"
+
+  # YAML に存在しないルールを自動無効化
+  disabled_rules = SuggestionRule.where.not(key: yaml_keys).where(enabled: true)
+  if disabled_rules.any?
+    disabled_keys = disabled_rules.pluck(:key)
+    disabled_rules.update_all(enabled: false)
+    puts "  Disabled rules not in YAML: #{disabled_keys}"
+  end
+
+  puts "  Loaded #{SuggestionRule.count} suggestion rules (#{SuggestionRule.enabled.count} enabled)"
 else
   puts "  WARNING: health_rules.yml not found, skipping suggestion_rules"
 end
