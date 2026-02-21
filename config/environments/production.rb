@@ -82,7 +82,7 @@ Rails.application.configure do
     password: ENV["RESEND_API_KEY"],
     enable_starttls_auto: true
   }
-  config.action_mailer.default_url_options = { host: ENV.fetch("FRONTEND_URL", "https://climode-front.vercel.app") }
+  config.action_mailer.default_url_options = { host: ENV.fetch("FRONTEND_URL", "https://climode.app") }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
@@ -96,7 +96,8 @@ Rails.application.configure do
 
   # Enable DNS rebinding protection and other `Host` header attacks.
   config.hosts = [
-    ENV.fetch("RENDER_EXTERNAL_HOSTNAME", "climode-back.onrender.com")
+    ENV.fetch("RENDER_EXTERNAL_HOSTNAME", "climode-back.onrender.com"),
+    "api.climode.app"
   ]
   # Skip DNS rebinding protection for the default health check endpoint.
   config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
