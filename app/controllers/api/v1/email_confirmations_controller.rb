@@ -13,7 +13,7 @@ class Api::V1::EmailConfirmationsController < ApplicationController
     end
 
     raw_token = user.generate_confirmation_token!
-    UserMailer.confirmation_email(user, raw_token).deliver_later
+    UserMailer.confirmation_email(user, raw_token).deliver_now
 
     render json: { message: "確認メールを送信しました。メールをご確認ください。" }, status: :ok
   end

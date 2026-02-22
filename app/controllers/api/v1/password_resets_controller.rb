@@ -22,7 +22,7 @@ class Api::V1::PasswordResetsController < ApplicationController
       end
 
       raw_token = user.generate_reset_password_token!
-      UserMailer.reset_password_email(user, raw_token).deliver_later
+      UserMailer.reset_password_email(user, raw_token).deliver_now
     end
 
     # ユーザー列挙防止: 存在有無に関わらず同じレスポンス
