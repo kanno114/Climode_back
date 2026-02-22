@@ -54,6 +54,9 @@ gem "whenever", require: false
 gem "sentry-ruby"
 gem "sentry-rails"
 
+# Resend email delivery via HTTP API
+gem "resend"
+
 
 group :development do
   # メール確認用（ブラウザでメールプレビュー）
