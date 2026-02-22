@@ -71,17 +71,9 @@ Rails.application.configure do
   # caching is enabled.
   config.action_mailer.perform_caching = false
 
-  # Resend SMTP設定
-  config.action_mailer.delivery_method = :smtp
+  # Resend HTTP API設定
+  config.action_mailer.delivery_method = :resend
   config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.smtp_settings = {
-    address: "smtp.resend.com",
-    port: 587,
-    authentication: :plain,
-    user_name: "resend",
-    password: ENV["RESEND_API_KEY"],
-    enable_starttls_auto: true
-  }
   config.action_mailer.default_url_options = { host: ENV.fetch("FRONTEND_URL", "https://climode.app") }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
