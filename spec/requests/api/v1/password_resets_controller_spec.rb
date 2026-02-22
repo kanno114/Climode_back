@@ -5,7 +5,8 @@ RSpec.describe "Api::V1::PasswordResetsController", type: :request do
 
   before do
     Rack::Attack.enabled = false
-    ActiveJob::Base.queue_adapter = :test
+    ActionMailer::Base.delivery_method = :test
+    ActionMailer::Base.deliveries.clear
   end
 
   after do
@@ -39,7 +40,7 @@ RSpec.describe "Api::V1::PasswordResetsController", type: :request do
           post "/api/v1/password_resets",
                params: { password_reset: { email: user.email } }.to_json,
                headers: { "Content-Type" => "application/json" }
-        }.to have_enqueued_mail(UserMailer, :reset_password_email)
+        }.to change { ActionMailer::Base.deliveries.count }.by(1)
       end
     end
 

@@ -5,7 +5,7 @@ class Api::V1::RegistrationsController < ApplicationController
     if user.save
       # メール確認トークンを生成して確認メールを送信
       raw_token = user.generate_confirmation_token!
-      UserMailer.confirmation_email(user, raw_token).deliver_later
+      UserMailer.confirmation_email(user, raw_token).deliver_now
 
       access_token = Auth::JwtService.generate_access_token(user)
 

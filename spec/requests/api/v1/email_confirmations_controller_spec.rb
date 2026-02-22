@@ -5,7 +5,8 @@ RSpec.describe "Api::V1::EmailConfirmationsController", type: :request do
 
   before do
     Rack::Attack.enabled = false
-    ActiveJob::Base.queue_adapter = :test
+    ActionMailer::Base.delivery_method = :test
+    ActionMailer::Base.deliveries.clear
   end
 
   after do
@@ -21,7 +22,7 @@ RSpec.describe "Api::V1::EmailConfirmationsController", type: :request do
       it "確認メールを送信する" do
         expect {
           post "/api/v1/email_confirmation", headers: headers
-        }.to have_enqueued_mail(UserMailer, :confirmation_email)
+        }.to change { ActionMailer::Base.deliveries.count }.by(1)
 
         expect(response).to have_http_status(:ok)
         json = json_response
@@ -49,7 +50,7 @@ RSpec.describe "Api::V1::EmailConfirmationsController", type: :request do
       it "メールを送信しない" do
         expect {
           post "/api/v1/email_confirmation", headers: headers
-        }.not_to have_enqueued_mail(UserMailer, :confirmation_email)
+        }.not_to change { ActionMailer::Base.deliveries.count }
       end
     end
 
