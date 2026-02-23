@@ -5,7 +5,7 @@ Climode のバックエンド API。Rails 7.2（API モード）を使用した 
 ## 技術スタック
 
 - **Ruby**: 3.3.6
-- **Rails**: 7.2.0（API モード）
+- **Rails**: 7.2.2.2（API モード）
 - **PostgreSQL**: 15
 - **主要 Gem**:
   - `bcrypt` - パスワードハッシュ化
@@ -16,6 +16,9 @@ Climode のバックエンド API。Rails 7.2（API モード）を使用した 
   - `kaminari` - ページネーション
   - `web-push` - プッシュ通知
   - `whenever` - 定期ジョブスケジューリング
+  - `sentry-ruby`, `sentry-rails` - エラーモニタリング
+  - `resend` - メール送信
+- **セキュリティ**: `brakeman`（静的解析）
 - **テスト**: rspec-rails, factory_bot_rails, faker, shoulda-matchers, database_cleaner, json_spec
 - **デプロイ**: Render
 
@@ -56,8 +59,11 @@ rails server
 - `POST /api/v1/signin` - サインイン
 - `POST /api/v1/signup` - サインアップ
 - `POST /api/v1/oauth_register` - OAuth 登録
-- `POST /api/v1/refresh` - トークンリフレッシュ
 - `GET /api/v1/validate_token` - トークン検証
+- `POST /api/v1/password_resets` - パスワードリセット要求
+- `PATCH /api/v1/password_resets/:id` - パスワードリセット実行
+- `POST /api/v1/email_confirmation` - メール確認送信
+- `PATCH /api/v1/email_confirmation/:id` - メールアドレス確認
 
 ### ユーザー
 
@@ -86,6 +92,16 @@ rails server
 - `GET /api/v1/suggestions` - 行動提案一覧
   - クエリパラメータ: `date`, `time` (morning/evening)
 
+### 関心トピック
+
+- `GET /api/v1/concern_topics` - 関心トピック一覧
+- `GET /api/v1/user_concern_topics` - ユーザーの関心トピック取得
+- `PATCH /api/v1/user_concern_topics` - ユーザーの関心トピック更新
+
+### 天気予報
+
+- `GET /api/v1/forecast` - 24 時間天気予報
+
 ### レポート
 
 - `GET /api/v1/reports/weekly` - 週次レポート
@@ -106,28 +122,37 @@ rails server
 
 ### サービス層
 
-- `Signal::EvaluationService` - シグナル判定ロジック
+- `Auth::JwtService` - JWT トークン管理
 - `Suggestion::SuggestionEngine` - 行動提案生成
-- `Weather::WeatherSnapshotService` - 気象データ取得・保存
+- `Suggestion::RuleEngine` / `RuleRegistry` - ルール評価
+- `Suggestion::SuggestionPersistence` - 提案スナップショット永続化
+- `Weather::WeatherDataService` - 気象データ取得
+- `Weather::WeatherSnapshotService` - 気象スナップショット保存
 - `Reports::WeeklyReportService` - 週次レポート生成
+- `Reports::WeeklyAnalysisService` - 週次分析
+- `Reports::CorrelationAnalyzer` - 相関分析
 - `PushNotificationService` - プッシュ通知送信
 
 ### ジョブ
 
-- `SignalEvaluationJob` - シグナル判定ジョブ（毎朝実行）
-- `MorningSignalNotificationJob` - 朝のシグナル通知ジョブ
-- `DailyReminderJob` - 日次リマインダージョブ
+- `MorningSuggestionJob` - 提案事前計算ジョブ（毎朝 7:30）
+- `MorningNotificationJob` - 朝のシグナル通知ジョブ（毎朝 8:00）
+- `DailyReminderJob` - 夜のリマインダージョブ（毎晩 20:00）
 
 ### モデル
 
 - `User` - ユーザー
+- `UserIdentity` - OAuth ID 管理
 - `DailyLog` - 日次ログ
-- `Trigger` - トリガー（プリセット）
-- `UserTrigger` - ユーザー登録トリガー
+- `DailyLogSuggestion` - 日次ログと提案の関連付け
+- `SuggestionRule` - 提案ルール定義
+- `SuggestionSnapshot` - 提案スナップショット
+- `SuggestionFeedback` - 提案フィードバック
 - `WeatherSnapshot` - 気象スナップショット
 - `Prefecture` - 都道府県
+- `ConcernTopic` - 関心トピック
+- `UserConcernTopic` - ユーザー関心トピック
 - `PushSubscription` - プッシュ通知購読
-- `SuggestionFeedback` - 提案フィードバック
 
 ## テスト
 
